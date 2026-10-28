@@ -40,6 +40,9 @@ namespace Saturn {
 		Asset
 	};
 
+	//
+	// Data for one entry and one language.
+	//
 	class LocalisationTableEntryData
 	{
 	public:
@@ -71,6 +74,11 @@ namespace Saturn {
 		std::variant<std::u8string, AssetID> Data;
 	};
 
+	//
+	// LocalisationTableEntry
+	//
+	// Data for one entry and all of it's language.
+	//
 	struct LocalisationTableEntry
 	{
 		LocalisationTableEntry() = default;
@@ -81,12 +89,28 @@ namespace Saturn {
 		}
 
 		std::string EntryName;
+
+		//					LANGUAGE      ->			ENTRIES
 		std::unordered_map<LocTextLanguage, LocalisationTableEntryData>	DataPerLanguage;
 	};
 
+	//
+	// LocalisationTableAsset
+	//
+	// A localisation table is a list of all entires (keys) that are mapped to a
+	// piece of data, that can be text data (for use in UI) or an AssetID.
+	//
+	// Languages have to be added and exist throughout the table.
+	// For example adding Spanish to the table creates a new data field in all
+	// entires. Removing a language has the same effect.
+	//
 	class LocalisationTableAsset : public Asset
 	{
 	public:
+		// We have to use a UUID because the name of an entiry is volatile
+		// and can change, but of course a map needs a constant key value.
+		//
+		//
 		//											UUID -> ENTRY
 		using LocTableEntryMap = std::unordered_map<UUID, LocalisationTableEntry>;
 

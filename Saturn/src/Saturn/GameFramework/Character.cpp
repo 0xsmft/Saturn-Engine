@@ -184,6 +184,22 @@ namespace Saturn {
 		return TryGetComponent<CharacterMovementComponent>();
 	}
 
+	PhysicsCharacterController* Character::GetPhysicsMovementController()
+	{
+		CharacterMovementComponent* pComp = GetMovementComponent();
+		if( !pComp ) return nullptr;
+
+		return pComp->CharacterMovement;
+	}
+
+	const PhysicsCharacterController* Character::GetPhysicsMovementController() const
+	{
+		const CharacterMovementComponent* pComp = GetMovementComponent();
+		if( !pComp ) return nullptr;
+
+		return pComp->CharacterMovement;
+	}
+
 	void Character::Jump( float pwr /*= 1.0f */ )
 	{
 		if( auto* pMovementComp = GetMovementComponent() )

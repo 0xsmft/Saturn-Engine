@@ -159,7 +159,7 @@ namespace Saturn {
 
 			if( !m_Window->Minimized() )
 			{
-				Renderer::Get()->BeginFrame();
+				RenderThread::Get().Queue( [ = ] { Renderer::Get()->BeginFrame(); } );
 				{
 					BuildRenderCommands();
 				}

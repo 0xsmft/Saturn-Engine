@@ -117,6 +117,12 @@ namespace Saturn {
 		const CharacterMovementComponent* GetMovementComponent() const;
 
 		//
+		// Get the physics movement controller
+		//
+		class PhysicsCharacterController* GetPhysicsMovementController();
+		const class PhysicsCharacterController* GetPhysicsMovementController() const;
+
+		//
 		// Jump
 		//
 		// @param pwr - power to jump.

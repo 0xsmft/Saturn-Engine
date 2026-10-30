@@ -250,7 +250,11 @@ namespace Saturn {
 		Yemen,
 
 		Zambia,
-		Zimbabwe
+		Zimbabwe,
+
+		COUNT = Zimbabwe
 	};
 	
 }
+
+#include "CountryStrAux.h"

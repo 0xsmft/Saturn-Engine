@@ -504,7 +504,9 @@ namespace Saturn {
 		Chuukese,
 		Pohnpeian,
 		Kosraean,
-		Woleaian
+		Woleaian,
+
+		COUNT = Woleaian
 	};
 
 	enum class LocTextLanguageVariant : uint16_t
@@ -624,6 +626,8 @@ namespace Saturn {
 		QuechuaSouthern,
 		QuechuaAncash,
 		QuechuaCuscoCollao,
+
+		COUNT = QuechuaCuscoCollao
 	};
 
 	struct LanguageOption
@@ -632,3 +636,5 @@ namespace Saturn {
 		LocTextLanguageVariant Variant = LocTextLanguageVariant::UnknownUnknown;
 	};
 }
+
+#include "LanguageStrAux.h"

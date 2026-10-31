@@ -105,11 +105,23 @@ namespace Saturn {
 							case LocalisationTableEntryType::Asset:
 							{
 								ImGui::Text( "%" PRIu64, data.GetAssetID() );
+
+								if( ImGui::BeginItemTooltip() ) 
+								{
+									ImGui::Text( "This asset will be loaded based on the current language." );
+									ImGui::EndTooltip();
+								}
 							} break;
 
 							case LocalisationTableEntryType::Text:
 							{
 								ImGui::Text( "%s", data.GetTextData() );
+
+								if( ImGui::BeginItemTooltip() ) 
+								{
+									ImGui::Text( "This text will be based on the current language." );
+									ImGui::EndTooltip();
+								}
 							} break;
 
 							default:

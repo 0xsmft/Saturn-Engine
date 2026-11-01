@@ -31,67 +31,13 @@
 
 namespace Saturn {
 
-//	static std::unordered_map<AssetID, AssetViewer*> s_AssetViewers;
-
 	AssetViewer::AssetViewer( AssetID ID )
 		: m_AssetID( ID )
 	{
-//		s_AssetViewers[ ID ] = this;
 	}
 
 	AssetViewer::~AssetViewer()
 	{
 	}
 
-	/*
-	void AssetViewer::Draw()
-	{
-		SAT_PF_EVENT();
-
-		for( auto Itr = s_AssetViewers.begin(); Itr != s_AssetViewers.end(); )
-		{
-			if( Itr->second->IsOpen() )
-			{
-				Itr->second->OnImGuiRender();
-				++Itr;
-			}
-			else
-			{
-				delete Itr->second;
-				Itr = s_AssetViewers.erase( Itr );
-			}
-		}
-	}
-
-	void AssetViewer::Update( Timestep ts )
-	{
-		for( auto&& [id, viewer] : s_AssetViewers )
-		{
-			viewer->OnUpdate( ts );
-		}
-	}
-
-	void AssetViewer::ProcessEvent( RubyEvent& rEvent )
-	{
-		for( auto&& [id, viewer] : s_AssetViewers )
-		{
-			viewer->OnEvent( rEvent );
-		}
-	}
-
-	void AssetViewer::DestroyViewer( AssetID ID )
-	{
-	}
-
-	void AssetViewer::Terminate()
-	{
-		for( auto&& [id, viewer] : s_AssetViewers )
-		{
-			if( viewer )
-				delete viewer;
-		}
-
-		s_AssetViewers.clear();
-	}
-	*/
 }

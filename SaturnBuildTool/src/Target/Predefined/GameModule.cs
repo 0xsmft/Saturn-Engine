@@ -79,14 +79,26 @@ namespace SaturnBuildTool
             // Use Saturn PCH
             PCH = new PCHInfo( "sppch.h", Path.Combine( saturnDir, "Saturn/src/sppch.cpp" ) );
 
-            // LIBARIES
+            // SYSTEM LIBARIES
             switch(Shared.Platform.PlatformType)
             {
                 default:
                 case PlatformType.Windows:
-                case PlatformType.Linux:
                     {
                         Links.Add( "vulkan-1" );
+                    } break;
+
+                case PlatformType.Linux:
+                    {
+                        Links.AddRange( new string[] { 
+                            "vulkan", 
+                            "xcb", 
+                            "dl", 
+                            "m", 
+                            "xcb-randr", 
+                            "pthread", 
+                            "Xrandr", 
+                            "xcb-keysyms" } );
                     } break;
 
                 case PlatformType.MacApple:
@@ -121,7 +133,10 @@ namespace SaturnBuildTool
 
                             case PlatformType.Linux:
                                 {
-                                    // TODO:
+                                    Links.AddRange( new string[] {
+                                        "shaderc_shared",
+                                        "SPIRV",
+                                    } );
                                 } break;
                             
                             case PlatformType.MacApple:
@@ -147,7 +162,10 @@ namespace SaturnBuildTool
 
                             case PlatformType.Linux:
                                 {
-                                    // TODO:
+                                    Links.AddRange( new string[] {
+                                        "shaderc_shared",
+                                        "SPIRV",
+                                    } );
                                 } break;
                             
                             case PlatformType.MacApple:
@@ -180,12 +198,26 @@ namespace SaturnBuildTool
                     }
                 } break;
 
+                case PlatformType.Linux:
+                    {
+                        if( Shared.ProjectInfo.CurrentConfigKind != ConfigKind.Dist )
+                        {
+                            Tools.PkgConfig.FindPackageLibs( "gtk+-3.0" )
+                                .Split( ' ' )
+                                .Where( s => s.StartsWith( "-l" ) )
+                                .Select( s => s.Substring( 2 ) )
+                                .ToList()
+                                .ForEach( lib => Links.Add( lib ) );
+                        }
+                    } goto case PlatformType.MacApple;
+
                 case PlatformType.MacApple:
                     {
                         if( Shared.ProjectInfo.CurrentConfigKind != ConfigKind.Dist )
                         {
                             string saturnDir = Shared.ProjectInfo.SaturnDir;
                             LibraryPaths.Add( Path.Combine( saturnDir, "Saturn/vendor/assimp/bin" ) );
+
                             Links.Add( "assimp" );   
                         }
                     } break;

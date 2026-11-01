@@ -62,7 +62,7 @@ public: \
 	[[nodiscard]] inline static SClass* StaticClass() { return GetStaticClassInternal(); } \
 public: \
 	typedef x ThisClass; \
-	typedef BaseClass Super; \
+	typedef BaseClass Super;
 
 #define SAT_DECLARE_CLASS_NO_INTER( x, BaseClass ) \
 private: \
@@ -84,4 +84,4 @@ public: \
 	[[nodiscard]] inline static SClass* StaticClass() { return GetStaticClassInternal(); } \
 public: \
 	typedef x ThisClass; \
-	typedef BaseClass Super; \
+	typedef BaseClass Super;

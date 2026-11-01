@@ -176,6 +176,13 @@ project "Saturn-Editor"
 		systemversion "latest"
 		linkgroups "On"
 
+		runpathdirs 
+		{
+			"%{cfg.targetdir}",
+			os.getenv('VULKAN_SDK') .. "/lib",
+			"../Saturn/vendor/assimp/bin/"
+		}
+
 		defines
 		{
 			"SAT_PLATFORM_LINUX"
@@ -191,6 +198,9 @@ project "Saturn-Editor"
 			"Xrandr",
 			"xcb-randr",
 			"vulkan",
+			"xkbcommon",
+			"xkbcommon-x11",
+			"xcb-cursor"
 		}
 
 		libdirs
@@ -221,7 +231,7 @@ project "Saturn-Editor"
 			AppendPkgConfigLibraries("gtk+-3.0")
 		end
 
-		filter { "system:linux", "configurations:Debug" }
+		filter { "system:linux", "configurations:Debug or configurations:Debug-ASan" }
 			links
 			{
 				"assimp",

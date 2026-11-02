@@ -506,7 +506,7 @@ namespace Saturn {
 		Kosraean,
 		Woleaian,
 
-		COUNT = Woleaian
+		COUNT = Woleaian + 1
 	};
 
 	enum class LocTextLanguageVariant : uint16_t
@@ -627,7 +627,7 @@ namespace Saturn {
 		QuechuaAncash,
 		QuechuaCuscoCollao,
 
-		COUNT = QuechuaCuscoCollao
+		COUNT = QuechuaCuscoCollao + 1
 	};
 
 	struct LanguageOption

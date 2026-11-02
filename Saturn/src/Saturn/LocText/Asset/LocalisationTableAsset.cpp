@@ -47,7 +47,7 @@ namespace Saturn {
 
 	uint64_t LocalisationTableAsset::GetNewNameCount()
 	{
-		uint64_t count = ( uint64_t ) std::count_if( m_Entries.begin(), m_Entries.end(),
+		return std::count_if( m_Entries.begin(), m_Entries.end(),
 			[]( const auto& rKV ) -> bool
 		{
 			// This is not great...
@@ -58,8 +58,6 @@ namespace Saturn {
 			else
 				return false;
 		} );
-
-		return count;
 	}
 
 	LocalisationTableEntry& LocalisationTableAsset::AddNewEntry()
@@ -69,7 +67,40 @@ namespace Saturn {
 		auto emplaced = m_Entries.emplace( std::pair{ UUID(), LocalisationTableEntry( count == 0 ? "New Text Entry" : std::format( "New Text Entry ({})", count ) ) } );
 
 		auto& rKv = *( emplaced.first );
-		return rKv.second;
+		auto& rEntry = rKv.second;
+		
+		AppendLanguagesToNewlyAddedEntry( rEntry );
+
+		return rEntry;
+	}
+
+	void LocalisationTableAsset::AddNewLanguage( LocTextLanguage lang, LocTextLanguageVariant dialect )
+	{
+		const auto itr = std::find( m_UsedLanguages.begin(), m_UsedLanguages.end(), lang );
+		if( itr == m_UsedLanguages.end() )
+		{
+			m_UsedLanguages.emplace_back( lang );
+
+			AddNewLanguageToAllEntires( lang, dialect );
+		}
+	}
+
+	void LocalisationTableAsset::AddNewLanguageToAllEntires( LocTextLanguage lang, LocTextLanguageVariant dialect )
+	{
+		for( auto& [ uuid, entry ] : m_Entries )
+		{
+			entry.DataPerLanguage.emplace( std::pair{ lang, LocalisationTableEntryData() } );
+		}
+	}
+
+	void LocalisationTableAsset::AppendLanguagesToNewlyAddedEntry( LocalisationTableEntry& rEntry )
+	{
+		rEntry.DataPerLanguage.reserve( m_UsedLanguages.size() );
+
+		for( const auto usedLang : m_UsedLanguages )
+		{
+			rEntry.DataPerLanguage.emplace( std::pair( usedLang, LocalisationTableEntryData() ) );
+		}
 	}
 
 }

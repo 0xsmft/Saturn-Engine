@@ -30,7 +30,7 @@
 
 namespace Saturn::Auxiliary {
 
-	std::string LocTextLanguageToString( LocTextLanguage language )
+	constexpr std::string LocTextLanguageToString( LocTextLanguage language )
 	{
 		switch( language )
 		{

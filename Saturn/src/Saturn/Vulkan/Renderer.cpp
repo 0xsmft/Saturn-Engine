@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2026 BEAST                                                           *
+* Copyright (c) 2020 - 2026 0xsmft https://0xsmft.dev                                       *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -678,8 +678,7 @@ namespace Saturn {
 		m_BeginFrameTime = m_BeginFrameTimer.ElapsedMilliseconds();
 
 		// Start the command buffer
-		VkCommandBufferBeginInfo cmdBufferBeginInfo{};
-		cmdBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		VkCommandBufferBeginInfo cmdBufferBeginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 		VK_CHECK( vkBeginCommandBuffer( m_CommandBuffers[ m_FrameInFlightIndex ], &cmdBufferBeginInfo ) );
 	}
 

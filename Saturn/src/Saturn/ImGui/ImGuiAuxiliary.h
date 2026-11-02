@@ -223,6 +223,8 @@ namespace Saturn::Auxiliary {
 
 	extern bool InputText( const char* label, std::string* str, ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = nullptr, void* user_data = nullptr );
 
+	extern bool InputTextMultiline( const char* label, std::string* str, const ImVec2& rSize = ImVec2( 0.0f, 0.0f ), ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = nullptr, void* user_data = nullptr );
+
 	extern ImVec2 GetClosestPointOnRectBorder( const ImRect& rRect, const ImVec2& rPoint );
 
 	extern ImVec2 GetConnectionPointBetweenRectAndPoint( const ImRect& rRect, const ImVec2& rEndPoint );

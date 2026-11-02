@@ -46,22 +46,25 @@ namespace Saturn {
 	class LocalisationTableEntryData
 	{
 	public:
+		using StringType = std::string;
+
+	public:
 		LocalisationTableEntryType Type = LocalisationTableEntryType::Text;
 
 	public:
 		LocalisationTableEntryData() = default;
 		~LocalisationTableEntryData() = default;
 
-		const std::u8string& GetTextData() const 
+		const StringType& GetTextData() const
 		{
 			SAT_CORE_ASSERT( Type == LocalisationTableEntryType::Text );
-			return std::get<std::u8string>( Data ); 
+			return std::get<StringType>( Data );
 		}
 
-		std::u8string& GetTextData()
+		StringType& GetTextData()
 		{
 			SAT_CORE_ASSERT( Type == LocalisationTableEntryType::Text );
-			return std::get<std::u8string>( Data );
+			return std::get<StringType>( Data );
 		}
 
 		AssetID GetAssetID() const
@@ -71,7 +74,7 @@ namespace Saturn {
 		}
 
 	private:
-		std::variant<std::u8string, AssetID> Data;
+		std::variant<StringType, AssetID> Data;
 	};
 
 	//
@@ -107,7 +110,7 @@ namespace Saturn {
 	class LocalisationTableAsset : public Asset
 	{
 	public:
-		// We have to use a UUID because the name of an entiry is volatile
+		// We have to use a UUID because the name of an entry is volatile
 		// and can change, but of course a map needs a constant key value.
 		//
 		//
@@ -129,6 +132,11 @@ namespace Saturn {
 	private:
 		uint64_t GetNewNameCount();
 		LocalisationTableEntry& AddNewEntry();
+
+	private:
+		void AddNewLanguage( LocTextLanguage lang, LocTextLanguageVariant dialect );
+		void AddNewLanguageToAllEntires( LocTextLanguage lang, LocTextLanguageVariant dialect );
+		void AppendLanguagesToNewlyAddedEntry( LocalisationTableEntry& rEntry );
 
 	private:
 		LocTableEntryMap m_Entries;

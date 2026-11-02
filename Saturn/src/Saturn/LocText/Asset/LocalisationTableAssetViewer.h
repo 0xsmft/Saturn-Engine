@@ -44,11 +44,20 @@ namespace Saturn {
 		virtual void OnEvent( Event& rEvent ) override {}
 
 	private:
+		void DrawLanguagePopup();
+
+	private:
 		Ref<LocalisationTableAsset> m_LocalisationTable;
 
+		bool m_ShowNewLanguagePopup = false;
 		bool m_Dirty = false;
 		bool m_CanSave = true;
 		bool m_ShowDirtyPopup = false;
+
+		LocTextLanguage m_ChosenLanguage = LocTextLanguage::Unknown;
+		LocTextLanguageVariant m_ChosenLanguageVariant = LocTextLanguageVariant::UnknownUnknown;
+
+		std::unordered_map<std::underlying_type_t<LocTextLanguage>, std::string> m_LanguageNameCache;
 	};
 
 }

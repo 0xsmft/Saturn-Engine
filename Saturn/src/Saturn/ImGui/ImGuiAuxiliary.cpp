@@ -1074,4 +1074,23 @@ namespace Saturn::Auxiliary {
 		return ImGui::InputText( label, ( char* ) str->c_str(), str->capacity() + 1, flags, InputTextCallback, &userDataCB );
 	}
 
+	bool InputTextMultiline( 
+		const char* label, 
+		std::string* str, 
+		const ImVec2& rSize /*= ImVec2( 0.0f, 0.0f )*/, 
+		ImGuiInputTextFlags flags /*= 0*/, 
+		ImGuiInputTextCallback callback /*= nullptr*/, 
+		void* user_data /*= nullptr */ )
+	{
+		IM_ASSERT( ( flags & ImGuiInputTextFlags_CallbackResize ) == 0 );
+		flags |= ImGuiInputTextFlags_CallbackResize;
+
+		InputTextCallback_UserData userDataCB{};
+		userDataCB.pStr = str;
+		userDataCB.ChainCallback = callback;
+		userDataCB.pChainCallbackUserData = user_data;
+
+		return ImGui::InputTextMultiline( label, ( char* ) str->c_str(), str->capacity() + 1, rSize, flags, InputTextCallback, &userDataCB );
+	}
+
 }

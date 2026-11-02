@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2026 BEAST                                                           *
+* Copyright (c) 2020 - 2026 0xsmft https://0xsmft.dev                                       *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -30,6 +30,7 @@
 #include "Layer.h"
 
 #include "Saturn/Core/App.h"
+#include "Saturn/Core/EngineSettings.h"
 
 #include "Saturn/ImGui/Styles.h"
 #include "Saturn/Vulkan/VulkanContext.h"
@@ -138,6 +139,8 @@ namespace Saturn {
 			PoolCreateInfo.pPoolSizes = PoolSizes.data();
 
 			VK_CHECK( vkCreateDescriptorPool( VulkanContext::Get()->GetDevice(), &PoolCreateInfo, nullptr, &m_DescriptorPool ) );
+
+			SetDebugUtilsObjectName( "ImGuiDescriptorPool", ( uint64_t ) m_DescriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL );
 		}
 		
 		ImGui_ImplVulkan_InitInfo ImGuiInitInfo = {};
@@ -153,6 +156,13 @@ namespace Saturn {
 		ImGuiInitInfo.CheckVkResultFn = _VkCheckResult;
 
 		ImGui_ImplVulkan_Init( &ImGuiInitInfo, VulkanContext::Get()->GetDefaultVulkanPass() );
+
+		for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
+		{
+			m_CommandBuffers[ i ] = VulkanContext::Get()->CreateSubCommandBuffer();
+
+			SetDebugUtilsObjectName( "ImGuiCmdBuffer", ( uint64_t ) m_CommandBuffers[ i ], VK_OBJECT_TYPE_COMMAND_BUFFER );
+		}
 #endif
 	}
 
@@ -161,6 +171,13 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		ImGui_ImplVulkan_Shutdown();
 		ImGui_ImplRuby_Shutdown();
+
+		/*
+		vkFreeCommandBuffers(
+			VulkanContext::Get()->GetDevice(),
+			VulkanContext::Get()->GetCommandPool(),
+			m_CommandBuffers.size(), m_CommandBuffers.data() );
+		*/
 
 		vkDestroyDescriptorPool( VulkanContext::Get()->GetDevice(), m_DescriptorPool, nullptr );
 		vkDestroyDescriptorSetLayout( VulkanContext::Get()->GetDevice(), m_DescriptorLayout, nullptr );
@@ -178,6 +195,10 @@ namespace Saturn {
 
 		ImGui::NewFrame();
 		ImGuizmo::BeginFrame();
+
+		const VkCommandBuffer currentImGuiCmdBuffer = m_CommandBuffers[ Renderer::Get()->GetCurrentFrame() ];
+
+		vkResetCommandBuffer( currentImGuiCmdBuffer, 0 );
 #endif
 	}
 
@@ -207,7 +228,19 @@ namespace Saturn {
 
 		// Begin swap chain pass
 		CmdBeginDebugLabel( CommandBuffer, "Swap chain pass" );
-		vkCmdBeginRenderPass( CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
+		vkCmdBeginRenderPass( CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS );
+
+		VkCommandBufferInheritanceInfo inheritanceInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO };
+		inheritanceInfo.renderPass = VulkanContext::Get()->GetDefaultVulkanPass();
+		inheritanceInfo.framebuffer = RenderPassBeginInfo.framebuffer;
+
+		VkCommandBufferBeginInfo cmdBufInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+		cmdBufInfo.flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
+		cmdBufInfo.pInheritanceInfo = &inheritanceInfo;
+
+		const VkCommandBuffer currentImGuiCmdBuffer = m_CommandBuffers[ Renderer::Get()->GetCurrentFrame() ];
+
+		VK_CHECK( vkBeginCommandBuffer( currentImGuiCmdBuffer, &cmdBufInfo ) );
 
 		VkViewport Viewport = {};
 		Viewport.x = 0.0f;
@@ -219,16 +252,22 @@ namespace Saturn {
 
 		VkRect2D Scissor = { { 0, 0 }, { WindowWidth, WindowHeight } };
 
-		vkCmdSetViewport( CommandBuffer, 0u, 1u, &Viewport );
-		vkCmdSetScissor( CommandBuffer, 0u, 1u, &Scissor );
+		vkCmdSetViewport( currentImGuiCmdBuffer, 0u, 1u, &Viewport );
+		vkCmdSetScissor( currentImGuiCmdBuffer, 0u, 1u, &Scissor );
 
-		ImGui_ImplVulkan_RenderDrawData( ImGui::GetDrawData(), CommandBuffer );
+		ImGui_ImplVulkan_RenderDrawData( ImGui::GetDrawData(), currentImGuiCmdBuffer );
 
-		ImGui::UpdatePlatformWindows();
-		ImGui::RenderPlatformWindowsDefault();
+		VK_CHECK( vkEndCommandBuffer( currentImGuiCmdBuffer ) );
+
+		vkCmdExecuteCommands( CommandBuffer, 1, &currentImGuiCmdBuffer );
 
 		vkCmdEndRenderPass( CommandBuffer );
 		CmdEndDebugLabel( CommandBuffer );
+
+//		VK_CHECK( vkEndCommandBuffer( CommandBuffer ) );
+
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
 #endif
 	}
 }

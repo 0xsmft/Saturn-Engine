@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2026 BEAST                                                           *
+* Copyright (c) 2020 - 2026 0xsmft https://0xsmft.dev                                       *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -72,6 +72,6 @@ namespace Saturn {
 		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
 		VkDescriptorSetLayout m_DescriptorLayout = VK_NULL_HANDLE;
 
-		VkCommandBuffer m_CommandBuffer = VK_NULL_HANDLE;
+		std::array<VkCommandBuffer, MAX_FRAMES_IN_FLIGHT> m_CommandBuffers{ VK_NULL_HANDLE };
 	};
 }

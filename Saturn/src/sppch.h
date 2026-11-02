@@ -60,6 +60,7 @@
 #include <mutex>
 #include <span>
 #include <cinttypes>
+#include <variant>
 
 #if !defined(SAT_PLATFORM_WINDOWS)
 #include <signal.h>

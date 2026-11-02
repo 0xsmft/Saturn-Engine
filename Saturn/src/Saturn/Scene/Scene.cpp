@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2026 BEAST                                                           *
+* Copyright (c) 2020 - 2026 0xsmft https://0xsmft.dev                                       *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -1318,7 +1318,7 @@ namespace Saturn {
 		entt::entity entity, 
 		std::vector<entt::id_type>& rMap ) 
 	{
-		// Ensure no realloc needs to be done by simply reserving the max size of the component group.
+		// Ensure no realloc needs to be done.
 		rMap.reserve( sizeof...( V ) );
 
 		BuildComponentHashInternal<V...>( rReg, entity, rMap );

@@ -89,7 +89,7 @@ namespace Saturn {
 	{
 		for( auto& [ uuid, entry ] : m_Entries )
 		{
-			entry.DataPerLanguage.emplace( std::pair{ lang, LocalisationTableEntryData() } );
+			entry.DataPerLanguage.emplace( std::pair{ lang, LocalisationTableEntryData( entry.Type ) } );
 		}
 	}
 
@@ -99,7 +99,18 @@ namespace Saturn {
 
 		for( const auto usedLang : m_UsedLanguages )
 		{
-			rEntry.DataPerLanguage.emplace( std::pair( usedLang, LocalisationTableEntryData() ) );
+			rEntry.DataPerLanguage.emplace( std::pair( usedLang, LocalisationTableEntryData( rEntry.Type ) ) );
+		}
+	}
+
+	void LocalisationTableAsset::ChangeTypeForEntry( LocalisationTableEntry& rEntry, LocalisationTableEntryType newType )
+	{
+		rEntry.Type = newType;
+		rEntry.DataPerLanguage.clear();
+
+		for( const auto usedLang : m_UsedLanguages )
+		{
+			rEntry.DataPerLanguage.emplace( std::pair( usedLang, LocalisationTableEntryData( newType ) ) );
 		}
 	}
 

@@ -40,6 +40,24 @@ namespace Saturn {
 		Asset
 	};
 
+	constexpr std::string_view LocalisationTableEntryTypeToString( LocalisationTableEntryType type )
+	{
+		switch( type )
+		{
+			case LocalisationTableEntryType::Text:
+				return "Text";
+		
+			case LocalisationTableEntryType::Asset:
+				return "Asset";
+			
+			default:
+				break;
+		}
+
+		SAT_CORE_ASSERT( false );
+		return "Unknown";
+	}
+
 	//
 	// Data for one entry and one language.
 	//
@@ -52,7 +70,18 @@ namespace Saturn {
 		LocalisationTableEntryType Type = LocalisationTableEntryType::Text;
 
 	public:
-		LocalisationTableEntryData() = default;
+		LocalisationTableEntryData( LocalisationTableEntryType type = LocalisationTableEntryType::Text )
+			: Type( type )
+		{
+			switch( Type )
+			{
+				default: break;
+				case LocalisationTableEntryType::Asset:
+				{
+					SetAssetID( 0 );
+				} break;
+			}
+		}
 		~LocalisationTableEntryData() = default;
 
 		const StringType& GetTextData() const
@@ -73,6 +102,12 @@ namespace Saturn {
 			return std::get<AssetID>( Data );
 		}
 
+		inline void SetAssetID( AssetID id ) 
+		{
+			SAT_CORE_ASSERT( Type == LocalisationTableEntryType::Asset );
+			Data = id;
+		}
+
 	private:
 		std::variant<StringType, AssetID> Data;
 	};
@@ -86,8 +121,8 @@ namespace Saturn {
 	{
 		LocalisationTableEntry() = default;
 
-		LocalisationTableEntry( const std::string& rEntryName )
-			: EntryName( rEntryName )
+		LocalisationTableEntry( const std::string& rEntryName, LocalisationTableEntryType type = LocalisationTableEntryType::Text )
+			: EntryName( rEntryName ), Type( type )
 		{
 		}
 
@@ -95,6 +130,9 @@ namespace Saturn {
 
 		//					LANGUAGE      ->			ENTRIES
 		std::unordered_map<LocTextLanguage, LocalisationTableEntryData>	DataPerLanguage;
+	
+		// What type of entry is this? By default it's a text entry.
+		LocalisationTableEntryType Type = LocalisationTableEntryType::Text;
 	};
 
 	//
@@ -137,6 +175,13 @@ namespace Saturn {
 		void AddNewLanguage( LocTextLanguage lang, LocTextLanguageVariant dialect );
 		void AddNewLanguageToAllEntires( LocTextLanguage lang, LocTextLanguageVariant dialect );
 		void AppendLanguagesToNewlyAddedEntry( LocalisationTableEntry& rEntry );
+
+		//
+		// Change the data type from one to another.
+		// 
+		// NB: All data will be ERASED.
+		//
+		void ChangeTypeForEntry( LocalisationTableEntry& rEntry, LocalisationTableEntryType newType );
 
 	private:
 		LocTableEntryMap m_Entries;

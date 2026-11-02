@@ -31,7 +31,11 @@
 
 #include "Saturn/Asset/AssetManager.h"
 
+#include "Saturn/Core/App.h"
+
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
+#include "Saturn/ImGui/EditorIcons.h"
+#include "Saturn/ImGui/EditorEvents.h"
 
 namespace Saturn {
 
@@ -96,6 +100,43 @@ namespace Saturn {
 					ImGui::PushID( ( int ) id );
 					ImGui::SetNextItemWidth( 200.0F );
 					Auxiliary::InputText( "##ident", &entry.EntryName );
+
+					ImGui::PushID( "typesec" );
+					ImGui::BeginHorizontal( "##typeItmHz" );
+					ImGui::Text( "Type: " );
+					ImGui::PopID();
+
+					ImGui::Spring();
+
+					const std::string_view typeStr = LocalisationTableEntryTypeToString( entry.Type );
+					const auto& rStyle = ImGui::GetStyle();
+					const float comboWidth = glm::max(
+						200.0f,
+						ImGui::CalcTextSize( typeStr.data() ).x +
+						rStyle.FramePadding.x * 2.0f +
+						ImGui::GetFrameHeight() );
+
+					ImGui::SetNextItemWidth( comboWidth );
+					if( ImGui::BeginCombo( "##type", typeStr.data() ) )
+					{
+						bool selected = ( entry.Type == LocalisationTableEntryType::Text );
+						if( ImGui::Selectable( "Localised Text", selected ) )
+						{
+							if( !selected )
+								m_LocalisationTable->ChangeTypeForEntry( entry, LocalisationTableEntryType::Text );
+						}
+
+						selected = ( entry.Type == LocalisationTableEntryType::Asset );
+						if( ImGui::Selectable( "Asset", selected ) )
+						{
+							if( !selected )
+								m_LocalisationTable->ChangeTypeForEntry( entry, LocalisationTableEntryType::Asset );
+						}
+
+						ImGui::EndCombo();
+					}
+
+					ImGui::EndHorizontal();
 					ImGui::PopID();
 
 					for( auto& [langCode, data] : entry.DataPerLanguage )
@@ -106,24 +147,65 @@ namespace Saturn {
 						{
 							case LocalisationTableEntryType::Asset:
 							{
-								ImGui::Text( "%" PRIu64, data.GetAssetID() );
+								bool assetFinderOpen = false;
 
-								if( ImGui::BeginItemTooltip() ) 
+								ImGui::PushID( ( int ) id );
+								ImGui::PushID( ( int ) langCode );
+
+								ImGui::BeginHorizontal( "##assetareaHz" );
+								ImGui::Text( "%" PRIu64, data.GetAssetID() );
+								
+								if( ImGui::BeginItemTooltip() )
 								{
 									ImGui::Text( "This asset will be loaded based on the current language." );
 									ImGui::EndTooltip();
 								}
+
+								ImGui::Spring();
+								if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+								{
+									assetFinderOpen = !assetFinderOpen;
+								}
+								ImGui::EndHorizontal();
+
+								AssetID temporaryID = data.GetAssetID();
+								if( Auxiliary::DrawAssetFinder( AssetType::Unknown, &assetFinderOpen, temporaryID ) )
+								{
+									data.SetAssetID( temporaryID );
+								}
+
+								if( Auxiliary::TreeNode( "Show details", false ) )
+								{
+									Ref<Asset> asset = AssetManager::Get()->FindAsset( data.GetAssetID() );
+									if( asset )
+									{
+										ImGui::Text( "Name: %s", asset->Name.c_str() );
+										ImGui::Text( "Type: %s", AssetTypeToString( asset->Type ).data() );
+										
+										if( ImGui::Button( "Browse To" ) )
+										{
+											Application::Get()->DispatchEvent<CBBrowseToItemEvent>(
+												asset->Path, asset->ID );
+										}
+									}
+									else
+									{
+										ImGui::TextColored( ImVec4{ 1.0f, 0.0f, 0.0f, 1.0f }, "No asset is set." );
+									}
+
+									Auxiliary::EndTreeNode();
+								}
+								ImGui::PopID();
+								ImGui::PopID();
 							} break;
 
 							case LocalisationTableEntryType::Text:
 							{
-								Auxiliary::InputTextMultiline( "##ident", &data.GetTextData(), ImVec2( 200.0F, 200.0F ) );
-
-								if( ImGui::BeginItemTooltip() ) 
-								{
-									ImGui::Text( "This text will be based on the current language." );
-									ImGui::EndTooltip();
-								}
+								ImGui::PushID( ( int ) id );
+								ImGui::PushID( ( int ) langCode );
+								Auxiliary::InputTextMultiline( "##textfield", &data.GetTextData(), ImVec2( 200.0F, 200.0F ) );
+								ImGui::PopID();
+								ImGui::PopID();
 							} break;
 
 							default:
@@ -142,7 +224,7 @@ namespace Saturn {
 	void LocalisationTableAssetViewer::DrawLanguagePopup()
 	{
 		ImGui::OpenPopup( "Choose a new language##sltlang" );
-		if( ImGui::BeginPopupModal( "Choose a new language##sltlang", nullptr, ImGuiWindowFlags_NoSavedSettings ) )
+		if( ImGui::BeginPopupModal( "Choose a new language##sltlang", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize ) )
 		{
 			ImGui::BeginHorizontal( "##langpickerHz" );
 

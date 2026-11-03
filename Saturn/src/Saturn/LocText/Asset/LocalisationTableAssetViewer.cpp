@@ -70,7 +70,8 @@ namespace Saturn {
 		if( ImGui::Begin( m_Name.c_str(), &m_Open, flags ) )
 		{
 			if( m_ShowDirtyPopup ) DrawDirtyPopupModal();
-			if( m_ShowNewLanguagePopup ) DrawLanguagePopupModal();
+			if( m_ShowRemoveLanguagePopup ) DrawRemoveLanguagePopupModal();
+			if( m_ShowNewLanguagePopup ) DrawPickLanguagePopupModal();
 
 			ImGui::BeginHorizontal( "##opt_hz" );
 
@@ -83,6 +84,11 @@ namespace Saturn {
 			{
 				m_LocalisationTable->AddNewEntry();
 				m_Dirty = true;
+			}
+
+			if( ImGui::Button( "Remove language" ) )
+			{
+				m_ShowRemoveLanguagePopup = true;
 			}
 
 			ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical );
@@ -364,7 +370,7 @@ namespace Saturn {
 		}
 	}
 
-	void LocalisationTableAssetViewer::DrawLanguagePopupModal()
+	void LocalisationTableAssetViewer::DrawPickLanguagePopupModal()
 	{
 		ImGui::OpenPopup( "Choose a new language##sltlang" );
 		if( ImGui::BeginPopupModal( "Choose a new language##sltlang", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize ) )
@@ -463,6 +469,76 @@ namespace Saturn {
 				m_ChosenLanguage = LocTextLanguage::Unknown;
 				m_ChosenLanguageVariant = LocTextLanguageVariant::UnknownUnknown;
 				m_ShowNewLanguagePopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndPopup();
+		}
+	}
+
+	void LocalisationTableAssetViewer::DrawRemoveLanguagePopupModal()
+	{
+		ImGui::OpenPopup( "Remove language##sltlang" );
+		if( ImGui::BeginPopupModal( "Remove language##sltlang", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize ) )
+		{
+			ImGui::BeginHorizontal( "##langpickerHz" );
+
+			ImGui::Text( "Language:" );
+			ImGui::Spring();
+
+			const std::string langName = Auxiliary::LocTextLanguageToString( m_ChosenLanguage );
+			const auto& rStyle = ImGui::GetStyle();
+			const float comboWidth = glm::max(
+				200.0f,
+				ImGui::CalcTextSize( langName.c_str() ).x +
+				rStyle.FramePadding.x * 2.0f +
+				ImGui::GetFrameHeight() );
+
+			ImGui::SetNextItemWidth( comboWidth );
+			if( ImGui::BeginCombo( "##langName", langName.c_str() ) )
+			{
+				for( const auto lang : m_LocalisationTable->GetUsedLanguages() )
+				{
+					const bool selected = ( m_ChosenLanguage == lang );
+
+					const std::string& rItemName = Auxiliary::LocTextLanguageToString( lang );
+					if( ImGui::Selectable( rItemName.c_str() ) )
+					{
+						m_ChosenLanguage = lang;
+					}
+				}
+
+				ImGui::EndCombo();
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::Separator();
+
+			ImGui::BeginHorizontal( "optionsHz" );
+
+			Auxiliary::DisabledFlag disabledIf( m_ChosenLanguage == LocTextLanguage::Unknown );
+			if( ImGui::Button( "Remove" ) )
+			{
+				m_LocalisationTable->RemoveLanguage( m_ChosenLanguage );
+
+				m_LanguageNameCache.erase( ( uint16_t ) m_ChosenLanguage );
+
+				m_Dirty = true;
+				m_ChosenLanguage = LocTextLanguage::Unknown;
+				m_ChosenLanguageVariant = LocTextLanguageVariant::UnknownUnknown;
+				m_ShowRemoveLanguagePopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+			disabledIf.Pop();
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				m_ChosenLanguage = LocTextLanguage::Unknown;
+				m_ChosenLanguageVariant = LocTextLanguageVariant::UnknownUnknown;
+				m_ShowRemoveLanguagePopup = false;
 				ImGui::CloseCurrentPopup();
 			}
 

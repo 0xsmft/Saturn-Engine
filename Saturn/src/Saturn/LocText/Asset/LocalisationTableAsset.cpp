@@ -84,6 +84,25 @@ namespace Saturn {
 		m_Entries.erase( id );
 	}
 
+	void LocalisationTableAsset::RemoveLanguage( LocTextLanguage language )
+	{
+		const auto itr = std::find( m_UsedLanguages.begin(), m_UsedLanguages.end(), language );
+		if( itr != m_UsedLanguages.end() )
+		{
+			m_UsedLanguages.erase( itr );
+		}
+
+		// Now we need to remove it from every entry...
+		for( auto& [uuid, rEntry] : m_Entries )
+		{
+			std::erase_if( rEntry.DataPerLanguage, 
+				[ language ]( const auto& kv ) -> bool
+			{
+				return kv.first == language;
+			} );
+		}
+	}
+
 	void LocalisationTableAsset::AddNewLanguage( LocTextLanguage lang, LocTextLanguageVariant dialect )
 	{
 		const auto itr = std::find( m_UsedLanguages.begin(), m_UsedLanguages.end(), lang );

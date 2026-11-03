@@ -37,6 +37,8 @@
 #include "Saturn/ImGui/EditorIcons.h"
 #include "Saturn/ImGui/EditorEvents.h"
 
+#include <regex>
+
 namespace Saturn {
 
 	LocalisationTableAssetViewer::LocalisationTableAssetViewer( AssetID id )
@@ -99,12 +101,47 @@ namespace Saturn {
 
 					ImGui::PushID( ( int ) id );
 					ImGui::SetNextItemWidth( 200.0F );
-					Auxiliary::InputText( "##ident", &entry.EntryName );
+
+					if( Auxiliary::InputText( "##ident", &entry.EntryName ) ) 
+					{
+						m_EntryNameErrorMap[ id ] = CheckForInvalidEntryName( entry.EntryName );
+					}
+
+					const auto itr = m_EntryNameErrorMap.find( id );
+					if( itr != m_EntryNameErrorMap.end() )
+					{
+						const auto errors = itr->second;
+
+						if( ( errors & LocTableEntryNameInvalidFlag_Empty ) != 0 )
+						{
+							DisplayErrorSection( "The name cannot empty!" );
+						}
+
+						if( ( errors & LocTableEntryNameInvalidFlag_Spaces ) != 0 )
+						{
+							DisplayErrorSection( "The name cannot contain spaces!" );
+						}
+
+						if( ( errors & LocTableEntryNameInvalidFlag_Exists ) != 0 )
+						{
+							DisplayErrorSection( "An entry with that name already exists!" );
+						}
+
+						if( ( errors & LocTableEntryNameInvalidFlag_IllegalCharacters ) != 0 )
+						{
+							DisplayErrorSection( "The name cannot illegal characters!" );
+						}
+
+						if( ( errors & LocTableEntryNameInvalidFlag_MaxLength ) != 0 )
+						{
+							DisplayErrorSection( "The name cannot exceed 256 characters!" );
+						}
+					}
 
 					ImGui::PushID( "typesec" );
 					ImGui::BeginHorizontal( "##typeItmHz" );
 					ImGui::Text( "Type: " );
-					ImGui::PopID();
+					ImGui::PopID(); // typesec
 
 					ImGui::Spring();
 
@@ -137,7 +174,20 @@ namespace Saturn {
 					}
 
 					ImGui::EndHorizontal();
-					ImGui::PopID();
+
+					ImGui::PushID( "rm" );
+					if( ImGui::Button( "-" ) )
+					{
+						m_LocalisationTable->RemoveEntry( id );
+						m_EntryNameErrorMap.erase( id );
+
+						// PopID now so we can safely break out of the for loop.
+						ImGui::PopID(); // rm
+						ImGui::PopID(); // uuid
+						break;
+					}
+					ImGui::PopID(); // rm
+					ImGui::PopID(); // uuid
 
 					for( auto& [langCode, data] : entry.DataPerLanguage )
 					{
@@ -244,6 +294,9 @@ namespace Saturn {
 			{
 				for( std::underlying_type_t<LocTextLanguage> i = 1; i < ( std::underlying_type_t<LocTextLanguage> )LocTextLanguage::COUNT; ++i )
 				{
+					if( m_LocalisationTable->IsLanguageAlreadyUsed( ( LocTextLanguage ) i ) )
+						continue;
+
 					const bool selected = ( m_ChosenLanguage == ( LocTextLanguage ) i );
 
 					const std::string& rItemName = Auxiliary::LocTextLanguageToString( ( LocTextLanguage ) i );
@@ -297,6 +350,7 @@ namespace Saturn {
 
 			ImGui::BeginHorizontal( "optionsHz" );
 			
+			Auxiliary::DisabledFlag disabledIf( m_ChosenLanguage == LocTextLanguage::Unknown );
 			if( ImGui::Button( "Add" ) )
 			{
 				m_LocalisationTable->AddNewLanguage( m_ChosenLanguage, m_ChosenLanguageVariant );
@@ -308,6 +362,7 @@ namespace Saturn {
 				m_ShowNewLanguagePopup = false;
 				ImGui::CloseCurrentPopup();
 			}
+			disabledIf.Pop();
 
 			if( ImGui::Button( "Cancel" ) )
 			{
@@ -321,6 +376,55 @@ namespace Saturn {
 
 			ImGui::EndPopup();
 		}
+	}
+
+	void LocalisationTableAssetViewer::DisplayErrorSection( const char* pText )
+	{
+		const ImVec2 padding = ImGui::GetStyle().FramePadding;
+		const ImVec2 textPosition = ImGui::GetCursorScreenPos();
+		const ImVec2 textSize = ImGui::CalcTextSize( pText );
+
+		const ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
+		const ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
+
+		ImGui::GetWindowDrawList()->AddRectFilled( min, max, IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
+
+		ImGui::TextUnformatted( pText );
+	}
+
+	LocTableEntryNameInvalidFlags LocalisationTableAssetViewer::CheckForInvalidEntryName( const std::string& rName )
+	{
+		LocTableEntryNameInvalidFlags flags = LocTableEntryNameInvalidFlag_Okay;
+
+		// Names cannot be empty.
+		if( rName.empty() )
+		{
+			flags |= LocTableEntryNameInvalidFlag_Empty;
+		}
+
+		// Names cannot contain spaces.
+		if( rName.contains( ' ' ) )
+		{
+			flags |= LocTableEntryNameInvalidFlag_Spaces;
+		}
+
+		// Names cannot contain the following characters:
+		// "/"
+		// "|"
+		// "\" 
+		std::regex pattern( R"([/|\\])" );
+		if( std::regex_search( rName, pattern ) )
+		{
+			flags |= LocTableEntryNameInvalidFlag_IllegalCharacters;
+		}
+
+		// Names cannot have more than 256 characters.
+		if( rName.size() > 256 )
+		{
+			flags |= LocTableEntryNameInvalidFlag_MaxLength;
+		}
+
+		return flags;
 	}
 
 }

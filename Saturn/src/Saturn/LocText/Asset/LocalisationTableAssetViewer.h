@@ -32,6 +32,32 @@
 #include "Saturn/ImGui/AssetViewer.h"
 
 namespace Saturn {
+	
+	//
+	// Flags for when a localisation table entry name is invalid.
+	//
+	enum LocTableEntryNameInvalidFlags_
+	{
+		// No errors
+		LocTableEntryNameInvalidFlag_Okay = 0,
+
+		// Name is empty
+		LocTableEntryNameInvalidFlag_Empty = BIT( 0 ),
+
+		// Name contains spaces
+		LocTableEntryNameInvalidFlag_Spaces = BIT( 1 ),
+		
+		// Already exists
+		LocTableEntryNameInvalidFlag_Exists = BIT( 2 ),
+
+		// Invalid characters, e.g. '/'
+		LocTableEntryNameInvalidFlag_IllegalCharacters = BIT( 3 ),
+	
+		// Max length is 256 (without null terminator)
+		LocTableEntryNameInvalidFlag_MaxLength = BIT( 4 ),
+	};
+
+	typedef uint8_t LocTableEntryNameInvalidFlags;
 
 	class LocalisationTableAssetViewer : public AssetViewer
 	{
@@ -45,6 +71,9 @@ namespace Saturn {
 
 	private:
 		void DrawLanguagePopup();
+		void DisplayErrorSection( const char* pText );
+
+		LocTableEntryNameInvalidFlags CheckForInvalidEntryName( const std::string& rName );
 
 	private:
 		Ref<LocalisationTableAsset> m_LocalisationTable;
@@ -58,6 +87,13 @@ namespace Saturn {
 		LocTextLanguageVariant m_ChosenLanguageVariant = LocTextLanguageVariant::UnknownUnknown;
 
 		std::unordered_map<std::underlying_type_t<LocTextLanguage>, std::string> m_LanguageNameCache;
+		
+		// Map of an entry ID to the invalid naming flags
+		// we need to store it in a map so that we remember the errors.
+		// When an entry is removed it is also removed from here.
+		// 
+		//				  UUID -> Flags
+		std::unordered_map<UUID, LocTableEntryNameInvalidFlags> m_EntryNameErrorMap;
 	};
 
 }

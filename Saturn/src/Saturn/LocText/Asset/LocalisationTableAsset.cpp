@@ -45,15 +45,20 @@ namespace Saturn {
 
 	}
 
+	bool LocalisationTableAsset::IsLanguageAlreadyUsed( LocTextLanguage lang ) const
+	{
+		return std::find( m_UsedLanguages.begin(), m_UsedLanguages.end(), lang ) != m_UsedLanguages.end();
+	}
+
 	uint64_t LocalisationTableAsset::GetNewNameCount()
 	{
 		return std::count_if( m_Entries.begin(), m_Entries.end(),
 			[]( const auto& rKV ) -> bool
 		{
 			// This is not great...
-			// A name like "My New Text Entry" would pass this check
+			// A name like "My_New_Text_Entry" would pass this check
 			// but im too lazy to write the correct way so this will do.
-			if( rKV.second.EntryName.contains( "New Text Entry" ) )
+			if( rKV.second.EntryName.contains( "New_Text_Entry" ) )
 				return true;
 			else
 				return false;
@@ -64,7 +69,7 @@ namespace Saturn {
 	{
 		const auto count = GetNewNameCount();
 
-		auto emplaced = m_Entries.emplace( std::pair{ UUID(), LocalisationTableEntry( count == 0 ? "New Text Entry" : std::format( "New Text Entry ({})", count ) ) } );
+		auto emplaced = m_Entries.emplace( std::pair{ UUID(), LocalisationTableEntry( count == 0 ? "New_Text_Entry" : std::format( "New_Text_Entry_{}", count ) ) } );
 
 		auto& rKv = *( emplaced.first );
 		auto& rEntry = rKv.second;
@@ -72,6 +77,11 @@ namespace Saturn {
 		AppendLanguagesToNewlyAddedEntry( rEntry );
 
 		return rEntry;
+	}
+
+	void LocalisationTableAsset::RemoveEntry( UUID id )
+	{
+		m_Entries.erase( id );
 	}
 
 	void LocalisationTableAsset::AddNewLanguage( LocTextLanguage lang, LocTextLanguageVariant dialect )

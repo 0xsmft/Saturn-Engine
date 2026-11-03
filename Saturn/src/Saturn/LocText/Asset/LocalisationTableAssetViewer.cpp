@@ -51,6 +51,13 @@ namespace Saturn {
 
 		m_Open = true;
 		m_Name = std::format( "{0}##{1}", m_LocalisationTable->Name, id );
+
+		m_LanguageNameCache.reserve( m_LocalisationTable->GetUsedLanguages().size() );
+
+		for( const auto language : m_LocalisationTable->GetUsedLanguages() )
+		{
+			m_LanguageNameCache[ ( std::underlying_type_t< LocTextLanguage > )language ] = Auxiliary::LocTextLanguageToString( language );
+		}
 	}
 
 	LocalisationTableAssetViewer::~LocalisationTableAssetViewer()

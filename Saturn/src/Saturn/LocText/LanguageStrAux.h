@@ -505,7 +505,7 @@ namespace Saturn::Auxiliary {
 			case LocTextLanguage::Kosraean: return "Kosraean";
 			case LocTextLanguage::Woleaian: return "Woleaian";
 
-			default: return "Unknown";
+			default: return std::format( "Unhandled-{}", ( std::underlying_type_t<LocTextLanguage> ) language );
 		}
 	}
 

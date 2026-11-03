@@ -167,9 +167,12 @@ namespace Saturn {
 		std::vector<LocTextLanguage>& GetUsedLanguages() { return m_UsedLanguages; }
 		const std::vector<LocTextLanguage>& GetUsedLanguages() const { return m_UsedLanguages; }
 
+		[[nodiscard]] bool IsLanguageAlreadyUsed( LocTextLanguage lang ) const;
+
 	private:
 		uint64_t GetNewNameCount();
 		LocalisationTableEntry& AddNewEntry();
+		void RemoveEntry( UUID id );
 
 	private:
 		void AddNewLanguage( LocTextLanguage lang, LocTextLanguageVariant dialect );

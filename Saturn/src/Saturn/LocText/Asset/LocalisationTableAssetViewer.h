@@ -70,7 +70,8 @@ namespace Saturn {
 		virtual void OnEvent( Event& rEvent ) override {}
 
 	private:
-		void DrawLanguagePopup();
+		void DrawDirtyPopupModal();
+		void DrawLanguagePopupModal();
 		void DisplayErrorSection( const char* pText );
 
 		LocTableEntryNameInvalidFlags CheckForInvalidEntryName( const std::string& rName );

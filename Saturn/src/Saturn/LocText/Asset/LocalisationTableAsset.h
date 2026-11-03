@@ -37,7 +37,9 @@ namespace Saturn {
 	enum class LocalisationTableEntryType : uint8_t
 	{
 		Text,
-		Asset
+		Asset,
+
+		MaxValue = Asset
 	};
 
 	constexpr std::string_view LocalisationTableEntryTypeToString( LocalisationTableEntryType type )
@@ -106,6 +108,12 @@ namespace Saturn {
 		{
 			SAT_CORE_ASSERT( Type == LocalisationTableEntryType::Asset );
 			Data = id;
+		}
+
+		inline void SetTextData( const StringType& rNewString )
+		{
+			SAT_CORE_ASSERT( Type == LocalisationTableEntryType::Text );
+			Data = rNewString;
 		}
 
 	private:

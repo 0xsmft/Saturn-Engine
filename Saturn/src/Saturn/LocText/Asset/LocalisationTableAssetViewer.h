@@ -71,7 +71,9 @@ namespace Saturn {
 
 	private:
 		void DrawDirtyPopupModal();
-		void DrawLanguagePopupModal();
+		void DrawPickLanguagePopupModal();
+		void DrawRemoveLanguagePopupModal();
+
 		void DisplayErrorSection( const char* pText );
 
 		LocTableEntryNameInvalidFlags CheckForInvalidEntryName( const std::string& rName );
@@ -80,6 +82,7 @@ namespace Saturn {
 		Ref<LocalisationTableAsset> m_LocalisationTable;
 
 		bool m_ShowNewLanguagePopup = false;
+		bool m_ShowRemoveLanguagePopup = false;
 		bool m_Dirty = false;
 		bool m_CanSave = true;
 		bool m_ShowDirtyPopup = false;

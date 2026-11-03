@@ -181,6 +181,7 @@ namespace Saturn {
 		uint64_t GetNewNameCount();
 		LocalisationTableEntry& AddNewEntry();
 		void RemoveEntry( UUID id );
+		void RemoveLanguage( LocTextLanguage language );
 
 	private:
 		void AddNewLanguage( LocTextLanguage lang, LocTextLanguageVariant dialect );

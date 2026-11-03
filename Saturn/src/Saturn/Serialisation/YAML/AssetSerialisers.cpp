@@ -1326,16 +1326,16 @@ namespace Saturn {
 		auto shaderPrototype = Ref<ShaderAsset>::Create( rAsset );
 		rAsset = shaderPrototype;
 
-        const auto& basePath = rAsset->Path;
-        const auto fullPath = GetFilepathAbs( basePath );
-        
-        std::ifstream stream( fullPath, std::ios::in );
-        std::stringstream ss;
-        ss << stream.rdbuf();
-        stream.close();
-        
-        shaderPrototype->m_ShaderSourceCode = ss.str();
-        
+		const auto& basePath = rAsset->Path;
+		const auto fullPath = GetFilepathAbs( basePath );
+		
+		std::ifstream stream( fullPath, std::ios::in );
+		std::stringstream ss;
+		ss << stream.rdbuf();
+		stream.close();
+		
+		shaderPrototype->m_ShaderSourceCode = ss.str();
+		
 		shaderPrototype->TryLoadShaders();
 
 		return true;
@@ -1365,11 +1365,16 @@ namespace Saturn {
 		{
 			out << YAML::BeginMap;
 			out << YAML::Key << "Key" << YAML::Value << entry.EntryName;
+			out << YAML::Key << "DataType" << YAML::Value << ( uint16_t ) entry.Type;
 			
+			out << YAML::Key << "DataPerLanguage" << YAML::Value;
+			out << YAML::BeginSeq;
+
 			for( const auto& [langType, data] : entry.DataPerLanguage )
 			{
+				out << YAML::BeginMap;
+
 				out << YAML::Key << "LangType" << YAML::Value << ( uint16_t ) langType;
-				out << YAML::Key << "DataType" << YAML::Value << ( uint8_t ) data.Type;
 
 				switch( data.Type )
 				{
@@ -1388,7 +1393,10 @@ namespace Saturn {
 						out << YAML::Key << "Data" << YAML::Value << "";
 					} break;
 				}
+
+				out << YAML::EndMap; // Language entry
 			}
+			out << YAML::EndSeq; // DataPerLanguage
 
 			out << YAML::EndMap; // Entry
 		}
@@ -1401,7 +1409,7 @@ namespace Saturn {
 		out << YAML::BeginSeq;
 		for( const auto& rLangauge : locTable->GetUsedLanguages() )
 		{
-			out << ( uint16_t )rLangauge;
+			out << ( uint16_t ) rLangauge;
 		}
 		out << YAML::EndSeq; // UsedLangs
 
@@ -1418,8 +1426,83 @@ namespace Saturn {
 
 	bool LocalisationTableAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
+		const auto absolutePath = GetFilepathAbs( rAsset->Path );
+		std::ifstream FileIn( absolutePath );
+
+		std::stringstream ss;
+		ss << FileIn.rdbuf();
+
+		YAML::Node data = YAML::Load( ss.str() );
+
+		if( data.IsNull() )
+			return false;
+
+		const auto locTableData = data[ "LocalisationTable" ];
+
+		if( locTableData.IsNull() )
+			return false;
+
 		auto locTable = Ref<LocalisationTableAsset>::Create( rAsset );
 		rAsset = locTable;
+
+		const size_t entryCount = locTableData[ "Count" ].as<size_t>( 0llu );
+		locTable->m_Entries.reserve( entryCount );
+
+		const auto entriesData = locTableData[ "Entries" ];
+		for( const auto entry : entriesData )
+		{
+			const auto key = entry[ "Key" ].as<std::string>();
+			const auto rawDataType = entry[ "DataType" ].as<uint16_t>();
+
+			LocalisationTableEntryType dataType = ( LocalisationTableEntryType ) rawDataType;
+			if( dataType > LocalisationTableEntryType::MaxValue )
+			{
+				SAT_CORE_WARN( "[LocalisationTableAssetSerialiser]: Data type for table entry {0} is greater than the max value of {1}. Value will be set to 0", key, ( uint8_t ) LocalisationTableEntryType::MaxValue );
+				dataType = LocalisationTableEntryType::Text;
+			}
+
+			const auto[ itr, added ] = locTable->m_Entries.emplace( std::pair{ UUID(), LocalisationTableEntry( key, dataType ) } );
+
+			auto& [ uuid, newlyAddedEntry ] = *itr;
+
+			const auto dataPerLanguage = entry[ "DataPerLanguage" ];
+			newlyAddedEntry.DataPerLanguage.reserve( dataPerLanguage.size() );
+
+			for( const auto language : dataPerLanguage )
+			{
+				const auto langType = language[ "LangType" ].as<uint16_t>();
+	
+				LocalisationTableEntryData languageData( dataType );
+				switch( dataType )
+				{
+					case LocalisationTableEntryType::Text:
+					{
+						const auto data = language[ "Data" ].as<std::string>();
+						languageData.SetTextData( data );
+					} break;
+
+					case LocalisationTableEntryType::Asset:
+					{
+						const auto data = language[ "Data" ].as<uint64_t>();
+						languageData.SetAssetID( data );
+					} break;
+
+					default:
+						break;
+				}
+
+				newlyAddedEntry.DataPerLanguage[ ( LocTextLanguage ) langType ] = languageData;
+			}
+		}
+
+		const auto usedLangs = locTableData[ "UsedLangs" ];
+		locTable->m_UsedLanguages.reserve( usedLangs.size() );
+
+		for( const auto lang : usedLangs )
+		{
+			const auto langEnum = lang.as<uint16_t>();
+			locTable->AddNewLanguage( ( LocTextLanguage ) langEnum, LocTextLanguageVariant::UnknownUnknown );
+		}
 
 		return true;
 	}

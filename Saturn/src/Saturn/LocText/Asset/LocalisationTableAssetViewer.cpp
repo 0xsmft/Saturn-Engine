@@ -62,7 +62,8 @@ namespace Saturn {
 		const ImGuiWindowFlags flags = m_Dirty ? ImGuiWindowFlags_UnsavedDocument : 0;
 		if( ImGui::Begin( m_Name.c_str(), &m_Open, flags ) )
 		{
-			if( m_ShowNewLanguagePopup ) DrawLanguagePopup();
+			if( m_ShowDirtyPopup ) DrawDirtyPopupModal();
+			if( m_ShowNewLanguagePopup ) DrawLanguagePopupModal();
 
 			ImGui::BeginHorizontal( "##opt_hz" );
 
@@ -74,7 +75,19 @@ namespace Saturn {
 			if( ImGui::Button( "Add new entry" ) )
 			{
 				m_LocalisationTable->AddNewEntry();
+				m_Dirty = true;
 			}
+
+			ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical );
+
+			Auxiliary::DisabledFlag disabledIfNotDirty( !m_Dirty && m_EntryNameErrorMap.empty() );
+			if( ImGui::Button( "Save" ) )
+			{
+				LocalisationTableAssetSerialiser ltas;
+				ltas.Serialise( m_LocalisationTable );
+				m_Dirty = false;
+			}
+			disabledIfNotDirty.Pop();
 
 			ImGui::EndHorizontal();
 
@@ -105,12 +118,18 @@ namespace Saturn {
 					if( Auxiliary::InputText( "##ident", &entry.EntryName ) ) 
 					{
 						m_EntryNameErrorMap[ id ] = CheckForInvalidEntryName( entry.EntryName );
+						m_Dirty = true;
 					}
 
 					const auto itr = m_EntryNameErrorMap.find( id );
 					if( itr != m_EntryNameErrorMap.end() )
 					{
 						const auto errors = itr->second;
+						// TODO: Think about this...
+						// If there are no errors but we are still in the map then we remove the element,
+						// it may be added back if the user starts to rename again and creates another error.
+						if( errors == 0 )
+							m_EntryNameErrorMap.erase( itr );
 
 						if( ( errors & LocTableEntryNameInvalidFlag_Empty ) != 0 )
 						{
@@ -159,15 +178,21 @@ namespace Saturn {
 						bool selected = ( entry.Type == LocalisationTableEntryType::Text );
 						if( ImGui::Selectable( "Localised Text", selected ) )
 						{
-							if( !selected )
+							if( !selected ) 
+							{
 								m_LocalisationTable->ChangeTypeForEntry( entry, LocalisationTableEntryType::Text );
+								m_Dirty = true;
+							}
 						}
 
 						selected = ( entry.Type == LocalisationTableEntryType::Asset );
 						if( ImGui::Selectable( "Asset", selected ) )
 						{
 							if( !selected )
+							{
 								m_LocalisationTable->ChangeTypeForEntry( entry, LocalisationTableEntryType::Asset );
+								m_Dirty = true;
+							}
 						}
 
 						ImGui::EndCombo();
@@ -180,6 +205,7 @@ namespace Saturn {
 					{
 						m_LocalisationTable->RemoveEntry( id );
 						m_EntryNameErrorMap.erase( id );
+						m_Dirty = true;
 
 						// PopID now so we can safely break out of the for loop.
 						ImGui::PopID(); // rm
@@ -222,6 +248,7 @@ namespace Saturn {
 								if( Auxiliary::DrawAssetFinder( AssetType::Unknown, &assetFinderOpen, temporaryID ) )
 								{
 									data.SetAssetID( temporaryID );
+									m_Dirty = true;
 								}
 
 								if( Auxiliary::TreeNode( "Show details", false ) )
@@ -253,7 +280,10 @@ namespace Saturn {
 							{
 								ImGui::PushID( ( int ) id );
 								ImGui::PushID( ( int ) langCode );
-								Auxiliary::InputTextMultiline( "##textfield", &data.GetTextData(), ImVec2( 200.0F, 200.0F ) );
+								if( Auxiliary::InputTextMultiline( "##textfield", &data.GetTextData(), ImVec2( 200.0F, 200.0F ) ) ) 
+								{
+									m_Dirty = true;
+								}
 								ImGui::PopID();
 								ImGui::PopID();
 							} break;
@@ -269,9 +299,65 @@ namespace Saturn {
 		}
 
 		ImGui::End();
+
+		if( !m_Open && m_Dirty )
+		{
+			m_Open = true;
+			m_ShowDirtyPopup = true;
+		}
 	}
 	
-	void LocalisationTableAssetViewer::DrawLanguagePopup()
+	void LocalisationTableAssetViewer::DrawDirtyPopupModal()
+	{
+		ImGui::OpenPopup( "Localisation Table is dirty##loctbledirty" );
+
+		if( ImGui::BeginPopupModal( "Localisation Table is dirty##loctbledirty", nullptr, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			if( !m_EntryNameErrorMap.empty() )
+				ImGui::Text( "There are errors that are stopping you from being able to save. You must fix them now or lose changes." );
+			else
+				ImGui::Text( "There are unsaved changes to this Localisation Table, what would you like to do?" );
+
+			ImGui::Separator();
+
+			ImGui::BeginHorizontal( "##optsbbhz" );
+
+			Auxiliary::DisabledFlag disabledIfErrors( !m_EntryNameErrorMap.empty() );
+			if( ImGui::Button( "Save" ) )
+			{
+				LocalisationTableAssetSerialiser ltas;
+				ltas.Serialise( m_LocalisationTable );
+
+				m_Open = m_Dirty = m_ShowDirtyPopup = false;
+
+				ImGui::CloseCurrentPopup();
+			}
+			disabledIfErrors.Pop();
+
+			ImGui::Spring();
+
+			if( ImGui::Button( "Discard Changes" ) )
+			{
+				m_Open = m_Dirty = m_ShowDirtyPopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::Spring();
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				m_Open = true;
+				m_ShowDirtyPopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndPopup();
+		}
+	}
+
+	void LocalisationTableAssetViewer::DrawLanguagePopupModal()
 	{
 		ImGui::OpenPopup( "Choose a new language##sltlang" );
 		if( ImGui::BeginPopupModal( "Choose a new language##sltlang", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize ) )
@@ -357,6 +443,7 @@ namespace Saturn {
 
 				m_LanguageNameCache[ ( std::underlying_type_t< LocTextLanguage > )m_ChosenLanguage ] = Auxiliary::LocTextLanguageToString( m_ChosenLanguage );
 
+				m_Dirty = true;
 				m_ChosenLanguage = LocTextLanguage::Unknown;
 				m_ChosenLanguageVariant = LocTextLanguageVariant::UnknownUnknown;
 				m_ShowNewLanguagePopup = false;

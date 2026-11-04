@@ -294,6 +294,7 @@ namespace Saturn {
 			PipelineSpec.Name = "Dynamic Meshes";
 			PipelineSpec.Shader = m_RendererData.DynamicMeshShader;
 			PipelineSpec.RenderPass = m_RendererData.GeometryPass;
+			PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
 			PipelineSpec.UseDepthTest = true;
 			PipelineSpec.VertexLayout = {
 				{ ShaderDataType::Float3, "a_Position" },

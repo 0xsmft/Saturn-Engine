@@ -103,19 +103,8 @@ namespace SaturnBuildTool
 
                 case VendorProject.VULKANLIBS:
                     {
-                        binPath = Environment.GetEnvironmentVariable( "VULKAN_SDK_PATH" );
-                        if( binPath == null )
-                        {
-                            binPath = Environment.GetEnvironmentVariable( "VK_SDK_PATH" );
-                            if( binPath == null )
-                            {
-                                binPath = Environment.GetEnvironmentVariable( "VULKAN_SDK" );
-                                if( binPath == null )
-                                {
-                                    break;
-                                }
-                            }
-                        }
+                        binPath = VulkanSDKPath.FindVulkanSDKPath();
+                        if( string.IsNullOrEmpty( binPath ) ) break;
 
                         // On Linux, the Vulkan SDK has a "lib" folder but on Windows and Mac, it is "Lib"
                         // cheers vulkan devs.
@@ -132,19 +121,8 @@ namespace SaturnBuildTool
 
                 case VendorProject.VULKANSDK:
                     {
-                        binPath = Environment.GetEnvironmentVariable( "VULKAN_SDK_PATH" );
-                        if( binPath == null )
-                        {
-                            binPath = Environment.GetEnvironmentVariable( "VK_SDK_PATH" );
-                            if( binPath == null )
-                            {
-                                binPath = Environment.GetEnvironmentVariable( "VULKAN_SDK" );
-                                if( binPath == null )
-                                {
-                                    break;
-                                }
-                            }
-                        }
+                        binPath = VulkanSDKPath.FindVulkanSDKPath();
+                        if( string.IsNullOrEmpty( binPath ) ) break;
 
                         // On Linux, the Vulkan SDK has a "bin" folder but on Windows and Mac, it is "Bin"
                         // cheers vulkan devs.

@@ -30,33 +30,38 @@ namespace SaturnBuildTool
             string saturnDir = Shared.ProjectInfo.SaturnDir;
 
             Includes.AddRange( new string[] {
-                "Build/Generated", // Game auto-generated files.
-                Path.Combine( saturnDir, "Saturn/src" ),
-                Path.Combine( saturnDir, "Saturn-SharedStorage/src" ),
-                Path.Combine( saturnDir, "Saturn/vendor/imgui" ),
-                Path.Combine( saturnDir, "Saturn/vendor/glm" ),
-                Path.Combine( saturnDir, "Saturn/vendor/entt/include" ),
-                Path.Combine( saturnDir, "Saturn/vendor/assimp/include" ),
-                Path.Combine( saturnDir, "Saturn/vendor/shaderc/libshaderc/include" ),
-                Path.Combine( saturnDir, "Saturn/vendor/shaderc/glslc/src" ),
-                Path.Combine( saturnDir, "Saturn/vendor/SPIRV-Cross/src" ),
-                Path.Combine( saturnDir, "Saturn/vendor/vma/src" ),
-                Path.Combine( saturnDir, "Saturn/vendor/ImGuizmo/src" ),
-                Path.Combine( saturnDir, "Saturn/vendor/yaml-cpp/include" ),
-                Path.Combine( saturnDir, "Saturn/vendor/imgui_node_editor" ),
-                Path.Combine( saturnDir, "Saturn/vendor/imspinner/src" ),
-                Path.Combine( saturnDir, "Saturn/vendor/tracy/src" ),
-                Path.Combine( saturnDir, "Saturn/vendor/Filewatch/src" ),
-                Path.Combine( saturnDir, "Saturn/vendor/miniaudio/src" ),
-                Path.Combine( saturnDir, "Saturn/vendor/JoltPhysics/Jolt" ),
-                Path.Combine( saturnDir, "Saturn/vendor/zlib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/Recast/RecastAndDetour/Include" ),
-                Path.Combine( saturnDir, "Saturn/vendor/stb" ),
-                Path.Combine( saturnDir, "Saturn/vendor/vulkan/include" ),
-                Path.Combine( saturnDir, "Saturn/vendor/spdlog/include" ),
-                Path.Combine( saturnDir, "Saturn/vendor/acl/include" ),
-                Path.Combine( saturnDir, "Saturn/vendor/acl/rtm/include" ),
-                Path.Combine( saturnDir, "Saturn/vendor/nativefiledialogext/src/include/nativefiledialog" ),
+                Path.Combine( "Build", "Generated" ), // Game auto-generated files.
+                Path.Combine( saturnDir, "Saturn", "src" ),
+                Path.Combine( saturnDir, "Saturn-SharedStorage", "src" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "imgui" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "glm" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "entt", "include" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "assimp","include" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "shaderc", "libshaderc", "include" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "shaderc", "glslc", "src" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "SPIRV-Cross", "src" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "vma", "src" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "ImGuizmo", "src" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "yaml-cpp", "include" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "imgui_node_editor" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "imspinner", "src" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "tracy", "src" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "Filewatch", "src" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "miniaudio", "src" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "JoltPhysics", "Jolt" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "zlib" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "Recast", "RecastAndDetour", "Include" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "stb" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "spdlog", "include" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "acl", "include" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "acl", "rtm", "include" ),
+                Path.Combine( saturnDir, "Saturn", "vendor", "nativefiledialogext", "src", "include", "nativefiledialog" ),
+            } );
+
+            string vkSdk = VulkanSDKPath.FindVulkanSDKPath();
+            Includes.AddRange( new string[] { 
+                Path.Combine( vkSdk, "include", "vulkan" ),
+                Path.Combine( vkSdk, "include" ),
             } );
 
             // LibraryPaths

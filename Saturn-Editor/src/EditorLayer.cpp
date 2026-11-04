@@ -4627,9 +4627,72 @@ namespace Saturn {
 				}
 				else
 				{
+					// Multi-selection, median point.
 					for( SharedPtr<Entity>& rEntity : selectedEntities )
 					{
+						auto& tc = rEntity->GetComponent<TransformComponent>();
 
+						glm::mat4 localTransform = centerPoint;
+
+						if( SharedPtr<Entity> parent = rEntity->TryGetParent() )
+						{
+							const glm::mat4 parentTransform =
+								g_ActiveScene->GetTransformRelativeToParent( parent );
+
+							localTransform = glm::inverse( parentTransform ) * centerPoint;
+						}
+
+						glm::vec3 translation;
+						glm::vec3 rotation;
+						glm::vec3 scale;
+
+						Maths::DecomposeTransform(
+							localTransform,
+							translation,
+							rotation,
+							scale
+						);
+
+						switch( m_GizmoOperation )
+						{
+							case ImGuizmo::TRANSLATE:
+							{
+								tc.Position = translation;
+							} break;
+
+							case ImGuizmo::ROTATE:
+							{
+								glm::vec3 rotationEuler = tc.GetRotationEuler();
+
+								rotationEuler.x = glm::mod(
+									rotationEuler.x + glm::pi<float>(),
+									glm::two_pi<float>()
+								) - glm::pi<float>();
+
+								rotationEuler.y = glm::mod(
+									rotationEuler.y + glm::pi<float>(),
+									glm::two_pi<float>()
+								) - glm::pi<float>();
+
+								rotationEuler.z = glm::mod(
+									rotationEuler.z + glm::pi<float>(),
+									glm::two_pi<float>()
+								) - glm::pi<float>();
+
+								glm::vec3 delta = rotation - rotationEuler;
+
+								if( fabs( delta.x ) < 0.001F ) delta.x = 0.0F;
+								if( fabs( delta.y ) < 0.001F ) delta.y = 0.0F;
+								if( fabs( delta.z ) < 0.001F ) delta.z = 0.0F;
+
+								tc.SetRotation( rotationEuler + delta );
+							} break;
+
+							case ImGuizmo::SCALE:
+							{
+								tc.Scale = scale;
+							} break;
+						}
 					}
 				}
 

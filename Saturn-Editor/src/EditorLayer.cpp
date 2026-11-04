@@ -1851,6 +1851,51 @@ namespace Saturn {
 			}
 			ImGui::EndHorizontal();
 
+			ImGui::BeginHorizontal( "##prj_defloctbl" );
+			{
+				auto defaultLocTable = ActiveProject->GetDefaultLocTableAsset();
+
+				ImGui::Text( "Default Localisation Table Asset:" );
+				defaultLocTable == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, ( uint64_t ) defaultLocTable );
+
+				ImGui::Spring();
+
+				Auxiliary::DisabledFlag inspectDisabledFlag( m_RequestRuntime );
+
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
+					s_OpenAssetFinderPopup = true;
+
+				if( Auxiliary::DrawAssetFinder( AssetType::LocalisationTable, &s_OpenAssetFinderPopup, defaultLocTable ) )
+				{
+					ActiveProject->SetDefaultLocTableAsset( defaultLocTable );
+					shouldSaveProject = true;
+				}
+
+				inspectDisabledFlag.Pop();
+
+				{
+					Auxiliary::ScopedDisabledFlag disabledFlag( defaultLocTable == 0 );
+
+					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "SearchFolder" ), { 24.0f, 24.0f } ) )
+					{
+						const Ref<Asset> target = m_AssetManager->FindAsset( defaultLocTable );
+
+						if( target )
+						{
+							Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
+							contentBrowserPanel->BrowseToItem( target->Path, defaultLocTable );
+						}
+					}
+
+					if( ImGui::BeginItemTooltip() )
+					{
+						ImGui::Text( "Find in Content Browser" );
+						ImGui::EndTooltip();
+					}
+				}
+			}
+			ImGui::EndHorizontal();
+
 			ImGui::PushFont( boldFont );
 			ImGui::Text( "Autosaves" );
 			ImGui::Separator();
@@ -2184,7 +2229,7 @@ namespace Saturn {
 				ImGui::GetFrameHeight() );
 
 			ImGui::SetNextItemWidth( comboWidth );
-			if( ImGui::BeginCombo( "##osystem", sdkDisplayName.data() ) )
+			if( ImGui::BeginCombo( "##osystem", sdkDisplayName.c_str() ) )
 			{
 				bool selected = ( selectedType == OnlineSystemAPIType::Null );
 				if( ImGui::Selectable( "None", selected ) )
@@ -4271,7 +4316,7 @@ namespace Saturn {
 		ImGui::PushStyleColor( ImGuiCol_Button, { 0.0f, 0.0f, 0.0f, 0.0f } );
 		ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 5.0f * 2.0f, 0 ) );
 
-		auto showTooltip = []( const char* pText )
+		const auto showTooltip = []( const char* pText )
 		{
 			if( ImGui::BeginItemTooltip() )
 			{

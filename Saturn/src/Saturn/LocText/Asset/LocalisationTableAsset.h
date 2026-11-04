@@ -221,7 +221,7 @@ namespace Saturn {
 		LocTableEntryMap m_Entries;
 		LocTableEntryMapRT m_EntriesRT;
 		std::vector<LocTextLanguage> m_UsedLanguages;
-		LocTextLanguage m_ActiveLanguage = LocTextLanguage::Unknown;
+		LocTextLanguage m_ActiveLanguage = LocTextLanguage::English;
 
 	private:
 		friend class LocalisationTableAssetViewer;

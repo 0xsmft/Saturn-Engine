@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace SaturnBuildTool
 {
@@ -47,35 +48,38 @@ namespace SaturnBuildTool
                 "Saturn",
             } );
 
-            // Include directories relative to root folder (solution directory)
             Includes.AddRange( new string[] {
-                "Saturn/src",
-                "Saturn-SharedStorage/src",
-                "Saturn/vendor/imgui",
-                "Saturn/vendor/glm",
-                "Saturn/vendor/entt/include",
-                "Saturn/vendor/assimp/include",
-                "Saturn/vendor/shaderc/libshaderc/include",
-                "Saturn/vendor/shaderc/glslc/src",
-                "Saturn/vendor/SPRIV-Cross/src",
-                "Saturn/vendor/vma/src",
-                "Saturn/vendor/ImGuizmo/src",
-                "Saturn/vendor/yaml-cpp/include",
-                "Saturn/vendor/imgui_node_editor",
-                "Saturn/vendor/imspinner/src",
-                "Saturn/vendor/tracy/src",
-                "Saturn/vendor/Filewatch/src",
-                "Saturn/vendor/miniaudio/src",
-                "Saturn/vendor/JoltPhysics/Jolt",
-                "Saturn/vendor/zlib",
-                "Saturn/vendor/Recast/RecastAndDetour/Include",
-                "Saturn/vendor/stb",
-                "Saturn/vendor/vulkan/include",
-                "Saturn/vendor/spdlog/include",
-                "Saturn/vendor/freetype/include",
-                "Saturn/vendor/msdf-atlas-gen",
-                "Saturn/vendor/msdf-atlas-gen/msdfgen/",
-                "Saturn/vendor/msdf-atlas-gen/msdfgen/core",
+                Path.Combine( "Saturn", "src" ),
+                Path.Combine( "Saturn-SharedStorage", "src" ),
+                Path.Combine( "Saturn", "vendor", "imgui" ),
+                Path.Combine( "Saturn", "vendor", "glm" ),
+                Path.Combine( "Saturn", "vendor", "entt", "include" ),
+                Path.Combine( "Saturn", "vendor", "assimp","include" ),
+                Path.Combine( "Saturn", "vendor", "shaderc", "libshaderc", "include" ),
+                Path.Combine( "Saturn", "vendor", "shaderc", "glslc", "src" ),
+                Path.Combine( "Saturn", "vendor", "SPIRV-Cross", "src" ),
+                Path.Combine( "Saturn", "vendor", "vma", "src" ),
+                Path.Combine( "Saturn", "vendor", "ImGuizmo", "src" ),
+                Path.Combine( "Saturn", "vendor", "yaml-cpp", "include" ),
+                Path.Combine( "Saturn", "vendor", "imgui_node_editor" ),
+                Path.Combine( "Saturn", "vendor", "imspinner", "src" ),
+                Path.Combine( "Saturn", "vendor", "tracy", "src" ),
+                Path.Combine( "Saturn", "vendor", "Filewatch", "src" ),
+                Path.Combine( "Saturn", "vendor", "miniaudio", "src" ),
+                Path.Combine( "Saturn", "vendor", "JoltPhysics", "Jolt" ),
+                Path.Combine( "Saturn", "vendor", "zlib" ),
+                Path.Combine( "Saturn", "vendor", "Recast", "RecastAndDetour", "Include" ),
+                Path.Combine( "Saturn", "vendor", "stb" ),
+                Path.Combine( "Saturn", "vendor", "spdlog", "include" ),
+                Path.Combine( "Saturn", "vendor", "acl", "include" ),
+                Path.Combine( "Saturn", "vendor", "acl", "rtm", "include" ),
+                Path.Combine( "Saturn", "vendor", "nativefiledialogext", "src", "include", "nativefiledialog" ),
+            } );
+
+            string vkSdk = VulkanSDKPath.FindVulkanSDKPath();
+            Includes.AddRange( new string[] {
+                Path.Combine( vkSdk, "include", "vulkan" ),
+                Path.Combine( vkSdk, "include" ),
             } );
 
             AppendPlatformRequirements();

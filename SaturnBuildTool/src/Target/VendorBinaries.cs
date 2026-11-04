@@ -103,19 +103,8 @@ namespace SaturnBuildTool
 
                 case VendorProject.VULKANLIBS:
                     {
-                        binPath = Environment.GetEnvironmentVariable( "VULKAN_SDK_PATH" );
-                        if( binPath == null )
-                        {
-                            binPath = Environment.GetEnvironmentVariable( "VK_SDK_PATH" );
-                            if( binPath == null )
-                            {
-                                binPath = Environment.GetEnvironmentVariable( "VULKAN_SDK" );
-                                if( binPath == null )
-                                {
-                                    break;
-                                }
-                            }
-                        }
+                        binPath = VulkanSDKPath.FindVulkanSDKPath();
+                        if( string.IsNullOrEmpty( binPath ) ) break;
 
                         binPath = Path.Combine( binPath, "Lib" );
                     }
@@ -124,19 +113,8 @@ namespace SaturnBuildTool
 
                 case VendorProject.VULKANSDK:
                     {
-                        binPath = Environment.GetEnvironmentVariable( "VULKAN_SDK_PATH" );
-                        if( binPath == null )
-                        {
-                            binPath = Environment.GetEnvironmentVariable( "VK_SDK_PATH" );
-                            if( binPath == null )
-                            {
-                                binPath = Environment.GetEnvironmentVariable( "VULKAN_SDK" );
-                                if( binPath == null )
-                                {
-                                    break;
-                                }
-                            }
-                        }
+                        binPath = VulkanSDKPath.FindVulkanSDKPath();
+                        if( string.IsNullOrEmpty( binPath ) ) break;
 
                         binPath = Path.Combine( binPath, "Bin" );
                     }

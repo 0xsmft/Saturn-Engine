@@ -73,7 +73,7 @@ namespace Saturn {
 		bool UseSpecializationInfo = false;
 		bool EnableBlending = true;
 		CullMode CullMode = CullMode::Back;
-		VkFrontFace FrontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		VkFrontFace FrontFace = VK_FRONT_FACE_CLOCKWISE;
 		VkPolygonMode PolygonMode = VK_POLYGON_MODE_FILL;
 		VkCompareOp DepthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 		VkPrimitiveTopology Topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;

@@ -177,6 +177,9 @@ namespace Saturn {
 		const UUID GetDefaultPhysRegAsset() const { return m_DefaultPhysSurfaceRegistryAsset; }
 		void SetDefaultPhysRegAsset( UUID newID ) { m_DefaultPhysSurfaceRegistryAsset = newID; }
 
+		const UUID GetDefaultLocTableAsset() const { return m_DefaultLocTableAsset; }
+		void SetDefaultLocTableAsset( UUID newID ) { m_DefaultLocTableAsset = newID; }
+
 		void RemoveAssetFromDefaults( /*AssetID*/ UUID assetID );
 
 		//////////////////////////////////////////////////////////////////////////
@@ -240,6 +243,7 @@ namespace Saturn {
 		UUID m_DefaultPhysicsMaterialAsset = 0;
 		UUID m_DefaultFontAsset = 0;
 		UUID m_DefaultPhysSurfaceRegistryAsset = 0;
+		UUID m_DefaultLocTableAsset = 0;
 		// The minimum file size for a file in the asset bundle before it needs to be compressed, in kilobytes.
 		uint64_t m_MininumCompressedThresholdInAB = 512llu;
 		OnlineSystemAPIType m_OnlineAPIType = OnlineSystemAPIType::Null;

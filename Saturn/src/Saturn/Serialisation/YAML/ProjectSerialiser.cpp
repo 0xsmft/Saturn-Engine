@@ -70,6 +70,7 @@ namespace Saturn {
 			out << YAML::Key << "DefaultPhyMaterialAsset" << YAML::Value << rProject->GetDefaultPhysicsMaterialAsset();
 			out << YAML::Key << "DefaultFontAsset" << YAML::Value << rProject->GetDefaultFontAsset();
 			out << YAML::Key << "DefaultPhysRegAsset" << YAML::Value << rProject->GetDefaultPhysRegAsset();
+			out << YAML::Key << "DefaultLocTableAsset" << YAML::Value << rProject->GetDefaultLocTableAsset();
 			out << YAML::Key << "ABCompressThreshold" << YAML::Value << rProject->GetCompressionThresholdForAssetBundle();
 #if !defined(SAT_DIST)
 			out << YAML::Key << "IsAutoSavesEnabled" << YAML::Value << rProject->IsAutoSavesEnabled();
@@ -177,6 +178,7 @@ namespace Saturn {
 		newProject->SetDefaultPhysicsMaterialAsset( project[ "DefaultPhyMaterialAsset" ].as<uint64_t>( 0 ) );
 		newProject->SetDefaultFontAsset( project[ "DefaultFontAsset" ].as<uint64_t>( 0 ) );
 		newProject->SetDefaultPhysRegAsset( project[ "DefaultPhysRegAsset" ].as<uint64_t>( 0 ) );
+		newProject->SetDefaultLocTableAsset( project[ "DefaultLocTableAsset" ].as<uint64_t>( 0 ) );
 		newProject->SetCompressionThresholdForAssetBundle( project[ "ABCompressThreshold" ].as<uint64_t>( 512llu ) );
 
 #if !defined(SAT_DIST)

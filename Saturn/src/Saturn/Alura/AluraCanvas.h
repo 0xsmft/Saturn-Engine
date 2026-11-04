@@ -358,6 +358,8 @@ namespace Saturn {
 		float GetFrameHeight() const;
 		float GetRegionMaxScroll( const AluraRegionData& rData ) const;
 
+		std::string RetrieveTextFromLocTable( const std::string& rTableEntry );
+
 		// An active region must be pushed before calling this.
 		glm::vec2 GetContentRegionAvail();
 
@@ -443,7 +445,6 @@ namespace Saturn {
 		void PushClipRect_ForItem( const AluraRect& bb );
 		void PopClipRect_ForItem();
 
-		std::string RetrieveTextFromLocTable( const std::string& rTableEntry );
 
 	private:
 		UUID m_ID;

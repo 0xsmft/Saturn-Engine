@@ -289,6 +289,9 @@ namespace Saturn {
 
 		if( m_DefaultPhysSurfaceRegistryAsset == assetID )
 			m_DefaultPhysSurfaceRegistryAsset = 0llu;
+
+		if( m_DefaultLocTableAsset == assetID )
+			m_DefaultLocTableAsset = 0llu;
 	}
 
 	bool Project::HasPremakeFile() const

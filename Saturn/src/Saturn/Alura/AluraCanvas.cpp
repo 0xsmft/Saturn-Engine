@@ -78,6 +78,11 @@ namespace Saturn {
 			m_Style = stylingProf->GetStyle();
 		}
 
+		Ref<LocalisationTableAsset> locTable = AssetManager::Get()->GetAssetAs<LocalisationTableAsset>( rSpecification.LocalisationTableAssetID );
+		if( locTable )
+		{
+			m_PrimaryLocalisationTable = locTable;
+		}
 		// Load editor font
 		m_EditorFont = Ref<AluraFont>::Create();
 
@@ -99,6 +104,9 @@ namespace Saturn {
 
 		// Forgot to call PopStyle()
 		SAT_CORE_ASSERT( m_ColourStack.size() == 0 );
+
+		// Forgot to call PopLocalisationTable()
+		SAT_CORE_ASSERT( m_LocTableStack.size() == 0 );
 
 		// Forgot to call PopFontSize()
 		SAT_CORE_ASSERT( m_BackupOfFontSize == 0.0f );
@@ -147,6 +155,9 @@ namespace Saturn {
 			}
 		}
 
+		// Push default loc table.
+		PushLocalisationTable( m_PrimaryLocalisationTable );
+
 		// Push default clipping rect.
 		m_Renderer->PushClipRect( m_CanvasSize );
 	}
@@ -192,6 +203,7 @@ namespace Saturn {
 
 	void AluraCanvas::EndFrame()
 	{
+		PopLocalisationTable();
 		m_Renderer->PopClipRect();
 
 		// If any keys are "released" from the previous frame, we
@@ -411,6 +423,40 @@ namespace Saturn {
 	{
 		PushStyle( AluraColour_Text, rColour );
 		AddTextU32( rText );
+		PopStyle();
+	}
+
+	void AluraCanvas::AddLocalisedText( const std::string& rTableEntry )
+	{
+		// Handle SetNextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		const auto& rText = RetrieveTextFromLocTable( rTableEntry );
+
+		const auto textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
+		AluraRect bb( posDependingLastCall, posDependingLastCall + textSize );
+
+		ItemSize( bb.GetSize() );
+		if( !CanAddItem( bb ) )
+			return;
+
+		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, m_Style.Colours[ AluraColour_Text ] );
+
+#if defined(SAT_ALURA_SHOW_TEXT_BB)
+		m_Renderer->SubmitRectFrame( bb, 1.0f, { 1.0f, 0.0f, 0.0f, 1.0f } );
+#endif
+	}
+
+	void AluraCanvas::AddLocalisedTextColoured( const std::string& rTableEntry, const glm::vec4& rColour )
+	{
+		PushStyle( AluraColour_Text, rColour );
+		AddLocalisedText( rTableEntry );
 		PopStyle();
 	}
 
@@ -699,8 +745,8 @@ namespace Saturn {
 			Application::Get()->GetWindow()->SetMouseCursor( RubyCursorType::IBeam );
 #else
 			// I don't like this but upon a call to ImGui::NewFrame()
-			// the mouse cursor is reset back to default, so if we do
-			// and using ImGui::SetMouseCursor stops Alura and ImGui
+			// the mouse cursor is reset back to default, so using 
+			// ImGui::SetMouseCursor stops Alura and ImGui
 			// trying to fight over the cursor.
 			ImGui::SetMouseCursor( ImGuiMouseCursor_TextInput );
 #endif
@@ -1571,6 +1617,24 @@ namespace Saturn {
 		m_BackupOfFontSize = 0.0f;
 	}
 
+	void AluraCanvas::PushLocalisationTable( Ref<LocalisationTableAsset> asset )
+	{
+		SAT_CORE_ASSERT( asset, "Alura: PushLocalisationTable() called on null loc table asset!" );
+		m_LocTableStack.push( asset );
+	}
+
+	void AluraCanvas::PushLocalisationTable( AssetID assetID )
+	{
+		Ref<LocalisationTableAsset> asset = AssetManager::Get()->GetAssetAs<LocalisationTableAsset>( assetID );
+		PushLocalisationTable( asset );
+	}
+
+	void AluraCanvas::PopLocalisationTable()
+	{
+		SAT_CORE_ASSERT( !m_LocTableStack.empty(), "Alura: PopLocalisationTable() called on empty loc table stack!" );
+		m_LocTableStack.pop();
+	}
+
 	float AluraCanvas::GetFrameHeight() const
 	{
 		return m_Style.CurrentFontSize + m_Style.WindowPadding.y * 2.0f;
@@ -2034,6 +2098,19 @@ namespace Saturn {
 	void AluraCanvas::PopClipRect_ForItem()
 	{
 		m_Renderer->PopClipRect();
+	}
+
+	std::string AluraCanvas::RetrieveTextFromLocTable( const std::string& rTableEntry )
+	{
+		// If we do not have any tables in the stack, we'll just return the
+		// table entry name.
+		if( m_LocTableStack.empty() )
+			return rTableEntry;
+
+		auto tbl = m_LocTableStack.top();
+		tbl->BuildIfNeeded();
+
+		return tbl->RetrieveText( rTableEntry );
 	}
 
 }

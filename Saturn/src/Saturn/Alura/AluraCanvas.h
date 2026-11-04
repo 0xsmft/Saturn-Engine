@@ -34,6 +34,8 @@
 #include "AluraRect.h"
 #include "AluraTextInput.h"
 
+#include "Saturn/LocText/Asset/LocalisationTableAsset.h"
+
 #include "Saturn/Core/Base.h"
 #include "Saturn/Core/UUID.h"
 #include "Saturn/Core/Ruby/RubyEventType.h"
@@ -166,6 +168,11 @@ namespace Saturn {
 		// Specify the main styling profile to be used, you don't need to have a styling profile asset
 		// as Alura will automatically default the style if no profile is specified.
 		AssetID  StylingProfile = 0;
+
+		// Specify the main localisation table to be used, you don't need to have a localisation table set,
+		// because they can be swapped in and out during UI calls.
+		// which is not recommenced because it can be slow.
+		AssetID  LocalisationTableAssetID = 0;
 	};
 
 	//
@@ -240,6 +247,9 @@ namespace Saturn {
 
 		void AddTextU32( const std::u32string& rText );
 		void AddTextColouredU32( const std::u32string& rText, const glm::vec4& rColour );
+
+		void AddLocalisedText( const std::string& rTableEntry );
+		void AddLocalisedTextColoured( const std::string& rTableEntry, const glm::vec4& rColour );
 
 		[[nodiscard]] bool AddButton( const glm::vec2& rSize, const glm::vec4& rColour = glm::one<glm::vec4>() );
 		
@@ -341,6 +351,10 @@ namespace Saturn {
 		void PushFontSize( float newSize );
 		void PopFontSize();
 
+		void PushLocalisationTable( Ref<LocalisationTableAsset> asset );
+		void PushLocalisationTable( AssetID assetID );
+		void PopLocalisationTable();
+
 		float GetFrameHeight() const;
 		float GetRegionMaxScroll( const AluraRegionData& rData ) const;
 
@@ -429,6 +443,8 @@ namespace Saturn {
 		void PushClipRect_ForItem( const AluraRect& bb );
 		void PopClipRect_ForItem();
 
+		std::string RetrieveTextFromLocTable( const std::string& rTableEntry );
+
 	private:
 		UUID m_ID;
 		glm::vec2 m_CanvasSize;
@@ -471,6 +487,9 @@ namespace Saturn {
 		// Fallback font if active font has an issue.
 		// Also used by the editor as well if we need to draw some text.
 		Ref<AluraFont> m_EditorFont = nullptr;
+
+		Ref<LocalisationTableAsset> m_PrimaryLocalisationTable;
+		std::stack<Ref<LocalisationTableAsset>> m_LocTableStack;
 
 		// Hovered item.
 		UUID m_Hot = 0llu;

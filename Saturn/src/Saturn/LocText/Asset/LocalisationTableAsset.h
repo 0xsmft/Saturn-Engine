@@ -153,6 +153,9 @@ namespace Saturn {
 	// For example adding Spanish to the table creates a new data field in all
 	// entires. Removing a language has the same effect.
 	//
+	// LocalisationTables are only used for UI, so in the AluraCanvas you can set the
+	// primary table to use.
+	//
 	class LocalisationTableAsset : public Asset
 	{
 	public:
@@ -163,10 +166,27 @@ namespace Saturn {
 		//											UUID -> ENTRY
 		using LocTableEntryMap = std::unordered_map<UUID, LocalisationTableEntry>;
 
+		// Runtime (built, non-volatile) version of the regular entry map.
+		//
+		// We have a separate map because during runtime we'll be accessing this data from it's
+		// entry name not it's ID. So having a dedicated map allows for better performance.
+		//
+		// We store a pointer to the entry (that is stored in the volatile map) because there is no
+		// need to copy here.
+		// 
+		// This map is built when we call BuildIfNeeded().
+		// 
+		//											ENTRY NAME ->  ENTRY*
+		using LocTableEntryMapRT = std::unordered_map<std::string, const LocalisationTableEntry*>;
+
 	public:
 		LocalisationTableAsset();
 		LocalisationTableAsset( const Ref<Asset>& rBase );
 		virtual ~LocalisationTableAsset();
+
+		void BuildIfNeeded();
+	
+		std::string RetrieveText( const std::string& rTableEntry ) const;
 
 	public:
 		LocTableEntryMap& GetAllEntries() { return m_Entries; }
@@ -174,6 +194,8 @@ namespace Saturn {
 
 		std::vector<LocTextLanguage>& GetUsedLanguages() { return m_UsedLanguages; }
 		const std::vector<LocTextLanguage>& GetUsedLanguages() const { return m_UsedLanguages; }
+
+		LocTextLanguage GetActiveLanguage() const { return m_ActiveLanguage; }
 
 		[[nodiscard]] bool IsLanguageAlreadyUsed( LocTextLanguage lang ) const;
 
@@ -197,7 +219,9 @@ namespace Saturn {
 
 	private:
 		LocTableEntryMap m_Entries;
+		LocTableEntryMapRT m_EntriesRT;
 		std::vector<LocTextLanguage> m_UsedLanguages;
+		LocTextLanguage m_ActiveLanguage = LocTextLanguage::Unknown;
 
 	private:
 		friend class LocalisationTableAssetViewer;

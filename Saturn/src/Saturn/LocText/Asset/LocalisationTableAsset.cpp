@@ -42,7 +42,40 @@ namespace Saturn {
 
 	LocalisationTableAsset::~LocalisationTableAsset()
 	{
+	}
 
+	void LocalisationTableAsset::BuildIfNeeded()
+	{
+		if( !m_EntriesRT.empty() )
+			return;
+
+		m_EntriesRT.reserve( m_Entries.size() );
+
+		for( const auto& [ID, rEntry] : m_Entries )
+		{
+			m_EntriesRT.emplace( std::pair( rEntry.EntryName, &rEntry ) );
+		}
+	}
+
+	std::string LocalisationTableAsset::RetrieveText( const std::string& rTableEntry ) const
+	{
+		const auto itr = m_EntriesRT.find( rTableEntry );
+		if( itr != m_EntriesRT.end() )
+		{
+			const auto* pEntry = itr->second;
+			
+			if( pEntry->Type != LocalisationTableEntryType::Text )
+				return rTableEntry;
+		
+			const auto langMapItr = pEntry->DataPerLanguage.find( m_ActiveLanguage );
+			if( langMapItr != pEntry->DataPerLanguage.end() )
+			{
+				const auto& rLangData = langMapItr->second;
+				return rLangData.GetTextData();
+			}
+		}
+
+		return rTableEntry;
 	}
 
 	bool LocalisationTableAsset::IsLanguageAlreadyUsed( LocTextLanguage lang ) const

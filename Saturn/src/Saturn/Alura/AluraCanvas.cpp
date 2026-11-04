@@ -156,7 +156,8 @@ namespace Saturn {
 		}
 
 		// Push default loc table.
-		PushLocalisationTable( m_PrimaryLocalisationTable );
+		if( m_PrimaryLocalisationTable )
+			PushLocalisationTable( m_PrimaryLocalisationTable );
 
 		// Push default clipping rect.
 		m_Renderer->PushClipRect( m_CanvasSize );
@@ -203,7 +204,9 @@ namespace Saturn {
 
 	void AluraCanvas::EndFrame()
 	{
-		PopLocalisationTable();
+		if( m_PrimaryLocalisationTable )
+			PopLocalisationTable();
+	
 		m_Renderer->PopClipRect();
 
 		// If any keys are "released" from the previous frame, we

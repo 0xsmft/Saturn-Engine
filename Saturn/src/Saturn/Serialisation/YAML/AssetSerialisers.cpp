@@ -36,6 +36,7 @@
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Asset/ShaderAsset.h"
+#include "Saturn/Asset/CameraShakeDescriptorAsset.h"
 #include "Saturn/Animation/SkeletonAsset.h"
 #include "Saturn/Animation/SkeletalAnimationAsset.h"
 #include "Saturn/Audio/SoundSpecification.h"
@@ -1503,6 +1504,69 @@ namespace Saturn {
 			const auto langEnum = lang.as<uint16_t>();
 			locTable->AddNewLanguage( ( LocTextLanguage ) langEnum, LocTextLanguageVariant::UnknownUnknown );
 		}
+
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// CameraShakeDescriptorAssetSerialiser
+
+	void CameraShakeDescriptorAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
+	{
+		const auto camShakeDesc = rAsset.As<CameraShakeDescriptorAsset>();
+
+		YAML::Emitter out;
+
+		out << YAML::BeginMap;
+
+		out << YAML::Key << "CameraShakeDescriptor" << YAML::Value;
+		out << YAML::BeginMap;
+
+		out << YAML::Key << "Trauma" << YAML::Value << camShakeDesc->GetTrauma();
+		out << YAML::Key << "DecaySpeed" << YAML::Value << camShakeDesc->GetDecaySpeed();
+		out << YAML::Key << "Pitch" << YAML::Value << camShakeDesc->GetMaxPitchInDeg();
+		out << YAML::Key << "Yaw" << YAML::Value << camShakeDesc->GetMaxYawInDeg();
+		out << YAML::Key << "Roll" << YAML::Value << camShakeDesc->GetMaxRollInDeg();
+
+		out << YAML::EndMap; // Asset
+		out << YAML::EndMap; // Root
+
+		const auto& basePath = rAsset->Path;
+		const auto fullPath = GetFilepathAbs( basePath );
+
+		std::ofstream fout( fullPath );
+		fout << out.c_str();
+	}
+
+	bool CameraShakeDescriptorAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		const auto absolutePath = GetFilepathAbs( rAsset->Path );
+		std::ifstream FileIn( absolutePath );
+
+		std::stringstream ss;
+		ss << FileIn.rdbuf();
+
+		YAML::Node data = YAML::Load( ss.str() );
+
+		if( data.IsNull() )
+			return false;
+
+		const auto camShakeDesc = data[ "CameraShakeDescriptor" ];
+
+		if( camShakeDesc.IsNull() )
+			return false;
+
+		auto camShakeDescAsset = Ref<CameraShakeDescriptorAsset>::Create( rAsset );
+
+		camShakeDescAsset->m_Trauma = camShakeDesc[ "Trauma" ].as<float>( 0.0f );
+		camShakeDescAsset->m_DecaySpeed = camShakeDesc[ "DecaySpeed" ].as<float>( 0.0f );
+		
+		camShakeDescAsset->m_MaxPitchDeg = camShakeDesc[ "Pitch" ].as<float>( 0.0f );
+		camShakeDescAsset->m_MaxYawDeg   = camShakeDesc[ "Yaw" ].as<float>( 0.0f );
+		camShakeDescAsset->m_MaxRollDeg  = camShakeDesc[ "Roll" ].as<float>( 0.0f );
+
+		// Set rAsset reference to point to our new CameraShakeDescriptorAssetSerialiser
+		rAsset = camShakeDescAsset;
 
 		return true;
 	}

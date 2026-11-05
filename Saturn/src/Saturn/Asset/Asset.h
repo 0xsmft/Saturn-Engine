@@ -57,6 +57,7 @@ namespace Saturn {
 		PhysSurfaceRegistry,
 		ShaderPrototype,
 		LocalisationTable,
+		CameraShakeDescriptor,
 		// ^^^ ADD NEW ASSET TYPES HERE ^^^
 		Unknown,
 		COUNT,
@@ -106,6 +107,8 @@ namespace Saturn {
 				return "ShaderPrototype";
 			case Saturn::AssetType::LocalisationTable:
 				return "LocalisationTable";
+			case Saturn::AssetType::CameraShakeDescriptor:
+				return "CameraShakeDescriptor";
 
 			default:
 			case Saturn::AssetType::Unknown:
@@ -167,6 +170,8 @@ namespace Saturn {
 				return COLOR_32( 245, 69, 180, 255 ); // Some shade of pink
 			case Saturn::AssetType::LocalisationTable:
 				return COLOR_32( 252, 186, 3, 255 ); // Light blue
+			case Saturn::AssetType::CameraShakeDescriptor:
+				return COLOR_32( 105, 80, 30, 255 ); // Brown
 
 			default:
 			case Saturn::AssetType::Unknown:
@@ -216,6 +221,8 @@ namespace Saturn {
 			return AssetType::ShaderPrototype;
 		else if( str == "LocalisationTable" )
 			return AssetType::LocalisationTable;
+		else if( str == "CameraShakeDescriptor" )
+			return AssetType::CameraShakeDescriptor;
 		else
 			return AssetType::Unknown;
 	}
@@ -260,6 +267,8 @@ namespace Saturn {
 			return AssetType::ShaderPrototype;
 		else if( str == ".slt" )
 			return AssetType::LocalisationTable;
+		else if( str == ".scs" )
+			return AssetType::CameraShakeDescriptor;
 		else
 			return AssetType::Unknown;
 	}

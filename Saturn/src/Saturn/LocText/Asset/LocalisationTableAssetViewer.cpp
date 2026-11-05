@@ -70,6 +70,9 @@ namespace Saturn {
 		if( ImGui::Begin( m_Name.c_str(), &m_Open, flags ) )
 		{
 			if( m_ShowDirtyPopup ) DrawDirtyPopupModal();
+
+			Auxiliary::ScopedDisabledFlag disabledIf( m_IsReadOnly );
+
 			if( m_ShowRemoveLanguagePopup ) DrawRemoveLanguagePopupModal();
 			if( m_ShowNewLanguagePopup ) DrawPickLanguagePopupModal();
 

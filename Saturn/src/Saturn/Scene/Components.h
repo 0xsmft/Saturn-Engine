@@ -438,6 +438,16 @@ namespace Saturn {
 		glm::vec4 Color = glm::one<glm::vec4>();
 	};
 
+
+	struct CameraShakeComponent
+	{
+		MemoryAssetDependency<AssetType::CameraShakeDescriptor> CameraShakeDescriptorID;
+
+		CameraShakeComponent() = default;
+		CameraShakeComponent( const CameraShakeComponent& other ) = default;
+		CameraShakeComponent( AssetID assetID ) : CameraShakeDescriptorID( assetID ) {}
+	};
+
 	template<typename... V>
 	struct ComponentGroup {};
 
@@ -451,7 +461,8 @@ namespace Saturn {
 		NavigationMeshSpecificationComponent,
 		BoneAttachmentInfoComponent,
 		BehaviourTreeComponent,
-		TextComponent>;
+		TextComponent,
+		CameraShakeComponent>;
 
 	// Without TagComponent, IdComponent, RelationshipComponent
 	// We could use templates and concepts for this however that will add a new layer of complexity and ambiguity (and definitely not because I don't know how to).
@@ -464,5 +475,6 @@ namespace Saturn {
 		BillboardComponent,
 		NavigationMeshSpecificationComponent,
 		BehaviourTreeComponent,
-		TextComponent>;
+		TextComponent,
+		CameraShakeComponent>;
 }

@@ -408,6 +408,8 @@ namespace Saturn {
 			}
 
 			DrawAddComponents<TextComponent>( "Text", selections[ 0 ] );
+			
+			DrawAddComponents<CameraShakeComponent>( "Camera Shake", selections[ 0 ] );
 
 			ImGui::EndPopup();
 		}
@@ -1892,6 +1894,46 @@ namespace Saturn {
 					modified = true;
 				}
 			}
+		} );
+
+		DrawComponent<CameraShakeComponent>( "Camera Shake", entity, [ & ]( CameraShakeComponent& csc )
+		{
+			bool modified = false;
+
+			{
+				bool open = false;
+
+				// Push disabled flag if runtime running
+				Auxiliary::ScopedDisabledFlag disabledFlag( m_IsReadOnly );
+
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+				{
+					m_CurrentFinderType = AssetType::CameraShakeDescriptor;
+					open = true;
+
+					if( csc.CameraShakeDescriptorID != 0 )
+						m_CurrentAssetID = csc.CameraShakeDescriptorID;
+				}
+
+				ImGui::SameLine();
+
+				if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &open, m_CurrentAssetID ) )
+				{
+					csc.CameraShakeDescriptorID = m_CurrentAssetID;
+					modified = true;
+				}
+
+				ImGui::PushID( ( void* ) &csc );
+
+				if( csc.CameraShakeDescriptorID != 0 )
+					ImGui::InputText( "##cscAstID", ( char* ) std::to_string( csc.CameraShakeDescriptorID ).c_str(), 256, ImGuiInputTextFlags_ReadOnly );
+				else
+					ImGui::InputText( "##cscAstID", ( char* ) "", 256, ImGuiInputTextFlags_ReadOnly );
+
+				ImGui::PopID();
+			}
+
+			if( modified ) m_Context->MarkDirty();
 		} );
 	}
 

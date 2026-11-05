@@ -42,6 +42,7 @@
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/ShaderAsset.h"
 #include "Saturn/Asset/AssetExtensions.h"
+#include "Saturn/Asset/CameraShakeDescriptorAsset.h"
 #include "Saturn/Asset/ShaderAsset.h"
 #include "Saturn/AI/BehaviourTree/BlackboardSpecificationAsset.h"
 #include "Saturn/Alura/AluraStylingProfile.h"
@@ -873,6 +874,29 @@ namespace Saturn {
 
 				LocalisationTableAssetSerialiser ltas;
 				ltas.Serialise( locTable );
+
+				AssetManager::Get()->Save();
+
+				UpdateFiles( true );
+				FindAndRenameItem( asset->Name );
+			}
+
+			if( ImGui::MenuItem( "New Camera Shake" ) )
+			{
+				const auto id = AssetManager::Get()->CreateAsset( AssetType::CameraShakeDescriptor );
+				auto asset = AssetManager::Get()->FindAsset( id );
+				auto newPath = m_CurrentPath / "New Camera Shake.scs";
+				uint32_t count = GetFilenameCount( "New Camera Shake.scs" );
+
+				if( count >= 1 )
+					newPath.replace_filename( std::format( "{0} ({1}).scs", "New Camera Shake", count ) );
+
+				asset->SetAbsolutePath( newPath );
+
+				Ref<CameraShakeDescriptorAsset> camShakeAsset = Ref<CameraShakeDescriptorAsset>::Create( asset );
+
+				CameraShakeDescriptorAssetSerialiser csdas;
+				csdas.Serialise( camShakeAsset );
 
 				AssetManager::Get()->Save();
 

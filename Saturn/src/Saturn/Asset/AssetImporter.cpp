@@ -53,6 +53,7 @@ namespace Saturn {
 		m_AssetSerialisers[ AssetType::PhysSurfaceRegistry ] = std::make_unique<PhysicsSurfaceRegistryAssetSerialiser>();
         m_AssetSerialisers[ AssetType::ShaderPrototype     ] = std::make_unique<ShaderPrototypeAssetSerialiser>();
         m_AssetSerialisers[ AssetType::LocalisationTable   ] = std::make_unique<LocalisationTableAssetSerialiser>();
+        m_AssetSerialisers[ AssetType::CameraShakeDescriptor  ] = std::make_unique<CameraShakeDescriptorAssetSerialiser>();
 	}
 
 	bool AssetImporter::TryLoadData( Ref<Asset>& rAsset )

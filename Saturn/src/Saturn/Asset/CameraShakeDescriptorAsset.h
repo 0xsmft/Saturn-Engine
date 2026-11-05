@@ -43,6 +43,26 @@ namespace Saturn {
 
 		virtual ~CameraShakeDescriptorAsset() = default;
 
+		[[nodiscard]] bool CompareForDirty( const Ref<CameraShakeDescriptorAsset> other ) const
+		{
+			if( GetTrauma() != other->GetTrauma() )
+				return true;
+
+			if( GetDecaySpeed() != other->GetDecaySpeed() )
+				return true;
+
+			if( GetMaxPitchInDeg() != other->GetMaxPitchInDeg() )
+				return true;
+
+			if( GetMaxYawInDeg() != other->GetMaxYawInDeg() )
+				return true;
+
+			if( GetMaxRollInDeg() != other->GetMaxRollInDeg() )
+				return true;
+
+			return false;
+		}
+
 	public:
 		float GetTrauma() const { return m_Trauma; }
 		float GetDecaySpeed() const { return m_DecaySpeed; }
@@ -64,6 +84,7 @@ namespace Saturn {
 
 	private:
 		friend class CameraShakeDescriptorAssetSerialiser;
+		friend class CameraShakeDescriptorAssetViewer;
 	};
-	
+
 }

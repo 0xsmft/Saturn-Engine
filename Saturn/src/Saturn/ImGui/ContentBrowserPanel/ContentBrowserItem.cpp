@@ -44,6 +44,7 @@
 #include "Saturn/ImGui/TextureViewer.h"
 #include "Saturn/ImGui/ShaderAssetViewer.h"
 #include "Saturn/ImGui/SoundAssetViewer.h"
+#include "Saturn/ImGui/CameraShakeDescriptorAssetViewer.h"
 #include "Saturn/Audio/SoundGraph/GraphSoundAssetViewer.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeAssetViewer.h"
 #include "Saturn/AI/BehaviourTree/BlackboardAssetViewer.h"
@@ -738,6 +739,12 @@ namespace Saturn {
 			case AssetType::LocalisationTable: 
 			{
 				const auto viewer = Ref<LocalisationTableAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::CameraShakeDescriptor:
+			{
+				const auto viewer = Ref<CameraShakeDescriptorAssetViewer>::Create( m_Asset->ID );
 				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 			

@@ -43,6 +43,7 @@
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/MaterialAsset.h"
+#include "Saturn/Asset/CameraShakeDescriptorAsset.h"
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/Audio/GraphSound.h"
 #include "Saturn/AI/BehaviourTree/BlackboardSpecificationAsset.h"
@@ -53,6 +54,7 @@
 #include "Saturn/Alura/AluraStylingProfile.h"
 #include "Saturn/Alura/AluraFont.h"
 #include "Saturn/NodeEditor/GlobalNodeEditorTaskCache.h"
+#include "Saturn/LocText/Asset/LocalisationTableAsset.h"
 
 #include "Saturn/Serialisation/YAML/SceneSerialiser.h"
 
@@ -522,6 +524,26 @@ namespace Saturn {
 				{
 					RawPhysicsSurfaceRegistryAssetSerialiser serialiser;
 					serialiser.DumpAndWriteToVFS( physSurfaceReg );
+				}
+			} break;
+
+			case Saturn::AssetType::LocalisationTable:
+			{
+				Ref<LocalisationTableAsset> locTbl = pAssetManager->ImportAssetAs<LocalisationTableAsset>( AssetBundleRegistry, id );
+				if( locTbl )
+				{
+					RawLocalisationTableAssetSerialiser serialiser;
+					serialiser.DumpAndWriteToVFS( locTbl );
+				}
+			} break;
+
+			case Saturn::AssetType::CameraShakeDescriptor:
+			{
+				Ref<CameraShakeDescriptorAsset> cameraShakeDesc = pAssetManager->ImportAssetAs<CameraShakeDescriptorAsset>( AssetBundleRegistry, id );
+				if( cameraShakeDesc )
+				{
+					RawCameraShakeDescriptorAssetSerialiser serialiser;
+					serialiser.DumpAndWriteToVFS( cameraShakeDesc );
 				}
 			} break;
 

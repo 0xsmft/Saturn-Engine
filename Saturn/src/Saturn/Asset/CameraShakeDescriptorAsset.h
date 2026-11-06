@@ -32,15 +32,22 @@
 
 namespace Saturn {
 
+	//
+	// CameraShakeDescriptorAsset
+	// 
+	// This asset holds the information to be used
+	// for a camera shake.
+	// 
+	// The maths implementation is based from:
+	// "Math for Game Programmers: Juicing Your Cameras With Math", Squirrel Eiserloh
+	// Video: https://www.youtube.com/watch?v=tu-Qe66AvtY
+	// Slides: https://gdcvault.com/play/1023146/Math-for-Game-Programmers-Juicing
+	//
 	class CameraShakeDescriptorAsset : public Asset
 	{
 	public:
-		CameraShakeDescriptorAsset() = default;
-		CameraShakeDescriptorAsset( const Ref<Asset>& rOther ) 
-			: Asset( rOther )
-		{
-		}
-
+		CameraShakeDescriptorAsset();
+		CameraShakeDescriptorAsset( const Ref<Asset>& rOther );
 		virtual ~CameraShakeDescriptorAsset() = default;
 
 		[[nodiscard]] bool CompareForDirty( const Ref<CameraShakeDescriptorAsset> other ) const
@@ -62,6 +69,8 @@ namespace Saturn {
 
 			return false;
 		}
+
+		glm::quat Process( Timestep ts );
 
 	public:
 		float GetTrauma() const { return m_Trauma; }
@@ -85,6 +94,7 @@ namespace Saturn {
 	private:
 		friend class CameraShakeDescriptorAssetSerialiser;
 		friend class CameraShakeDescriptorAssetViewer;
+		friend class RawCameraShakeDescriptorAssetSerialiser;
 	};
 
 }

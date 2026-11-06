@@ -43,6 +43,7 @@
 #include "Saturn/Animation/SkeletonAsset.h"
 #include "Saturn/Alura/AluraStylingProfile.h"
 #include "Saturn/Alura/AluraFont.h"
+#include "Saturn/LocText/Asset/LocalisationTableAsset.h"
 
 #include "Saturn/Audio/AudioSystem.h"
 
@@ -890,12 +891,120 @@ namespace Saturn {
 
 	bool RawLocalisationTableAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		return false;
+		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
+
+		if( !file )
+			return false;
+
+		/////////////////////////////////////
+
+		PakFileMemoryBuffer membuf( file->FileContent );
+		std::istream stream( &membuf );
+
+		auto locTblAsset = Ref<LocalisationTableAsset>::Create( rAsset );
+
+		size_t entryCount = 0llu;
+		RawSerialisation::ReadObject( entryCount, stream );
+
+		locTblAsset->m_Entries.reserve( entryCount );
+
+		for( size_t i = 0; i < entryCount; ++i )
+		{
+			std::string name = RawSerialisation::ReadString( stream );
+			size_t dataPerLangCount = 0llu;
+			RawSerialisation::ReadObject( dataPerLangCount, stream );
+
+			LocalisationTableEntryType entryType = LocalisationTableEntryType::MaxValue;
+			RawSerialisation::ReadObject( entryType, stream );
+
+			LocalisationTableEntry entry( name, entryType );
+			entry.DataPerLanguage.reserve( dataPerLangCount );
+
+			for( size_t j = 0; j < dataPerLangCount; ++j )
+			{
+				LocTextLanguage lang = LocTextLanguage::Unknown;
+				RawSerialisation::ReadObject( lang, stream );
+
+				LocalisationTableEntryData data( entryType );
+				
+				switch( entryType )
+				{
+					case LocalisationTableEntryType::Text: 
+					{
+						std::string textData = RawSerialisation::ReadString( stream );
+						data.SetTextData( textData );
+					} break;
+					
+					case LocalisationTableEntryType::Asset:
+					{
+						uint64_t id = 0llu;
+						RawSerialisation::ReadObject( id, stream );
+
+						data.SetAssetID( id );
+					} break;
+				
+					default:
+						break;
+				}
+
+				entry.DataPerLanguage[ lang ] = data;
+			}
+
+			locTblAsset->m_Entries[ UUID() ] = entry;
+		}
+
+		RawSerialisation::ReadVector( locTblAsset->m_UsedLanguages, stream );
+
+		return true;
 	}
 
 	bool RawLocalisationTableAssetSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
 	{
-		return false;
+		const auto locTblAsset = rAsset.As<LocalisationTableAsset>();
+
+		std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
+		out /= std::to_string( rAsset->ID );
+		out.replace_extension( ".vfs" );
+
+		std::ofstream stream( out, std::ios::binary | std::ios::trunc );
+
+		const auto& rEntries = locTblAsset->GetAllEntries();
+		RawSerialisation::WriteObject( rEntries.size(), stream );
+
+		for( const auto& [id, rEntry] : rEntries )
+		{
+			RawSerialisation::WriteString( rEntry.EntryName, stream );
+			RawSerialisation::WriteObject( rEntry.DataPerLanguage.size(), stream );
+			RawSerialisation::WriteObject( ( std::underlying_type_t<LocalisationTableEntryType> ) rEntry.Type, stream );
+
+			for( const auto& [langType, data] : rEntry.DataPerLanguage )
+			{
+				RawSerialisation::WriteObject( ( std::underlying_type_t<LocTextLanguage> ) langType, stream );
+
+				switch( data.Type )
+				{
+					default:
+						break;
+
+					case LocalisationTableEntryType::Text:
+					{
+						RawSerialisation::WriteString( data.GetTextData(), stream );
+					} break;
+
+					case LocalisationTableEntryType::Asset:
+					{
+						RawSerialisation::WriteObject( data.GetAssetID(), stream );
+					} break;
+				}
+			}
+		}
+
+		RawSerialisation::WriteVector( locTblAsset->GetUsedLanguages(), stream );
+
+		stream.close();
+
+		return true;
 	}
 
 	//////////////////////////////////////////////////////////////////////////

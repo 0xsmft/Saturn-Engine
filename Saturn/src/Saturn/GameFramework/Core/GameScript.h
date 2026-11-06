@@ -84,4 +84,4 @@ public: \
 	[[nodiscard]] inline static SClass* StaticClass() { return GetStaticClassInternal(); } \
 public: \
 	typedef x ThisClass; \
-	typedef BaseClass Super; \
+	typedef BaseClass Super;

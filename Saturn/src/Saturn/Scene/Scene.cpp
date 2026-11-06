@@ -39,6 +39,7 @@
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/TextureSourceAsset.h"
+#include "Saturn/Asset/CameraShakeDescriptorAsset.h"
 
 #include "Saturn/Core/Profiler.h"
 #include "Saturn/Core/VirtualFS.h"
@@ -449,7 +450,21 @@ namespace Saturn {
 			rCamera->OnUpdate( ts );
 
 			m_RendererCamera.pCamera = ( Camera* ) rCamera.Get();
-			m_RendererCamera.ViewMatrix = rCamera->ViewMatrix();
+			
+			glm::mat4 cameraShakeMatrix = glm::one<glm::mat4>();
+			if( const auto* pCamShake = entity->TryGetComponent<CameraShakeComponent>(); pCamShake )
+			{
+				Ref<CameraShakeDescriptorAsset> asset = AssetManager::Get()->GetAssetAs<CameraShakeDescriptorAsset>( pCamShake->CameraShakeDescriptorID );
+				if( asset )
+				{
+					const auto rotQuat = asset->Process( ts );
+					const auto shakeRotationMatrix = glm::mat4_cast( rotQuat );
+
+					cameraShakeMatrix = shakeRotationMatrix;
+				}
+			}
+			
+			m_RendererCamera.ViewMatrix = rCamera->ViewMatrix() * cameraShakeMatrix;
 		}
 		else
 		{

@@ -358,10 +358,17 @@ namespace Saturn {
 		// Text Component
 		WriteComponent<TextComponent>( rEntity, rStream, [ & ]()
 			{
-				auto& rTextComponent = rEntity->GetComponent< TextComponent>();
+				auto& rTextComponent = rEntity->GetComponent< TextComponent >();
 				WriteAssetDependency( rTextComponent.FontAssetID, rStream );
 				RawSerialisation::WriteVec4( rTextComponent.Color, rStream );
 				RawSerialisation::WriteString( rTextComponent.Text, rStream );
+			} );
+
+		// Camera Shake Component
+		WriteComponent<CameraShakeComponent>( rEntity, rStream, [ & ]()
+			{
+				auto& rCameraShakeComp = rEntity->GetComponent< CameraShakeComponent >();
+				WriteAssetDependency( rCameraShakeComp.CameraShakeDescriptorID, rStream );
 			} );
 	}
 
@@ -676,6 +683,13 @@ namespace Saturn {
 				ReadAssetDependency( rTextComponent.FontAssetID, rStream );
 				RawSerialisation::ReadVec4( rTextComponent.Color, rStream );
 				rTextComponent.Text = RawSerialisation::ReadString( rStream );
+			} );
+
+		// Camera Shake Component
+		ReadComponent<CameraShakeComponent>( rEntity, rStream, [ & ]()
+			{
+				auto& rCamShakeComponent = rEntity->GetComponent< CameraShakeComponent>();
+				ReadAssetDependency( rCamShakeComponent.CameraShakeDescriptorID, rStream );
 			} );
 	}
 

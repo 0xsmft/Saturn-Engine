@@ -586,6 +586,19 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 			rEmitter << YAML::EndMap;
 		}
+		
+		// Camera Shake
+		if( entity->HasComponent<CameraShakeComponent>() )
+		{
+			rEmitter << YAML::Key << "CameraShakeComponent";
+			rEmitter << YAML::BeginMap;
+
+			const auto& rCameraShakeComponent = entity->GetComponent< CameraShakeComponent >();
+
+			rEmitter << YAML::Key << "AssetID" << YAML::Value << rCameraShakeComponent.CameraShakeDescriptorID;
+
+			rEmitter << YAML::EndMap;
+		}
 	}
 
 	void ComponentSerialisation::DeserialiseComponents( const YAML::Node& rEntityNode, Ref<Scene> scene )
@@ -1070,6 +1083,14 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 			rTextComp.Text = textComp[ "Text" ].as<std::string>();
 			rTextComp.FontAssetID = textComp[ "AssetID" ].as<uint64_t>();
 			rTextComp.Color = textComp[ "Color" ].as<glm::vec4>();
+		}
+
+		const auto cameraShakeComp = rEntityNode[ "CameraShakeComponent" ];
+		if( cameraShakeComp )
+		{
+			auto& rcameraShakeComponent = DeserialisedEntity->AddComponent<CameraShakeComponent>();
+
+			rcameraShakeComponent.CameraShakeDescriptorID = cameraShakeComp[ "AssetID" ].as<uint64_t>();
 		}
 	}
 }

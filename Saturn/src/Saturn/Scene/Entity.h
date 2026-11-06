@@ -247,6 +247,25 @@ namespace Saturn {
 		//
 		glm::vec3 CalculateForwardVectorFromRotation();
 
+		//
+		// Apply a camera shake from a CameraShakeDescriptorAsset
+		// 
+		// NB: A camera shake only works when this entity has a camera.
+		//	   If you want to a apply a camera shake to a character
+		//	   call this function on the camera entity.
+		//
+		void ApplyCameraShake( AssetID id );
+
+		//
+		// See ApplyCameraShake( AssetID id )
+		//
+		void ApplyCameraShake( float trauma, float decaySpeed, float maxPitchDeg, float maxYawDeg, float maxRollDeg );
+
+		//
+		// Attempts to stop any previously applied camera shake.
+		//
+		void StopCameraShake();
+
 	public:
 		operator entt::entity() const { return m_EntityHandle; }
 		operator uint32_t() const { return ( uint32_t ) m_EntityHandle; }

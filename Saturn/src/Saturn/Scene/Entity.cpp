@@ -248,6 +248,22 @@ namespace Saturn {
 		return GetLocalRotationQuat() * TransformComponent::Forward;
 	}
 
+	void Entity::ApplyCameraShake( AssetID id )
+	{
+		auto& rCameraShakeComponent = AddComponent<CameraShakeComponent>();
+		rCameraShakeComponent.CameraShakeDescriptorID = id;
+	}
+
+	void Entity::ApplyCameraShake( float trauma, float decaySpeed, float maxPitchDeg, float maxYawDeg, float maxRollDeg )
+	{
+		// TODO...
+	}
+
+	void Entity::StopCameraShake()
+	{
+		RemoveComponent<CameraShakeComponent>();
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 
 	void Entity::Serialise( const SharedPtr<Entity>& rObject, std::ofstream& rStream )

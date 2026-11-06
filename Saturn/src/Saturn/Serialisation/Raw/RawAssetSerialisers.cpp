@@ -37,6 +37,7 @@
 #include "Saturn/Physics/PhysicsSurfaceRegistryAsset.h"
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/MaterialAsset.h"
+#include "Saturn/Asset/CameraShakeDescriptorAsset.h"
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/AI/BehaviourTree/BlackboardSpecificationAsset.h"
 #include "Saturn/Animation/SkeletonAsset.h"
@@ -878,6 +879,79 @@ namespace Saturn {
 		{
 			RawSerialisation::WriteString( rSurface.Name, stream );
 		}
+
+		stream.close();
+
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// (ALURA) LOCALISATION TABLE
+
+	bool RawLocalisationTableAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		return false;
+	}
+
+	bool RawLocalisationTableAssetSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
+	{
+		return false;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// CAMERA SHAKE DESCRIPTOR
+
+	bool RawCameraShakeDescriptorAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
+
+		if( !file )
+			return false;
+
+		/////////////////////////////////////
+
+		PakFileMemoryBuffer membuf( file->FileContent );
+		std::istream stream( &membuf );
+
+		auto camShakeAsset = Ref<CameraShakeDescriptorAsset>::Create( rAsset );
+
+		const auto readValue = [&]() -> float
+		{
+			float val = 0.0f;
+			RawSerialisation::ReadObject( val, stream );
+
+			return val;
+		};
+
+		camShakeAsset->m_Trauma = readValue();
+		camShakeAsset->m_DecaySpeed = readValue();
+
+		camShakeAsset->m_MaxPitchDeg = readValue();
+		camShakeAsset->m_MaxYawDeg = readValue();
+		camShakeAsset->m_MaxRollDeg = readValue();
+
+		rAsset = camShakeAsset;
+
+		return true;
+	}
+
+	bool RawCameraShakeDescriptorAssetSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
+	{
+		const auto cameraShakeAsset = rAsset.As<CameraShakeDescriptorAsset>();
+
+		std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
+		out /= std::to_string( rAsset->ID );
+		out.replace_extension( ".vfs" );
+
+		std::ofstream stream( out, std::ios::binary | std::ios::trunc );
+
+		RawSerialisation::WriteObject( cameraShakeAsset->GetTrauma(), stream );
+		RawSerialisation::WriteObject( cameraShakeAsset->GetDecaySpeed(), stream );
+
+		RawSerialisation::WriteObject( cameraShakeAsset->GetMaxPitchInDeg(), stream );
+		RawSerialisation::WriteObject( cameraShakeAsset->GetMaxYawInDeg(), stream );
+		RawSerialisation::WriteObject( cameraShakeAsset->GetMaxRollInDeg(), stream );
 
 		stream.close();
 

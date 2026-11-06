@@ -130,5 +130,19 @@ namespace Saturn {
 		[[nodiscard]] virtual bool TryLoadData( Ref<Asset>& rAsset ) const override;
 	};
 
+	class RawLocalisationTableAssetSerialiser : public RawAssetSerialiser
+	{
+	public:
+		virtual bool DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const override;
+		[[nodiscard]] virtual bool TryLoadData( Ref<Asset>& rAsset ) const override;
+	};
+
+	class RawCameraShakeDescriptorAssetSerialiser : public RawAssetSerialiser
+	{
+	public:
+		virtual bool DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const override;
+		[[nodiscard]] virtual bool TryLoadData( Ref<Asset>& rAsset ) const override;
+	};
+
 }
 

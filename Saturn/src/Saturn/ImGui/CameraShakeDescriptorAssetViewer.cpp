@@ -64,7 +64,7 @@ namespace Saturn {
 			bool modifiedThisFrame = false;
 
 			float trauma = m_CameraShakeAsset->GetTrauma();
-			if( Auxiliary::DrawFloatControl( "Trauma", trauma ) ) 
+			if( Auxiliary::DrawFloatControl( "Trauma", trauma, 0.0F, 1.0F ) ) 
 			{
 				m_CameraShakeAsset->m_Trauma = trauma;
 				modifiedThisFrame = true;

@@ -1559,6 +1559,9 @@ namespace Saturn {
 		auto camShakeDescAsset = Ref<CameraShakeDescriptorAsset>::Create( rAsset );
 
 		camShakeDescAsset->m_Trauma = camShakeDesc[ "Trauma" ].as<float>( 0.0f );
+		// Clamp if user has manually edited the file to be outside of a normalised range [0..1].
+		camShakeDescAsset->m_Trauma = glm::clamp( camShakeDescAsset->m_Trauma, 0.0f, 1.0f );
+
 		camShakeDescAsset->m_DecaySpeed = camShakeDesc[ "DecaySpeed" ].as<float>( 0.0f );
 		
 		camShakeDescAsset->m_MaxPitchDeg = camShakeDesc[ "Pitch" ].as<float>( 0.0f );

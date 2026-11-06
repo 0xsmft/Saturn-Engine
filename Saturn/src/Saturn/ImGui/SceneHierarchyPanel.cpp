@@ -1906,6 +1906,10 @@ namespace Saturn {
 				// Push disabled flag if runtime running
 				Auxiliary::ScopedDisabledFlag disabledFlag( m_IsReadOnly );
 
+				ImGui::Text( "Camera Shake Asset" );
+
+				ImGui::SameLine();
+
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 				{
 					m_CurrentFinderType = AssetType::CameraShakeDescriptor;

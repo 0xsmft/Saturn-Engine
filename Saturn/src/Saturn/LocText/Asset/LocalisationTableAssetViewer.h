@@ -83,7 +83,6 @@ namespace Saturn {
 
 		bool m_ShowNewLanguagePopup = false;
 		bool m_ShowRemoveLanguagePopup = false;
-		bool m_Dirty = false;
 		bool m_CanSave = true;
 		bool m_ShowDirtyPopup = false;
 

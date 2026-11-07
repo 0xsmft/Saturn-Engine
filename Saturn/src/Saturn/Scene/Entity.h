@@ -249,7 +249,10 @@ namespace Saturn {
 
 		//
 		// Apply a camera shake from a CameraShakeDescriptorAsset
-		// 
+		//
+		// NB: If the entity already has a camera shake, this function
+		//     will override it!
+		//
 		// NB: A camera shake only works when this entity has a camera.
 		//	   If you want to a apply a camera shake to a character
 		//	   call this function on the camera entity.

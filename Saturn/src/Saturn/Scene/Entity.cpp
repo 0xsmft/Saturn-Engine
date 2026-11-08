@@ -35,6 +35,8 @@
 #include "Saturn/Physics/PhysicsShapes.h"
 #include "Saturn/Physics/PhysicsCharacterController.h"
 
+#include "Saturn/CameraShake/CameraShakeInstance.h"
+
 namespace Saturn {
 
 	Entity::Entity()
@@ -256,7 +258,9 @@ namespace Saturn {
 
 	void Entity::ApplyCameraShake( float trauma, float decaySpeed, float maxPitchDeg, float maxYawDeg, float maxRollDeg )
 	{
-		// TODO...
+		auto& rCameraShakeComponent = AddComponent<CameraShakeComponent>();
+		rCameraShakeComponent.CameraShakeDescriptorID = 0;
+		rCameraShakeComponent.CameraShakeInstance = Ref<CameraShakeInstance>::Create( trauma, decaySpeed, maxPitchDeg, maxYawDeg, maxRollDeg );
 	}
 
 	void Entity::StopCameraShake()

@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2026 BEAST                                                           *
+* Copyright (c) 2020 - 2026 0xsmft https://0xsmft.dev                                       *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -27,36 +27,66 @@
 */
 
 #include "sppch.h"
+#include "CameraShakeInstance.h"
+
 #include "CameraShakeDescriptorAsset.h"
 
 #include "Saturn/Core/Random.h"
 
 namespace Saturn {
-	
-	CameraShakeDescriptorAsset::CameraShakeDescriptorAsset()
+
+	CameraShakeInstance::CameraShakeInstance( Ref<CameraShakeDescriptorAsset> asset )
 	{
+		SAT_CORE_ASSERT( asset, "Null CameraShakeDescriptorAsset specified into CameraShakeInstance!" );
+
+		m_Trauma = asset->GetTrauma();
+		m_CurrentTrauma = m_Trauma;
+		m_DecaySpeed = asset->GetDecaySpeed();
+
+		m_MaxPitchRad = asset->GetMaxPitchInRad();
+		m_MaxYawRad   = asset->GetMaxYawInRad();
+		m_MaxRollRad  = asset->GetMaxRollInRad();
 	}
 
-	CameraShakeDescriptorAsset::CameraShakeDescriptorAsset( const Ref<Asset>& rOther )
-		: Asset( rOther )
+	CameraShakeInstance::CameraShakeInstance( float trauma, float decaySpeed, float maxPitchDeg, float maxYawDeg, float maxRollDeg )
+	{
+		m_Trauma = trauma;
+		m_CurrentTrauma = m_Trauma;
+		m_DecaySpeed = decaySpeed;
+
+		m_MaxPitchRad = glm::radians( maxPitchDeg );
+		m_MaxYawRad   = glm::radians( maxYawDeg );
+		m_MaxRollRad  = glm::radians( maxRollDeg );
+	}
+
+	CameraShakeInstance::~CameraShakeInstance()
 	{
 	}
 
 	// TODO: This is not great and should be replaced with a perlin noise function.
-	static float RandValue() 
+	static float RandValue()
 	{
 		return Random::RandomFloatInRange( -1.0f, 1.0f );
 	}
 
-	glm::quat CameraShakeDescriptorAsset::Process( Timestep ts )
+	glm::quat CameraShakeInstance::Tick( Timestep ts )
 	{
-		const float shake = m_Trauma * m_Trauma;
-		const float pitchOffset = GetMaxPitchInRad() * shake * RandValue();
-		const float yawOffset = GetMaxYawInRad() * shake * RandValue();
-		const float rollOffset = GetMaxRollInRad() * shake * RandValue();
-	
-		glm::vec3 angles( glm::radians( pitchOffset ), glm::radians( yawOffset ), glm::radians( rollOffset ) );
+		m_CurrentTrauma = glm::max( 0.0f, m_CurrentTrauma - m_DecaySpeed * ts.Seconds() );
+
+		const float shake = m_CurrentTrauma * m_CurrentTrauma;
+		const float pitchOffset = m_MaxPitchRad * shake * RandValue();
+		const float yawOffset = m_MaxYawRad * shake * RandValue();
+		const float rollOffset = m_MaxRollRad * shake * RandValue();
+
+		m_Completed = ( m_CurrentTrauma == 0.0f );
+
+		const glm::vec3 angles( glm::radians( pitchOffset ), glm::radians( yawOffset ), glm::radians( rollOffset ) );
 		return glm::quat( angles );
+	}
+
+	void CameraShakeInstance::Reset()
+	{
+		m_CurrentTrauma = m_Trauma;
 	}
 
 }

@@ -542,8 +542,13 @@ namespace Saturn {
 	private:
 		void CreatePhysicsScene();
 
+		void RegisterRuntimeECSEvents();
+
 		void OnNavMeshBuildCompAdded( entt::registry& reg, entt::entity entity );
 		void OnNavMeshBuildCompRemoved( entt::registry& reg, entt::entity entity );
+
+		void OnCameraShakeComponentAdded( entt::registry& reg, entt::entity entity );
+		void OnCameraShakeComponentRemoved( entt::registry& reg, entt::entity entity );
 
 	private:
 		void RtSetupLights( Ref<SceneRenderer> sceneRenderer );

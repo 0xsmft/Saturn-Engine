@@ -28,31 +28,73 @@
 
 #pragma once
 
-#include "AssetViewer.h"
+#include "Saturn/Asset/Asset.h"
 
 namespace Saturn {
 
-	class CameraShakeDescriptorAsset;
-
-	class CameraShakeDescriptorAssetViewer : public AssetViewer
+	//
+	// CameraShakeDescriptorAsset
+	// 
+	// This asset holds the information to be used
+	// for a camera shake.
+	// 
+	// The maths implementation is based from:
+	// "Math for Game Programmers: Juicing Your Cameras With Math", Squirrel Eiserloh
+	// Video: https://www.youtube.com/watch?v=tu-Qe66AvtY
+	// Slides: https://gdcvault.com/play/1023146/Math-for-Game-Programmers-Juicing
+	//
+	class CameraShakeDescriptorAsset : public Asset
 	{
 	public:
-		CameraShakeDescriptorAssetViewer( AssetID id );
-		virtual ~CameraShakeDescriptorAssetViewer();
+		CameraShakeDescriptorAsset();
+		CameraShakeDescriptorAsset( const Ref<Asset>& rOther );
+		virtual ~CameraShakeDescriptorAsset() = default;
+
+		[[nodiscard]] bool CompareForDirty( const Ref<CameraShakeDescriptorAsset> other ) const
+		{
+			if( GetTrauma() != other->GetTrauma() )
+				return true;
+
+			if( GetDecaySpeed() != other->GetDecaySpeed() )
+				return true;
+
+			if( GetMaxPitchInDeg() != other->GetMaxPitchInDeg() )
+				return true;
+
+			if( GetMaxYawInDeg() != other->GetMaxYawInDeg() )
+				return true;
+
+			if( GetMaxRollInDeg() != other->GetMaxRollInDeg() )
+				return true;
+
+			return false;
+		}
+
+		Ref<class CameraShakeInstance> Instantiate();
 
 	public:
-		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) override;
-		virtual void OnEvent( Event& rEvent ) override;
+		float GetTrauma() const { return m_Trauma; }
+		float GetDecaySpeed() const { return m_DecaySpeed; }
+
+		float GetMaxPitchInDeg() const { return m_MaxPitchDeg; }
+		float GetMaxRollInDeg() const { return m_MaxRollDeg; }
+		float GetMaxYawInDeg() const { return m_MaxYawDeg; }
+
+		float GetMaxPitchInRad() const { return glm::radians( m_MaxPitchDeg ); }
+		float GetMaxRollInRad() const { return glm::radians( m_MaxRollDeg ); }
+		float GetMaxYawInRad() const { return glm::radians( m_MaxYawDeg ); }
 
 	private:
-		void DrawDirtyPopupModal();
+		float m_Trauma = 0.0f;
+		float m_DecaySpeed = 1.0f;
+		float m_MaxPitchDeg = 5.0f;
+		float m_MaxYawDeg = 5.0f;
+		float m_MaxRollDeg = 8.0f;
 
 	private:
-		Ref<CameraShakeDescriptorAsset> m_CameraShakeAsset;
-		Ref<CameraShakeDescriptorAsset> m_OriginalCameraShakeAsset;
-
-		bool m_ShowDirtyPopup = false;
+		friend class CameraShakeDescriptorAssetSerialiser;
+		friend class CameraShakeDescriptorAssetViewer;
+		friend class RawCameraShakeDescriptorAssetSerialiser;
 	};
 
 }

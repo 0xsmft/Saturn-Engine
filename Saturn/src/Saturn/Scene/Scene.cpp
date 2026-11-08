@@ -39,7 +39,8 @@
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/TextureSourceAsset.h"
-#include "Saturn/Asset/CameraShakeDescriptorAsset.h"
+#include "Saturn/CameraShake/CameraShakeDescriptorAsset.h"
+#include "Saturn/CameraShake/CameraShakeInstance.h"
 
 #include "Saturn/Core/Profiler.h"
 #include "Saturn/Core/VirtualFS.h"
@@ -165,6 +166,8 @@ namespace Saturn {
 		m_Registry.emplace<SceneComponent>( m_SceneEntity, m_InternalID );
 
 		BuildComponentRefl( AllComponents{} );
+
+		RegisterRuntimeECSEvents();
 	}
 
 	void Scene::OnNavMeshBuildCompAdded( entt::registry& reg, entt::entity entity )
@@ -173,6 +176,31 @@ namespace Saturn {
 
 	void Scene::OnNavMeshBuildCompRemoved( entt::registry& reg, entt::entity entity )
 	{
+	}
+
+	void Scene::OnCameraShakeComponentAdded( entt::registry& reg, entt::entity entity )
+	{
+		CameraShakeComponent& rComponent = reg.get<CameraShakeComponent>( entity );
+			
+		// Skip if we already have a valid camera shake instance.
+		if( rComponent.CameraShakeInstance ) 
+			return;
+
+		// Perform load of desc asset now...
+		Ref<CameraShakeDescriptorAsset> cameraShakeDescriptor = AssetManager::Get()->GetAssetAs<CameraShakeDescriptorAsset>( rComponent.CameraShakeDescriptorID );
+		if( cameraShakeDescriptor )
+		{
+			rComponent.CameraShakeInstance = cameraShakeDescriptor->Instantiate();
+		}
+	}
+
+	void Scene::OnCameraShakeComponentRemoved( entt::registry& reg, entt::entity entity )
+	{
+		// Screwy.
+		if( m_RuntimeState != RuntimeState::NoState )
+		{
+
+		}
 	}
 
 	Scene::~Scene()
@@ -450,17 +478,20 @@ namespace Saturn {
 			rCamera->OnUpdate( ts );
 
 			m_RendererCamera.pCamera = ( Camera* ) rCamera.Get();
-			
-			glm::mat4 cameraShakeMatrix = glm::one<glm::mat4>();
-			if( const auto* pCamShake = entity->TryGetComponent<CameraShakeComponent>(); pCamShake )
-			{
-				Ref<CameraShakeDescriptorAsset> asset = AssetManager::Get()->GetAssetAs<CameraShakeDescriptorAsset>( pCamShake->CameraShakeDescriptorID );
-				if( asset )
-				{
-					const auto rotQuat = asset->Process( ts );
-					const auto shakeRotationMatrix = glm::mat4_cast( rotQuat );
 
-					cameraShakeMatrix = shakeRotationMatrix;
+			// Tick camera shake if needed.
+			glm::mat4 cameraShakeMatrix = glm::one<glm::mat4>();
+			if( auto* pCamShake = entity->TryGetComponent<CameraShakeComponent>(); pCamShake )
+			{
+				if( pCamShake->CameraShakeInstance )
+				{
+					const auto rotQuat = pCamShake->CameraShakeInstance->Tick( ts );
+					cameraShakeMatrix = glm::mat4_cast( rotQuat );
+
+					if( pCamShake->CameraShakeInstance->IsCompleted() )
+					{
+						entity->RemoveComponent<CameraShakeComponent>();
+					}
 				}
 			}
 			
@@ -1511,6 +1542,8 @@ namespace Saturn {
 
 	void Scene::CopyScene( Ref<Scene>& NewScene )
 	{
+		RegisterRuntimeECSEvents();
+
 		// Copy entities
 		// I know we can just use the "=" operator, 
 		// but we need to recreate the entities from the game,
@@ -1995,6 +2028,12 @@ namespace Saturn {
 	void Scene::CreatePhysicsScene()
 	{
 		m_PhysicsScene = std::make_shared<PhysicsScene>( this );
+	}
+
+	void Scene::RegisterRuntimeECSEvents()
+	{
+		m_Registry.on_construct<CameraShakeComponent>().connect<&Scene::OnCameraShakeComponentAdded>( this );
+		m_Registry.on_destroy<CameraShakeComponent>().connect<&Scene::OnCameraShakeComponentRemoved>( this );
 	}
 
 	void Scene::DestroyPhysicsScene()

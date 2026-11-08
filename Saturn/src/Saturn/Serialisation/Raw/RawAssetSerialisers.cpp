@@ -37,7 +37,7 @@
 #include "Saturn/Physics/PhysicsSurfaceRegistryAsset.h"
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/MaterialAsset.h"
-#include "Saturn/Asset/CameraShakeDescriptorAsset.h"
+#include "Saturn/CameraShake/CameraShakeDescriptorAsset.h"
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/AI/BehaviourTree/BlackboardSpecificationAsset.h"
 #include "Saturn/Animation/SkeletonAsset.h"

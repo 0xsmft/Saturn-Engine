@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2026 BEAST                                                           *
+* Copyright (c) 2020 - 2026 0xsmft https://0xsmft.dev                                       *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -29,10 +29,10 @@
 #include "sppch.h"
 #include "CameraShakeDescriptorAssetViewer.h"
 
-#include "Saturn/Asset/CameraShakeDescriptorAsset.h"
+#include "Saturn/CameraShake/CameraShakeDescriptorAsset.h"
 #include "Saturn/Asset/AssetManager.h"
 
-#include "ImGuiAuxiliary.h"
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
 
 namespace Saturn {
 

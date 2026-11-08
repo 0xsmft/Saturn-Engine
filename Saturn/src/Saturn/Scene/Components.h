@@ -39,6 +39,8 @@
 
 #include "Saturn/Physics/PhysicsBodyType.h"
 
+#include "Saturn/CameraShake/CameraShakeInstance.h"
+
 // TODO: Should not be included...
 #include "Saturn/Animation/Animator.h"
 
@@ -438,10 +440,17 @@ namespace Saturn {
 		glm::vec4 Color = glm::one<glm::vec4>();
 	};
 
-
 	struct CameraShakeComponent
 	{
 		MemoryAssetDependency<AssetType::CameraShakeDescriptor> CameraShakeDescriptorID;
+
+		// TODO: Think about this..., this object only exists during runtime,
+		// but the reason why I've marked this as a "think about" is because
+		// maybe we shouldn't store this value and have the scene manage everything,
+		// but having the scene manage everything will introduce more overhead.
+		// The lifetime of this object is guaranteed to be valid while this component
+		// exists in the entity.
+		Ref<CameraShakeInstance> CameraShakeInstance;
 
 		CameraShakeComponent() = default;
 		CameraShakeComponent( const CameraShakeComponent& other ) = default;

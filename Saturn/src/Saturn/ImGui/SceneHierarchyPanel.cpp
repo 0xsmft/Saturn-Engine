@@ -368,8 +368,6 @@ namespace Saturn {
 		DrawEntityComponents( selections[ 0 ] );
 
 		{
-			Auxiliary::ScopedDisabledFlag disabledIfReadOnly( m_IsReadOnly );
-
 			if( ImGui::Button( "Add Component" ) )
 				ImGui::OpenPopup( "AddComponentPanel" );
 		}

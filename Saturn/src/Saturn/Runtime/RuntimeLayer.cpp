@@ -146,7 +146,7 @@ namespace Saturn {
 	{
 		const Ref<Asset> asset = AssetManager::Get()->FindAsset( id );
 
-		Ref<Scene> newScene = Ref<Scene>::Create();
+		Ref<Scene> newScene = Ref<Scene>::Create( SceneType::Runtime );
 		newScene->Path = asset->Path;
 
 		Scene::SetActiveScene( newScene.Get() );
@@ -170,7 +170,7 @@ namespace Saturn {
 
 	void RuntimeLayer::OpenFileInRuntime( AssetID id )
 	{
-		Ref<Scene> newlyLoadedScene = Ref<Scene>::Create();
+		Ref<Scene> newlyLoadedScene = Ref<Scene>::Create( SceneType::Runtime );
 		Scene::SetActiveScene( newlyLoadedScene.Get() );
 
 		g_AluraCanvas->OnSceneChange();

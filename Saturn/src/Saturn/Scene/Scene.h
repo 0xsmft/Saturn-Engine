@@ -190,11 +190,23 @@ namespace Saturn {
 		glm::vec3 Scale = { 1.0F, 1.0F, 1.0F };
 	};
 
+	enum class SceneType : uint8_t
+	{
+		// For use in the editor.
+		Editor,
+
+		// For use in runtime.
+		Runtime,
+		
+		// Temporary scene type.
+		Collection,
+	};
+
 	class Scene : public Asset
 	{
 	public:
-		Scene();
-		~Scene();
+		Scene( SceneType type = SceneType::Editor );
+		virtual ~Scene();
 		
 		// Spawn an entity, this is the most basic function for spawning an Entity
 		[[nodiscard]] SharedPtr<Entity> CreateEntity( const std::string& name = "" );
@@ -532,6 +544,8 @@ namespace Saturn {
 
 		void ShowOrHideAluraRtDebug() { m_ShowAluraRtDebug ^= 1; }
 
+		SceneType GetSceneType() const { return m_SceneType; }
+
 	public:
 		// Asset overrides.
 
@@ -548,7 +562,6 @@ namespace Saturn {
 		void OnNavMeshBuildCompRemoved( entt::registry& reg, entt::entity entity );
 
 		void OnCameraShakeComponentAdded( entt::registry& reg, entt::entity entity );
-		void OnCameraShakeComponentRemoved( entt::registry& reg, entt::entity entity );
 
 	private:
 		void RtSetupLights( Ref<SceneRenderer> sceneRenderer );
@@ -586,6 +599,7 @@ namespace Saturn {
 		UUID m_InternalID;
 
 		RuntimeState m_RuntimeState = RuntimeState::NoState;
+		SceneType m_SceneType = SceneType::Editor;
 
 #if !defined(SAT_DIST)
 		bool m_Dirty = false;

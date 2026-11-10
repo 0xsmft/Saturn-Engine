@@ -876,7 +876,7 @@ namespace Saturn {
 	{
 		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 
-		Ref<Scene> newScene = Ref<Scene>::Create();
+		Ref<Scene> newScene = Ref<Scene>::Create( SceneType::Runtime );
 		g_ActiveScene = newScene.Get();
 
 		m_SelectionManager->ClearSelection( g_ActiveScene, true );
@@ -984,7 +984,7 @@ namespace Saturn {
 		m_ImGuiWindowManager->MarkAllWindowsAsReadOnly();
 		m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Starting, RuntimeState::NoState );
 
-		m_RuntimeScene = Ref<Scene>::Create();
+		m_RuntimeScene = Ref<Scene>::Create( SceneType::Runtime );
 		Scene::SetActiveScene( m_RuntimeScene.Get() );
 
 		m_EditorScene->CopyScene( m_RuntimeScene );

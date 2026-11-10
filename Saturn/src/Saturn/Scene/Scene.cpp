@@ -160,52 +160,28 @@ namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
 
-	Scene::Scene()
+	Scene::Scene( SceneType type /*= SceneType::Editor*/ )
+		: m_SceneType( type )
 	{
 		m_SceneEntity = m_Registry.create();
 		m_Registry.emplace<SceneComponent>( m_SceneEntity, m_InternalID );
 
-		BuildComponentRefl( AllComponents{} );
-
-		RegisterRuntimeECSEvents();
-	}
-
-	void Scene::OnNavMeshBuildCompAdded( entt::registry& reg, entt::entity entity )
-	{
-	}
-
-	void Scene::OnNavMeshBuildCompRemoved( entt::registry& reg, entt::entity entity )
-	{
-	}
-
-	void Scene::OnCameraShakeComponentAdded( entt::registry& reg, entt::entity entity )
-	{
-		CameraShakeComponent& rComponent = reg.get<CameraShakeComponent>( entity );
-			
-		// Skip if we already have a valid camera shake instance.
-		if( rComponent.CameraShakeInstance ) 
-			return;
-
-		// Perform load of desc asset now...
-		Ref<CameraShakeDescriptorAsset> cameraShakeDescriptor = AssetManager::Get()->GetAssetAs<CameraShakeDescriptorAsset>( rComponent.CameraShakeDescriptorID );
-		if( cameraShakeDescriptor )
+		switch( m_SceneType )
 		{
-			rComponent.CameraShakeInstance = cameraShakeDescriptor->Instantiate();
+			default:
+			case SceneType::Collection:
+				break;
+
+			case SceneType::Editor:
+			{
+				BuildComponentRefl( AllComponents{} );
+			} break;
+
+			case SceneType::Runtime: 
+			{
+				RegisterRuntimeECSEvents();
+			} break;
 		}
-	}
-
-	void Scene::OnCameraShakeComponentRemoved( entt::registry& reg, entt::entity entity )
-	{
-		// Screwy.
-		if( m_RuntimeState != RuntimeState::NoState )
-		{
-
-		}
-	}
-
-	Scene::~Scene()
-	{
-		Empty();
 	}
 
 	void Scene::Empty()
@@ -238,6 +214,37 @@ namespace Saturn {
 		m_Registry.clear();
 
 		m_NavigationSystem.Terminate();
+	}
+
+	Scene::~Scene()
+	{
+		Empty();
+	}
+
+	void Scene::OnNavMeshBuildCompAdded( entt::registry& reg, entt::entity entity )
+	{
+	}
+
+	void Scene::OnNavMeshBuildCompRemoved( entt::registry& reg, entt::entity entity )
+	{
+	}
+
+	void Scene::OnCameraShakeComponentAdded( entt::registry& reg, entt::entity entity )
+	{
+		SAT_CORE_ASSERT( m_SceneType == SceneType::Runtime );
+
+		CameraShakeComponent& rComponent = reg.get<CameraShakeComponent>( entity );
+
+		// Skip if we already have a valid camera shake instance.
+		if( rComponent.CameraShakeInstance )
+			return;
+
+		// Perform load of desc asset now...
+		Ref<CameraShakeDescriptorAsset> cameraShakeDescriptor = AssetManager::Get()->GetAssetAs<CameraShakeDescriptorAsset>( rComponent.CameraShakeDescriptorID );
+		if( cameraShakeDescriptor )
+		{
+			rComponent.CameraShakeInstance = cameraShakeDescriptor->Instantiate();
+		}
 	}
 
 	WeakRef<Entity> Scene::GetMainCameraEntity( bool force )
@@ -1542,8 +1549,6 @@ namespace Saturn {
 
 	void Scene::CopyScene( Ref<Scene>& NewScene )
 	{
-		RegisterRuntimeECSEvents();
-
 		// Copy entities
 		// I know we can just use the "=" operator, 
 		// but we need to recreate the entities from the game,
@@ -2033,7 +2038,6 @@ namespace Saturn {
 	void Scene::RegisterRuntimeECSEvents()
 	{
 		m_Registry.on_construct<CameraShakeComponent>().connect<&Scene::OnCameraShakeComponentAdded>( this );
-		m_Registry.on_destroy<CameraShakeComponent>().connect<&Scene::OnCameraShakeComponentRemoved>( this );
 	}
 
 	void Scene::DestroyPhysicsScene()

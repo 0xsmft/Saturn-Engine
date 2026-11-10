@@ -996,6 +996,7 @@ namespace Saturn {
 		canvasSpecification.Size = glm::vec2{ m_ViewportSize.x, m_ViewportSize.y };
 		canvasSpecification.Position = glm::vec2{ 0.0f };
 		canvasSpecification.MasterFontAssetID = Project::GetActiveProject()->GetDefaultFontAsset();
+		canvasSpecification.LocalisationTableAssetID = Project::GetActiveProject()->GetDefaultLocTableAsset();
 
 		if( g_AluraCanvas )
 			delete g_AluraCanvas;

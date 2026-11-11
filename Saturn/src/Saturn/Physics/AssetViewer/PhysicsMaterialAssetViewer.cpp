@@ -37,6 +37,9 @@
 #include "Saturn/Serialisation/YAML/AssetSerialisers.h"
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 
+#include "UndoRedo/UndoRedoPhysMatActions.h"
+#include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
+
 #include <imgui.h>
 
 namespace Saturn {
@@ -51,6 +54,7 @@ namespace Saturn {
 
 	PhysicsMaterialAssetViewer::~PhysicsMaterialAssetViewer()
 	{
+		GlobalUndoRedoGroup::Get()->RemoveIfActionHasIdentifier( m_AssetID );
 	}
 
 	void PhysicsMaterialAssetViewer::OnImGuiRender()
@@ -93,6 +97,9 @@ namespace Saturn {
 		float friction = m_MaterialAsset->GetFriction();
 		if( ImGui::InputFloat( "##StaticFriction", &friction, 0.0f, 1000.0f ) ) 
 		{
+			Ref<UndoRedoActionModifyPhysicsMaterialStaticFriction> action = Ref<UndoRedoActionModifyPhysicsMaterialStaticFriction>::Create( m_MaterialAsset );
+			GlobalUndoRedoGroup::Get()->AddAction( action, m_AssetID );
+
 			m_MaterialAsset->SetFriction( friction );
 		}
 		
@@ -103,6 +110,9 @@ namespace Saturn {
 		float restitution = m_MaterialAsset->GetRestitution();
 		if( ImGui::InputFloat( "##Restitution", &restitution, 0.0f, 1000.0f ) ) 
 		{
+			Ref<UndoRedoActionModifyPhysicsMaterialRestitution> action = Ref<UndoRedoActionModifyPhysicsMaterialRestitution>::Create( m_MaterialAsset );
+			GlobalUndoRedoGroup::Get()->AddAction( action, m_AssetID );
+
 			m_MaterialAsset->SetRestitution( restitution );
 		}
 
@@ -119,6 +129,9 @@ namespace Saturn {
 
 					if( ImGui::Selectable( rSurface.Name.c_str(), selected ) )
 					{
+						Ref<UndoRedoActionModifyPhysicsMaterialSurfaceName> action = Ref<UndoRedoActionModifyPhysicsMaterialSurfaceName>::Create( m_MaterialAsset );
+						GlobalUndoRedoGroup::Get()->AddAction( action, m_AssetID );
+
 						m_MaterialAsset->SetSurfaceName( rSurface.Name );
 					}
 				}

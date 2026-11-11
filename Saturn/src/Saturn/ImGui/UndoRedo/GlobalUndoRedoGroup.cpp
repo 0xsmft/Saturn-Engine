@@ -38,6 +38,9 @@ namespace Saturn {
 	GlobalUndoRedoGroup::GlobalUndoRedoGroup()
 	{
 		SingletonStorage::AddSingleton( this );
+
+		m_RedoActions.reserve( MAX_UNDO_REDO_ACTIONS );
+		m_UndoActions.reserve( MAX_UNDO_REDO_ACTIONS );
 	}
 
 	GlobalUndoRedoGroup::~GlobalUndoRedoGroup()

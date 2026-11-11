@@ -34,6 +34,8 @@
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 
+#include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
+
 namespace Saturn {
 
 	CameraShakeDescriptorAssetViewer::CameraShakeDescriptorAssetViewer( AssetID id )
@@ -50,6 +52,8 @@ namespace Saturn {
 
 	CameraShakeDescriptorAssetViewer::~CameraShakeDescriptorAssetViewer()
 	{
+		GlobalUndoRedoGroup::Get()->RemoveIfActionHasIdentifier( m_AssetID );
+
 		m_OriginalCameraShakeAsset = nullptr;
 	}
 
@@ -66,6 +70,9 @@ namespace Saturn {
 			float trauma = m_CameraShakeAsset->GetTrauma();
 			if( Auxiliary::DrawFloatControl( "Trauma", trauma, 0.0F, 1.0F ) ) 
 			{
+				Ref<UndoRedoActionModifyFloat> action = Ref<UndoRedoActionModifyFloat>::Create( "Modify Camera Shake Trauma", &m_CameraShakeAsset->m_Trauma, m_CameraShakeAsset->m_Trauma, trauma );
+				GlobalUndoRedoGroup::Get()->AddAction( action, m_AssetID );
+
 				m_CameraShakeAsset->m_Trauma = trauma;
 				modifiedThisFrame = true;
 			}
@@ -73,6 +80,9 @@ namespace Saturn {
 			float decaySpeed = m_CameraShakeAsset->GetDecaySpeed();
 			if( Auxiliary::DrawFloatControl( "Decay Speed", decaySpeed ) ) 
 			{
+				Ref<UndoRedoActionModifyFloat> action = Ref<UndoRedoActionModifyFloat>::Create( "Modify Camera Shake Decay Speed", &m_CameraShakeAsset->m_DecaySpeed, m_CameraShakeAsset->m_DecaySpeed, decaySpeed );
+				GlobalUndoRedoGroup::Get()->AddAction( action, m_AssetID );
+
 				m_CameraShakeAsset->m_DecaySpeed = decaySpeed;
 				modifiedThisFrame = true;
 			}
@@ -80,6 +90,9 @@ namespace Saturn {
 			float pitchDeg = m_CameraShakeAsset->GetMaxPitchInDeg();
 			if( Auxiliary::DrawFloatControl( "Max Pitch (degrees)", pitchDeg, 0.0f, 360.0f ) )
 			{
+				Ref<UndoRedoActionModifyFloat> action = Ref<UndoRedoActionModifyFloat>::Create( "Modify Camera Shake Max Pitch", &m_CameraShakeAsset->m_MaxPitchDeg, m_CameraShakeAsset->m_MaxPitchDeg, pitchDeg );
+				GlobalUndoRedoGroup::Get()->AddAction( action, m_AssetID );
+
 				m_CameraShakeAsset->m_MaxPitchDeg = pitchDeg;
 				modifiedThisFrame = true;
 			}
@@ -87,6 +100,9 @@ namespace Saturn {
 			float yawDeg = m_CameraShakeAsset->GetMaxYawInDeg();
 			if( Auxiliary::DrawFloatControl( "Max Yaw (degrees)", yawDeg, 0.0f, 360.0f ) ) 
 			{
+				Ref<UndoRedoActionModifyFloat> action = Ref<UndoRedoActionModifyFloat>::Create( "Modify Camera Shake Max Yaw", &m_CameraShakeAsset->m_MaxYawDeg, m_CameraShakeAsset->m_MaxYawDeg, yawDeg );
+				GlobalUndoRedoGroup::Get()->AddAction( action, m_AssetID );
+
 				m_CameraShakeAsset->m_MaxYawDeg = yawDeg;
 				modifiedThisFrame = true;
 			}
@@ -94,6 +110,9 @@ namespace Saturn {
 			float rollDeg = m_CameraShakeAsset->GetMaxRollInDeg();
 			if( Auxiliary::DrawFloatControl( "Max Roll (degrees)", rollDeg, 0.0f, 360.0f ) )
 			{
+				Ref<UndoRedoActionModifyFloat> action = Ref<UndoRedoActionModifyFloat>::Create( "Modify Camera Shake Max Roll", &m_CameraShakeAsset->m_MaxRollDeg, m_CameraShakeAsset->m_MaxRollDeg, rollDeg );
+				GlobalUndoRedoGroup::Get()->AddAction( action, m_AssetID );
+
 				m_CameraShakeAsset->m_MaxRollDeg = rollDeg;
 				modifiedThisFrame = true;
 			}

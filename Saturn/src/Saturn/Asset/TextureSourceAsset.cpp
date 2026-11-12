@@ -201,6 +201,9 @@ namespace Saturn {
 			pTextureData = stbi_load( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels, 4 );
 		}
 
+		// If we are null here then stbi did not load the texture.
+		SAT_CORE_ASSERT( pTextureData );
+
 		m_Width = Width;
 		m_Height = Height;
 		// TODO: This is bad, forcing every texture to have 4 channels is a waste of CPU and GPU space,

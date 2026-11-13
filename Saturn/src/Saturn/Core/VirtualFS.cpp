@@ -31,6 +31,8 @@
 
 #include "Profiler.h"
 
+#include "Saturn/Project/Project.h"
+
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
 #if !defined(SAT_DIST)
@@ -395,6 +397,12 @@ namespace Saturn {
 			mounts += GetMountsForDir( rDir );
 
 		return mounts;
+	}
+
+	const std::string& VirtualFS::GetActiveMountBaseAndEnsureIsProject() const
+	{
+		SAT_CORE_VERIFY( m_ActiveMountBase != Project::GetActiveConfig().Name );
+		return m_ActiveMountBase;
 	}
 
 	size_t VirtualFS::GetMountsForDir( Ref<VDirectory>& rDirectory )

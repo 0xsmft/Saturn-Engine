@@ -64,9 +64,11 @@
 
 namespace Saturn {
 
+#define VfsGetActiveMountBase() VirtualFS::Get().GetActiveMountBase()
+
 	bool RawMaterialAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VfsGetActiveMountBase();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
 		if( !file )
@@ -199,7 +201,7 @@ namespace Saturn {
 
 	bool RawPrefabSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VfsGetActiveMountBase();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
 		if( !file )
@@ -276,7 +278,7 @@ namespace Saturn {
 
 	bool RawSkeletonAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VfsGetActiveMountBase();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
 		if( !file )
@@ -336,7 +338,7 @@ namespace Saturn {
 
 	bool RawStaticMeshAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VfsGetActiveMountBase();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
 		if( !file )
@@ -370,7 +372,7 @@ namespace Saturn {
 
 	bool RawSkeletalMeshAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VfsGetActiveMountBase();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
 		if( !file )
@@ -431,7 +433,7 @@ namespace Saturn {
 
 	bool RawPhysicsMaterialAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VfsGetActiveMountBase();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
 		if( !file )
@@ -525,7 +527,7 @@ namespace Saturn {
 	bool RawSoundSpecAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
 #if defined( SAT_DIST )
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VfsGetActiveMountBase();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
 		if( !file )
@@ -581,7 +583,7 @@ namespace Saturn {
 
 	bool RawBlackboardSpecSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VfsGetActiveMountBase();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
 		if( !file )
@@ -645,7 +647,7 @@ namespace Saturn {
 	bool RawSkeletalAnimationSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
 #if defined(SAT_DIST)
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VfsGetActiveMountBase();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
 		if( !file )
@@ -696,7 +698,7 @@ namespace Saturn {
 	bool RawFontSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
 #if defined(SAT_DIST)
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VfsGetActiveMountBase();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
 		if( !file )
@@ -737,7 +739,7 @@ namespace Saturn {
 
 	bool RawAluraStylingProfileSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VfsGetActiveMountBase();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
 		if( !file )
@@ -833,7 +835,7 @@ namespace Saturn {
 
 	bool RawPhysicsSurfaceRegistryAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VfsGetActiveMountBase();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
 		if( !file )
@@ -891,7 +893,7 @@ namespace Saturn {
 
 	bool RawLocalisationTableAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VfsGetActiveMountBase();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
 		if( !file )
@@ -1012,7 +1014,7 @@ namespace Saturn {
 
 	bool RawCameraShakeDescriptorAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VfsGetActiveMountBase();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
 		if( !file )

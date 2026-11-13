@@ -2095,7 +2095,7 @@ namespace Saturn {
 
 	void Scene::DeserialiseData()
 	{
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VirtualFS::Get().GetActiveMountBaseAndEnsureIsProject();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, Path );
 
 		if( !file )

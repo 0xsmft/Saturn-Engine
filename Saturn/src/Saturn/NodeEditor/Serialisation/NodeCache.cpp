@@ -440,7 +440,7 @@ namespace Saturn {
 		cachePath /= filename;
 
 #if defined( SAT_DIST )
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VirtualFS::Get().GetActiveMountBaseAndEnsureIsProject();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, cachePath );
 
 		if( !file )
@@ -514,7 +514,7 @@ namespace Saturn {
 		cachePath /= filename;
 
 #if defined( SAT_DIST )
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		const std::string& rMountBase = VirtualFS::Get().GetActiveMountBaseAndEnsureIsProject();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, cachePath );
 
 		if( !file )

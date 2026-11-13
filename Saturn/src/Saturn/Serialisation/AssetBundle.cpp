@@ -569,6 +569,8 @@ namespace Saturn {
 		if( !std::filesystem::exists( cachePath ) )
 			return AssetBundleResult::FileNotFound;
 
+		VirtualFS::Get().SetActiveMountBase( Project::GetActiveConfig().Name );
+
 		Timer timer;
 
 		std::ifstream stream( cachePath, std::ios::binary | std::ios::in );
@@ -850,6 +852,8 @@ namespace Saturn {
 		stream.close();
 
 		Project::SetActiveProject( newProject );
+
+		VirtualFS::Get().SetActiveMountBase( newProject->GetActiveConfig().Name );
 
 		return AssetBundleResult::Success;
 	}

@@ -88,6 +88,12 @@ namespace Saturn {
 		size_t GetMountBases();
 		size_t GetMounts();
 
+		const std::string& GetActiveMountBase() const { return m_ActiveMountBase; }
+
+		const std::string& GetActiveMountBaseAndEnsureIsProject() const;
+
+		void SetActiveMountBase( const std::string& rBase ) { m_ActiveMountBase = rBase; }
+
 	public:
 		void ImGuiRender();
 
@@ -107,6 +113,13 @@ namespace Saturn {
 
 	private:
 		Ref<VDirectory> m_RootDirectory;
+
+		// The current mount base, normally is the Game content
+		// which is named under the same name as the project
+		// but during initialisation the mount base will be set
+		// to the engine content and will bet set back to the
+		// project name.
+		std::string m_ActiveMountBase;
 
 		std::unordered_map<std::string, std::filesystem::path> m_MountBases;
 		

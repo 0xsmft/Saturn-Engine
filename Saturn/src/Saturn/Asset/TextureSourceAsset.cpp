@@ -275,7 +275,9 @@ namespace Saturn {
 	void TextureSourceAsset::ReadFromVFS()
 	{
 #if defined(SAT_DIST)
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		// We do not need to ensure we are the project mount base here because
+		// this asset may be loaded by the engine asset bundle.
+		const std::string& rMountBase = VirtualFS::Get().GetActiveMountBase();
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, Path );
 
 		if( !file )

@@ -1901,8 +1901,9 @@ namespace Saturn {
 			{
 				bool open = false;
 
-				// Push disabled flag if runtime running
-				Auxiliary::ScopedDisabledFlag disabledFlag( m_IsReadOnly );
+				// We do push any disabled flags here because it's safe to
+				// edit this during runtime.
+				//Auxiliary::ScopedDisabledFlag disabledFlag( m_IsReadOnly );
 
 				ImGui::Text( "Camera Shake Asset" );
 

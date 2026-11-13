@@ -60,7 +60,11 @@ namespace Saturn {
 				std::filesystem::remove( SoundSourcePath );
 		}
 
+		// Absolute path to the source file.
+		// Serialised as a relative path.
 		std::filesystem::path SoundSourcePath;
+		
+		// Absolute path to the orginal import path.
 		std::filesystem::path OriginalImportPath;
 
 #if defined(SAT_DIST)

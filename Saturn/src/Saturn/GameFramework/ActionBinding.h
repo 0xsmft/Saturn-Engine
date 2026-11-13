@@ -59,14 +59,14 @@ namespace Saturn {
 	// - RenderID and ActionName are stripped out.
 	struct ActionBindingData
 	{
-		std::string Name = "";
+		std::string Name;
 		RubyKey Key = RubyKey_UnknownKey;
 		RubyMouseButton MouseButton = RubyMouseButton_Unknown;
 		ActionBindingType Type = ActionBindingType::Key;
 
 #if !defined(SAT_DIST)
 		// The name of the Key/Mouse button
-		std::string ActionName = "";
+		std::string ActionName;
 		// RenderID
 		UUID ID;
 #endif

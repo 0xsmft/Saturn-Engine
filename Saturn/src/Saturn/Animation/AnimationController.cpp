@@ -46,7 +46,7 @@ namespace Saturn {
 	}
 
 	AnimationController::~AnimationController()
-	{		
+	{
 		m_TaskHandler = nullptr;
 	}
 

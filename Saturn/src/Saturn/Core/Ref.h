@@ -364,7 +364,7 @@ namespace Saturn {
 	struct IsSharedPtrDeleterViaible : std::false_type {};
 
 	template<class Callee, class Args>
-	struct IsSharedPtrDeleterViaible<Callee, Args, std::void_t<decltype(std::declval<Callee>()(std::declval<Args>()))>> : std::true_type {};
+	struct IsSharedPtrDeleterViaible<Callee, Args, std::void_t<decltype( std::declval<Callee>()( std::declval<Args>() ) )>> : std::true_type {};
 
 	template<typename Ty>
 	class SharedPtr;

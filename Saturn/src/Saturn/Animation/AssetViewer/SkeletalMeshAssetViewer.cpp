@@ -153,84 +153,94 @@ namespace Saturn {
 	void SkeletalMeshAssetViewer::RenderSidebar() 
 	{
 		ImGui::PushID( ( int ) m_AssetID );
-		ImGui::Begin( "Sidebar" );
-
-		if( Auxiliary::TreeNode( "Materials" ) )
+		if( ImGui::Begin( "Sidebar" ) ) 
 		{
-			int i = 0;
-			for( auto& rMaterial : m_Mesh->GetMaterialAssets() )
+			if( Auxiliary::TreeNode( "Materials" ) )
 			{
-				ImGui::PushID( i );
-
-				if( ImGui::TreeNodeEx( rMaterial->Name.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding ) )
+				int i = 0;
+				for( auto& rMaterial : m_Mesh->GetMaterialAssets() )
 				{
-					Auxiliary::ScopedDisabledFlag disabledIfRo( m_IsReadOnly );
+					ImGui::PushID( i );
 
-					ImGui::BeginHorizontal( i );
-
-					ImGui::TextDisabled( "%s", rMaterial->Name.empty() ? "<NULL>" : rMaterial->Name.c_str() );
-
-					bool open = false;
-
-					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+					if( ImGui::TreeNodeEx( rMaterial->Name.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding ) )
 					{
-						open = true;
+						Auxiliary::ScopedDisabledFlag disabledIfRo( m_IsReadOnly );
+
+						ImGui::BeginHorizontal( i );
+
+						ImGui::TextDisabled( "%s", rMaterial->Name.empty() ? "<NULL>" : rMaterial->Name.c_str() );
+
+						bool open = false;
+
+						if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+						{
+							open = true;
+						}
+
+						ImGui::Spring();
+
+						ImGui::EndHorizontal();
+
+						if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, m_AssetFinderOut, 0 ) )
+						{
+							// Update Pure Dependencies & Update ADN Dependencies
+							AssetManager::Get()->UnregisterAssetDependency( m_AssetID, rMaterial->ID );
+
+							m_Mesh->GetMaterialRegistry()->SetMaterial( i, m_AssetFinderOut );
+
+							AssetManager::Get()->RegisterAssetDependency( m_AssetID, m_AssetFinderOut );
+						}
+
+						Auxiliary::EndTreeNode();
 					}
 
-					ImGui::Spring();
+					ImGui::PopID();
 
-					ImGui::EndHorizontal();
-
-					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, m_AssetFinderOut, 0 ) )
-					{
-						// Update Pure Dependencies & Update ADN Dependencies
-						AssetManager::Get()->UnregisterAssetDependency( m_AssetID, rMaterial->ID );
-
-						m_Mesh->GetMaterialRegistry()->SetMaterial( i, m_AssetFinderOut );
-
-						AssetManager::Get()->RegisterAssetDependency( m_AssetID, m_AssetFinderOut );
-					}
-
-					Auxiliary::EndTreeNode();
+					++i;
 				}
 
-				ImGui::PopID();
-
-				++i;
+				Auxiliary::EndTreeNode();
 			}
 
-			Auxiliary::EndTreeNode();
-		}
-
-		if( Auxiliary::TreeNode( "Preview Animation" ) )
-		{
-			ImGui::TextDisabled( "%s", m_PreviewAnimation == nullptr ? "<NULL>" : m_PreviewAnimation->Name.c_str() );
-
-			bool open = false;
-
-			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+			if( Auxiliary::TreeNode( "Preview Animation" ) )
 			{
-				open = true;
+				ImGui::TextDisabled( "%s", m_PreviewAnimation == nullptr ? "<NULL>" : m_PreviewAnimation->Name.c_str() );
+
+				bool open = false;
+
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+				{
+					open = true;
+				}
+
+				if( Auxiliary::DrawAssetFinder( AssetType::SkeletalAnimation, &open, m_AssetFinderOut, 0 ) )
+				{
+					Ref<SkeletalAnimationAsset> newAsset = AssetManager::Get()->GetAssetAs<SkeletalAnimationAsset>( m_AssetFinderOut );
+
+					m_PreviewAnimation = newAsset;
+
+					m_Entity->GetComponent<SkeletalMeshComponent>().LocalAnimator->InitAnimation( m_AssetFinderOut, m_Mesh, AnimatorType::Single );
+				}
+
+				ImGui::Separator();
+
+				if( ImGui::Button( "Reset" ) )
+				{
+					m_PreviewAnimation = nullptr;
+					m_Entity->GetComponent<SkeletalMeshComponent>().LocalAnimator->Clear();
+				}
+
+				Auxiliary::EndTreeNode();
 			}
 
-			if( Auxiliary::DrawAssetFinder( AssetType::SkeletalAnimation, &open, m_AssetFinderOut, 0 ) )
+			if( Auxiliary::TreeNode( "Statistics" ) )
 			{
-				Ref<SkeletalAnimationAsset> newAsset = AssetManager::Get()->GetAssetAs<SkeletalAnimationAsset>( m_AssetFinderOut );
+				ImGui::Text( "Vertices: %" PRIu64, m_Mesh->GetVertexCount() );
+				ImGui::Text( "Indices: %" PRIu64, m_Mesh->GetIndexCount() );
+				ImGui::Text( "Faces: %" PRIu64, m_Mesh->GetFaceCount() );
 
-				m_PreviewAnimation = newAsset;
-
-				m_Entity->GetComponent<SkeletalMeshComponent>().LocalAnimator->InitAnimation( m_AssetFinderOut, m_Mesh, AnimatorType::Single );
+				Auxiliary::EndTreeNode();
 			}
-
-			ImGui::Separator();
-
-			if( ImGui::Button( "Reset" ) )
-			{
-				m_PreviewAnimation = nullptr;
-				m_Entity->GetComponent<SkeletalMeshComponent>().LocalAnimator->Clear();
-			}
-
-			Auxiliary::EndTreeNode();
 		}
 
 		ImGui::End();

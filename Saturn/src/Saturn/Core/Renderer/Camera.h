@@ -31,11 +31,8 @@
 #include "Saturn/Core/AABB/AABB.h"
 #include "Saturn/Core/Ref.h"
 
-#include <stdint.h>
-
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
-#include <array>
 
 namespace Saturn {
 

@@ -224,7 +224,12 @@ namespace Saturn {
 
 		[[nodiscard]] bool IsAssetTypeReimportable( AssetType type ) const;
 
-	private:
+		//////////////////////////////////////////////////////////////////////////
+		// INTERNAL FUNCTION!
+		// FOR USE BY ASSET BUNDLES.
+		//
+		// Import an asset from the main asset manager but into a different registry.
+		//
 		template<typename Ty>
 		Ref<Ty> ImportAssetAs( Ref<AssetRegistry> TargetRegistry, AssetID id )
 		{

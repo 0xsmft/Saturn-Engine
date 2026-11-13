@@ -53,6 +53,7 @@
 #include "Saturn/Physics/PhysicsSurfaceRegistryAsset.h"
 #include "Saturn/Alura/AluraStylingProfile.h"
 #include "Saturn/Alura/AluraFont.h"
+#include "Saturn/Alura/AluraCanvas.h"
 #include "Saturn/NodeEditor/GlobalNodeEditorTaskCache.h"
 #include "Saturn/LocText/Asset/LocalisationTableAsset.h"
 
@@ -112,220 +113,7 @@ namespace Saturn {
 			std::filesystem::create_directories( tempDir );
 	}
 
-	AssetBundleResult AssetBundle::BundleAssets( Ref<JobProgress> jobProgress )
-	{
-		jobProgress->Reset();
-		jobProgress->SetTitle( "AssetBundle - Init (Minimal)" );
-
-		BundleMinimal();
-
-		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
-
-		if( !std::filesystem::exists( cachePath ) )
-			std::filesystem::create_directories( cachePath );
-
-		cachePath /= "AssetBundle.sab";
-
-		Timer timer;
-
-		AssetManager* pAssetManager = AssetManager::Get();
-		Ref<Project> ActiveProject = Project::GetActiveProject();
-
-		const std::string& rMountBase = Project::GetActiveConfig().Name;
-
-		Ref<AssetRegistry> AssetBundleRegistry = Ref<AssetRegistry>::Create();
-		AssetBundleRegistry->CopyFrom( pAssetManager->GetAssetRegistry() );
-
-		auto& rVFS = VirtualFS::Get();
-
-		// Start by dumping all of the assets
-		CreateTempDirIfNeeded();
-
-		std::unordered_map<std::filesystem::path, AssetID> DumpFileToAssetID;
-
-		jobProgress->SetTitle( "Loading assets..." );
-
-		// THREAD-TRANSTION, Block main thread
-		Application::Get()->SuspendMainThreadCV();
-
-		for( auto& [id, asset] : AssetBundleRegistry->GetAssetMap() )
-		{
-			SAT_CORE_INFO( "Dumping asset to disk: {0}", asset->Name );
-
-			RTDumpAsset( asset, AssetBundleRegistry );
-
-			std::filesystem::path p = ActiveProject->GetTempDir() / std::to_string( id );
-			asset->Type == AssetType::Sound ? p.replace_extension( ".vfsn" ) : p.replace_extension( ".vfs" );
-
-			DumpFileToAssetID[ p ] = id;
-		}
-
-		// Always do scenes last because when we load the Asset Bundle we want all the assets to be loaded before this.
-		for( auto& [id, asset] : AssetBundleRegistry->GetAssetMap() )
-		{
-			if( asset->Type != AssetType::Scene )
-				continue;
-
-			Ref<Scene> scene = Ref<Scene>::Create();
-			scene->Path = asset->Path;
-			scene->ID = asset->ID;
-			scene->Name = asset->Name;
-
-			// Load from disk
-			SceneSerialiser serialiser( scene );
-			serialiser.Deserialise( asset );
-
-			// Serialise
-			scene->SerialiseData();
-		}
-
-		// THREAD-TRANSTION, Resume main thread
-		Application::Get()->ResumeMainThreadCV();
-
-		SAT_CORE_INFO( "Dumped {0} asset(s)", pAssetManager->GetAssetRegistrySize() );
-
-		jobProgress->SetProgress( 10.0f );
-		jobProgress->SetTitle( "Building AssetBundle" );
-
-		/////////////////////////////////////
-
-		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
-
-		AssetBundleHeader header{};
-		header.Assets = pAssetManager->GetAssetRegistrySize();
-		header.Version = SAT_CURRENT_VERSION;
-
-		RawSerialisation::WriteObject( header, fout );
-
-		// Write asset header data.
-		for( auto& [id, asset] : AssetBundleRegistry->GetAssetMap() )
-		{
-			SAT_CORE_INFO( "Writing header information for asset: ASSET/{0} ({1})", id, asset->Name );
-			const std::string status = std::format( "Writing header information for asset: ASSET/{0} ({1})", ( uint64_t ) id, asset->Name );
-
-			jobProgress->SetStatus( status );
-
-			asset->SerialiseData( fout );
-
-			rVFS.Mount( rMountBase, asset->Path );
-		}
-
-		jobProgress->SetProgress( 35.0f );
-		jobProgress->SetStatus( "Writing VFS" );
-
-		/////////////////////////////////////
-
-		VirtualFS::Get().WriteVFS( fout );
-
-		/////////////////////////////////////
-
-		const auto compressionThreshold = ActiveProject->GetCompressionThresholdForAssetBundle();
-
-		uint64_t offset = 0;
-
-		// Next, now that we have dumped all of the assets we can now pack and compress the assets.
-		// And we also make sure that we write the uncompressed/compressed file data + the header into the VFS.
-		for( const auto& rEntry : std::filesystem::directory_iterator( Project::GetActiveProject()->GetTempDir() ) )
-		{
-			if( !rEntry.is_regular_file() )
-				continue;
-
-			const std::filesystem::path path = rEntry.path();
-
-			Buffer fileBuffer;
-			std::ifstream stream( path, std::ios::binary | std::ios::in | std::ios::ate );
-
-			// File size in bytes
-			const uint64_t fileSize = stream.tellg();
-
-			DumpFileHeader dfh;
-			dfh.Asset = DumpFileToAssetID.at( path );
-			dfh.Version = SAT_CURRENT_VERSION;
-			dfh.OrginalSize = fileSize;
-			dfh.Offset = offset;
-
-			offset += fileSize;
-
-			stream.seekg( 0 );
-
-			fileBuffer.Allocate( ( size_t ) fileSize );
-			stream.read( reinterpret_cast< char* >( fileBuffer.Data ), fileBuffer.Size );
-
-			stream.close();
-
-			// Compression
-			if( ( fileSize / 1024llu ) > compressionThreshold && path.extension() != ".vfsn" )
-			{
-				SAT_CORE_WARN( "Compressing file: {0} because file is {1} KiB", path.string(), fileSize / 1024 );
-
-				jobProgress->SetStatus( std::format( "Compressing file: {0}", path.string() ) );
-
-				// Compress, file over the limit.
-				Buffer TemporaryBuffer;
-				TemporaryBuffer.Allocate( ( size_t ) compressBound( ( uLong ) fileSize ) );
-
-				uLongf compressedSize = ( uLongf ) TemporaryBuffer.Size;
-
-				int result = compress(
-					( Bytef* ) TemporaryBuffer.Data, &compressedSize,
-					( Bytef* ) fileBuffer.Data, static_cast< uLong >( fileBuffer.Size ) );
-
-				if( result != Z_OK )
-				{
-					SAT_CORE_ERROR( "Failed to compress {0}! zlib error is: {1}. Writing uncompressed data.", path.string(), result );
-
-					RawSerialisation::WriteObject( dfh, fout );
-					RawSerialisation::WriteSaturnBuffer( fileBuffer, fout );
-				}
-
-				SAT_CORE_INFO( "Compressed file: {0} new file size is {1} KiB", path.string(), compressedSize / 1024 );
-
-				Buffer compressedData = Buffer::Copy( TemporaryBuffer.Data, compressedSize );
-				dfh.CompressedSize = compressedSize;
-
-				RawSerialisation::WriteObject( dfh, fout );
-				RawSerialisation::WriteSaturnBuffer( compressedData, fout );
-
-				compressedData.Free();
-				TemporaryBuffer.Free();
-			}
-			else
-			{
-				dfh.CompressedSize = dfh.OrginalSize;
-
-				SAT_CORE_WARN( "Not compressing file: {0} because file size is less than the compression threshold KiB", path.string() );
-				jobProgress->SetStatus( std::format( "Not Compressing file because file size is less than the compression threshold: {0}", path.string() ) );
-
-				RawSerialisation::WriteObject( dfh, fout );
-				RawSerialisation::WriteSaturnBuffer( fileBuffer, fout );
-			}
-
-			jobProgress->AddProgress( ( 1.0f + jobProgress->GetProgress() ) / DumpFileToAssetID.size() );
-
-			fileBuffer.Free();
-		}
-
-		SAT_CORE_INFO( "Packaged {0} asset(s)", pAssetManager->GetAssetRegistrySize() );
-		SAT_CORE_INFO( "Asset bundle built in {0}s", timer.Elapsed() / 1000 );
-
-		fout.close();
-
-		jobProgress->SetProgress( 100.0f );
-		jobProgress->SetStatus( "Done" );
-
-		DumpFileToAssetID.clear();
-
-		// Delete the temp folder.
-		std::filesystem::remove_all( ActiveProject->GetTempDir() );
-
-		AssetBundleRegistry = nullptr;
-
-		jobProgress->OnComplete();
-
-		return AssetBundleResult::Success;
-	}
-
-	void AssetBundle::RTDumpAsset( const Ref<Asset>& rAsset, Ref<AssetRegistry>& AssetBundleRegistry )
+	static void RTDumpAsset( const Ref<Asset>& rAsset, Ref<AssetRegistry>& AssetBundleRegistry )
 	{
 		UUID id = rAsset->ID;
 		AssetManager* pAssetManager = AssetManager::Get();
@@ -557,6 +345,222 @@ namespace Saturn {
 		}
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	// ASSET BUNDLE
+
+	AssetBundleResult AssetBundle::BundleAssets( Ref<JobProgress> jobProgress )
+	{
+		jobProgress->Reset();
+		jobProgress->SetTitle( "AssetBundle - Init (Minimal)" );
+
+		BundleMinimal();
+
+		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
+
+		if( !std::filesystem::exists( cachePath ) )
+			std::filesystem::create_directories( cachePath );
+
+		cachePath /= "AssetBundle.sab";
+
+		Timer timer;
+
+		AssetManager* pAssetManager = AssetManager::Get();
+		Ref<Project> ActiveProject = Project::GetActiveProject();
+
+		const std::string& rMountBase = Project::GetActiveConfig().Name;
+
+		Ref<AssetRegistry> AssetBundleRegistry = Ref<AssetRegistry>::Create();
+		AssetBundleRegistry->CopyFrom( pAssetManager->GetAssetRegistry() );
+
+		auto& rVFS = VirtualFS::Get();
+
+		// Start by dumping all of the assets
+		CreateTempDirIfNeeded();
+
+		std::unordered_map<std::filesystem::path, AssetID> DumpFileToAssetID;
+
+		jobProgress->SetTitle( "Loading assets..." );
+
+		// THREAD-TRANSTION, Block main thread
+		Application::Get()->SuspendMainThreadCV();
+
+		for( auto& [id, asset] : AssetBundleRegistry->GetAssetMap() )
+		{
+			SAT_CORE_INFO( "Dumping asset to disk: {0}", asset->Name );
+
+			RTDumpAsset( asset, AssetBundleRegistry );
+
+			std::filesystem::path p = ActiveProject->GetTempDir() / std::to_string( id );
+			asset->Type == AssetType::Sound ? p.replace_extension( ".vfsn" ) : p.replace_extension( ".vfs" );
+
+			DumpFileToAssetID[ p ] = id;
+		}
+
+		// Always do scenes last because when we load the Asset Bundle we want all the assets to be loaded before this.
+		for( auto& [id, asset] : AssetBundleRegistry->GetAssetMap() )
+		{
+			if( asset->Type != AssetType::Scene )
+				continue;
+
+			Ref<Scene> scene = Ref<Scene>::Create();
+			scene->Path = asset->Path;
+			scene->ID = asset->ID;
+			scene->Name = asset->Name;
+
+			// Load from disk
+			SceneSerialiser serialiser( scene );
+			serialiser.Deserialise( asset );
+
+			// Serialise
+			scene->SerialiseData();
+		}
+
+		// THREAD-TRANSTION, Resume main thread
+		Application::Get()->ResumeMainThreadCV();
+
+		SAT_CORE_INFO( "Dumped {0} asset(s)", pAssetManager->GetAssetRegistrySize() );
+
+		jobProgress->SetProgress( 10.0f );
+		jobProgress->SetTitle( "Building AssetBundle" );
+
+		/////////////////////////////////////
+
+		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
+
+		AssetBundleHeader header{};
+		header.Assets = pAssetManager->GetAssetRegistrySize();
+		header.Version = SAT_CURRENT_VERSION;
+
+		RawSerialisation::WriteObject( header, fout );
+
+		// Write asset header data.
+		for( auto& [id, asset] : AssetBundleRegistry->GetAssetMap() )
+		{
+			SAT_CORE_INFO( "Writing header information for asset: ASSET/{0} ({1})", id, asset->Name );
+			const std::string status = std::format( "Writing header information for asset: ASSET/{0} ({1})", ( uint64_t ) id, asset->Name );
+
+			jobProgress->SetStatus( status );
+
+			asset->SerialiseData( fout );
+
+			rVFS.Mount( rMountBase, asset->Path );
+		}
+
+		jobProgress->SetProgress( 35.0f );
+		jobProgress->SetStatus( "Writing VFS" );
+
+		/////////////////////////////////////
+
+		VirtualFS::Get().WriteVFS( fout );
+
+		/////////////////////////////////////
+
+		const auto compressionThreshold = ActiveProject->GetCompressionThresholdForAssetBundle();
+
+		uint64_t offset = 0;
+
+		// Next, now that we have dumped all of the assets we can now pack and compress the assets.
+		// And we also make sure that we write the uncompressed/compressed file data + the header into the VFS.
+		for( const auto& rEntry : std::filesystem::directory_iterator( Project::GetActiveProject()->GetTempDir() ) )
+		{
+			if( !rEntry.is_regular_file() )
+				continue;
+
+			const std::filesystem::path path = rEntry.path();
+
+			Buffer fileBuffer;
+			std::ifstream stream( path, std::ios::binary | std::ios::in | std::ios::ate );
+
+			// File size in bytes
+			const uint64_t fileSize = stream.tellg();
+
+			DumpFileHeader dfh;
+			dfh.Asset = DumpFileToAssetID.at( path );
+			dfh.Version = SAT_CURRENT_VERSION;
+			dfh.OrginalSize = fileSize;
+			dfh.Offset = offset;
+
+			offset += fileSize;
+
+			stream.seekg( 0 );
+
+			fileBuffer.Allocate( ( size_t ) fileSize );
+			stream.read( reinterpret_cast< char* >( fileBuffer.Data ), fileBuffer.Size );
+
+			stream.close();
+
+			// Compression
+			if( ( fileSize / 1024llu ) > compressionThreshold && path.extension() != ".vfsn" )
+			{
+				SAT_CORE_WARN( "Compressing file: {0} because file is {1} KiB", path.string(), fileSize / 1024 );
+
+				jobProgress->SetStatus( std::format( "Compressing file: {0}", path.string() ) );
+
+				// Compress, file over the limit.
+				Buffer TemporaryBuffer;
+				TemporaryBuffer.Allocate( ( size_t ) compressBound( ( uLong ) fileSize ) );
+
+				uLongf compressedSize = ( uLongf ) TemporaryBuffer.Size;
+
+				int result = compress(
+					( Bytef* ) TemporaryBuffer.Data, &compressedSize,
+					( Bytef* ) fileBuffer.Data, static_cast< uLong >( fileBuffer.Size ) );
+
+				if( result != Z_OK )
+				{
+					SAT_CORE_ERROR( "Failed to compress {0}! zlib error is: {1}. Writing uncompressed data.", path.string(), result );
+
+					RawSerialisation::WriteObject( dfh, fout );
+					RawSerialisation::WriteSaturnBuffer( fileBuffer, fout );
+				}
+
+				SAT_CORE_INFO( "Compressed file: {0} new file size is {1} KiB", path.string(), compressedSize / 1024 );
+
+				Buffer compressedData = Buffer::Copy( TemporaryBuffer.Data, compressedSize );
+				dfh.CompressedSize = compressedSize;
+
+				RawSerialisation::WriteObject( dfh, fout );
+				RawSerialisation::WriteSaturnBuffer( compressedData, fout );
+
+				compressedData.Free();
+				TemporaryBuffer.Free();
+			}
+			else
+			{
+				dfh.CompressedSize = dfh.OrginalSize;
+
+				SAT_CORE_WARN( "Not compressing file: {0} because file size is less than the compression threshold KiB", path.string() );
+				jobProgress->SetStatus( std::format( "Not Compressing file because file size is less than the compression threshold: {0}", path.string() ) );
+
+				RawSerialisation::WriteObject( dfh, fout );
+				RawSerialisation::WriteSaturnBuffer( fileBuffer, fout );
+			}
+
+			jobProgress->AddProgress( ( 1.0f + jobProgress->GetProgress() ) / DumpFileToAssetID.size() );
+
+			fileBuffer.Free();
+		}
+
+		SAT_CORE_INFO( "Packaged {0} asset(s)", pAssetManager->GetAssetRegistrySize() );
+		SAT_CORE_INFO( "Asset bundle built in {0}s", timer.Elapsed() / 1000 );
+
+		fout.close();
+
+		jobProgress->SetProgress( 100.0f );
+		jobProgress->SetStatus( "Done" );
+
+		DumpFileToAssetID.clear();
+
+		// Delete the temp folder.
+		std::filesystem::remove_all( ActiveProject->GetTempDir() );
+
+		AssetBundleRegistry = nullptr;
+
+		jobProgress->OnComplete();
+
+		return AssetBundleResult::Success;
+	}
+
 	AssetBundleResult AssetBundle::ReadBundle()
 	{
 		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
@@ -639,7 +643,7 @@ namespace Saturn {
 				return AssetBundleResult::AssetIDMismatch;
 			}
 
-			// The version that the file was generated in much also match the engine version.
+			// The version that the file was generated in must also match the engine version.
 			if( dfh.Version != SAT_CURRENT_VERSION )
 			{
 				SAT_CORE_ERROR( "Pack file version mismatch!" );
@@ -848,6 +852,348 @@ namespace Saturn {
 		Project::SetActiveProject( newProject );
 
 		return AssetBundleResult::Success;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// ENGINE ASSET BUNDLE
+
+	EngineAssetBundle::EngineAssetBundle()
+	{
+	}
+
+	EngineAssetBundle::~EngineAssetBundle()
+	{
+	}
+
+	void EngineAssetBundle::MountToVFS()
+	{
+		const auto path = std::filesystem::current_path();
+		VirtualFS::Get().MountBase( "Saturn-" SAT_CURRENT_VERSION_BUILD_TAG, path / "content" );
+	}
+
+	static EngineAssetBundleResource DetermineResourceTypeFromID( AssetID id )
+	{
+		switch( id )
+		{
+			case 1llu:
+			{
+				return EngineAssetBundleResource::BRDFLutTexture;
+			}
+
+			case 2llu:
+			{
+				return EngineAssetBundleResource::SMAA_AreaTexture;
+			}
+
+			case 3llu:
+			{
+				return EngineAssetBundleResource::DefaultFont;
+			}
+
+			default:
+				SAT_CORE_ASSERT( false, "Unknown type!" );
+				return EngineAssetBundleResource::Unknown;
+		}
+	}
+
+	void EngineAssetBundle::Bundle()
+	{
+		MountToVFS();
+
+		// Editor assets that are needed to ship are:
+		// content/textures/BRDF_LUT.tga
+		// content/textures/SMMA_AreaTex.tga
+		// content/Templates/NotoSans-Regular.saf
+
+		// THREAD-TRANSTION, Block main thread
+		Application::Get()->SuspendMainThreadCV();
+
+		Ref<Asset> memoryOnlyTemporaryAsset = Ref<Asset>::Create();
+		memoryOnlyTemporaryAsset->ID = 1;
+		
+		memoryOnlyTemporaryAsset->Name = SAT_CURRENT_VERSION_BUILD_TAG "-Eng-BRDFLut";
+
+		Ref<TextureSourceAsset> brdfLut = Ref< TextureSourceAsset >::Create( memoryOnlyTemporaryAsset, "content/Textures/BRDF_LUT.tga", TextureLoadFlags_FlipVertically );
+		
+		memoryOnlyTemporaryAsset->ID = 2;
+		memoryOnlyTemporaryAsset->Name = SAT_CURRENT_VERSION_BUILD_TAG "-Eng-SMAAAreaTexture";
+		Ref<TextureSourceAsset> smaaAreaTexture = Ref< TextureSourceAsset >::Create( memoryOnlyTemporaryAsset, "content/Textures/SMAA_AreaTex.tga", TextureLoadFlags_FlipVertically );
+
+		Ref<AluraFont> editorFont = AluraCanvas::LoadEditorFont_ForEngineAB( Passkey< EngineAssetBundle >() );
+		editorFont->ID = 3;
+		editorFont->Name = SAT_CURRENT_VERSION_BUILD_TAG "-Eng-AluraFont";
+
+		std::vector<Ref<Asset>> assetsToDump{ brdfLut, editorFont, smaaAreaTexture };
+
+		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
+
+		if( !std::filesystem::exists( cachePath ) )
+			std::filesystem::create_directories( cachePath );
+
+		cachePath /= "AssetBundle-Engine.res.sab";
+
+		Timer timer;
+
+		auto& rVFS = VirtualFS::Get();
+
+		// Start by dumping all of the assets
+		CreateTempDirIfNeeded();
+
+		std::unordered_map<std::filesystem::path, AssetID> DumpFileToAssetID;
+
+		//////////////////////////////////////////////////////////////////////////
+		// DUMPING
+		
+		// (1) BRDFLUT
+		brdfLut->WriteToVFS();
+
+		// (2) SMAA
+		smaaAreaTexture->WriteToVFS();
+
+		// (3) Editor Font
+		{
+			RawFontSerialiser s;
+			s.DumpAndWriteToVFS( editorFont );
+		}
+
+		// THREAD-TRANSTION, Resume main thread
+		Application::Get()->ResumeMainThreadCV();
+
+		//////////////////////////////////////////////////////////////////////////
+
+		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
+
+		AssetBundleHeader header{};
+		header.Assets = 3llu;
+		header.Version = SAT_CURRENT_VERSION;
+
+		RawSerialisation::WriteObject( header, fout );
+
+		// Write asset header data.
+		for( auto& rAsset : assetsToDump )
+		{
+			rAsset->SerialiseData( fout );
+		}
+
+		/////////////////////////////////////
+
+		Ref<Project> ActiveProject = Project::GetActiveProject();
+
+		const auto compressionThreshold = ActiveProject->GetCompressionThresholdForAssetBundle();
+
+		uint64_t offset = 0;
+
+		// Next, now that we have dumped all of the assets we can now pack and compress the assets.
+		// And we also make sure that we write the uncompressed/compressed file data + the header into the VFS.
+		size_t index = 0llu;
+		for( const auto& rEntry : std::filesystem::directory_iterator( Project::GetActiveProject()->GetTempDir() ) )
+		{
+			if( !rEntry.is_regular_file() )
+				continue;
+
+			const std::filesystem::path path = rEntry.path();
+
+			Buffer fileBuffer;
+			std::ifstream stream( path, std::ios::binary | std::ios::in | std::ios::ate );
+
+			// File size in bytes
+			const uint64_t fileSize = stream.tellg();
+
+			DumpFileHeader dfh;
+			dfh.Asset = assetsToDump[ index++ ]->ID;
+			dfh.Version = SAT_CURRENT_VERSION;
+			dfh.OrginalSize = fileSize;
+			dfh.Offset = offset;
+
+			offset += fileSize;
+
+			stream.seekg( 0 );
+
+			fileBuffer.Allocate( ( size_t ) fileSize );
+			stream.read( reinterpret_cast< char* >( fileBuffer.Data ), fileBuffer.Size );
+
+			stream.close();
+
+			Buffer TemporaryBuffer;
+			TemporaryBuffer.Allocate( ( size_t ) compressBound( ( uLong ) fileSize ) );
+
+			uLongf compressedSize = ( uLongf ) TemporaryBuffer.Size;
+			const int result = compress(
+				( Bytef* ) TemporaryBuffer.Data, &compressedSize,
+				( Bytef* ) fileBuffer.Data, static_cast< uLong >( fileBuffer.Size ) );
+
+			if( result != Z_OK )
+			{
+				SAT_CORE_ERROR( "Failed to compress {0}! zlib error is: {1}. Writing uncompressed data.", path.string(), result );
+
+				RawSerialisation::WriteObject( dfh, fout );
+				RawSerialisation::WriteObject( ( uint8_t ) DetermineResourceTypeFromID( dfh.Asset ), fout );
+				RawSerialisation::WriteSaturnBuffer( fileBuffer, fout );
+			}
+
+			SAT_CORE_INFO( "Compressed file: {0} new file size is {1} KiB", path.string(), compressedSize / 1024 );
+
+			Buffer compressedData = Buffer::Copy( TemporaryBuffer.Data, compressedSize );
+			dfh.CompressedSize = compressedSize;
+
+			RawSerialisation::WriteObject( dfh, fout );
+			RawSerialisation::WriteObject( ( uint8_t ) DetermineResourceTypeFromID( dfh.Asset ), fout );
+			RawSerialisation::WriteSaturnBuffer( compressedData, fout );
+
+			compressedData.Free();
+			TemporaryBuffer.Free();
+
+			fileBuffer.Free();
+		}
+
+		SAT_CORE_INFO( "Asset bundle built in {0}s", timer.Elapsed() / 1000 );
+
+		fout.close();
+
+		DumpFileToAssetID.clear();
+		assetsToDump.clear();
+
+		// Delete the temp folder.
+		std::filesystem::remove_all( ActiveProject->GetTempDir() );
+	}
+
+	Ref<class Asset> EngineAssetBundle::GetResource( EngineAssetBundleResource res )
+	{
+		return nullptr;
+	}
+
+	AssetBundleResult EngineAssetBundle::ReadAll()
+	{
+		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
+		cachePath /= "AssetBundle.sab";
+
+		if( !std::filesystem::exists( cachePath ) )
+			return AssetBundleResult::FileNotFound;
+
+		Timer timer;
+
+		std::ifstream stream( cachePath, std::ios::binary | std::ios::in );
+
+		AssetBundleHeader header{};
+		RawSerialisation::ReadObject( header, stream );
+
+		if( std::memcmp( header.Magic, ".AB", 4 ) != 0 )
+		{
+			SAT_CORE_ERROR( "Invalid engine asset bundle file header or corrupt asset bundle file!" );
+			return AssetBundleResult::InvalidFileHeader;
+		}
+
+		if( header.Version != SAT_CURRENT_VERSION )
+		{
+			std::string decodedAssetBundleVer;
+			SAT_DECODE_VER_STRING( header.Version, decodedAssetBundleVer );
+
+			SAT_CORE_ERROR( "Engine Asset bundle version mismatch! This should not happen. Asset bundle version is: {0} while current Engine version is: {1}.", decodedAssetBundleVer, SAT_CURRENT_VERSION_STRING );
+
+			SAT_CORE_ERROR( "To developers: Have you forgot to rebuilt the Asset Bundle (and by extent the Engine Asset Bundle) after rebuilding the project for disturbution or was the Asset Bundle built successfully?" );
+
+			return AssetBundleResult::FileVersionMismatch;
+		}
+
+		m_LoadedAssets.reserve( 3 );
+
+		// Read header information
+		for( size_t i = 0; i < header.Assets; ++i )
+		{
+			Ref<Asset> asset = Ref<Asset>::Create();
+			asset->DeserialiseData( stream );
+
+			m_LoadedAssets.push_back( asset );
+		}
+
+		std::vector<DumpFileHeader> FileEntries( header.Assets );
+
+		for( size_t i = 0; i < header.Assets; ++i )
+		{
+			DumpFileHeader dfh;
+			RawSerialisation::ReadObject( dfh, stream );
+
+			EngineAssetBundleResource resType = EngineAssetBundleResource::Unknown;
+			RawSerialisation::ReadObject( resType, stream );
+
+			if( std::memcmp( dfh.Magic, ".PAK", 4 ) != 0 )
+			{
+				SAT_CORE_ERROR( "Invalid pack file header!" );
+
+				return AssetBundleResult::InvalidPackFileHeader;
+			}
+
+			// The version that the file was generated in must also match the engine version.
+			if( dfh.Version != SAT_CURRENT_VERSION )
+			{
+				SAT_CORE_ERROR( "Pack file version mismatch!" );
+
+				return AssetBundleResult::PackFileVersionMismatch;
+			}
+
+			// Find the VFile
+			Ref<VFile> file = Ref<VFile>::Create();
+			if( !file )
+				return AssetBundleResult::FileNotFound;
+
+			if( dfh.OrginalSize != dfh.CompressedSize )
+			{
+				SAT_CORE_INFO( "Decompressing file at offset {0}, AssetID/{1}", dfh.Offset, dfh.Asset );
+
+				// Compression was used, uncompress. 
+				Buffer uncompressedData;
+				uncompressedData.Allocate( dfh.OrginalSize );
+
+				Buffer compressedData;
+				RawSerialisation::ReadSaturnBuffer( compressedData, stream );
+
+				uLongf uncompSize = ( uLongf ) uncompressedData.Size;
+
+				const int result = uncompress(
+					( Bytef* ) uncompressedData.Data, &uncompSize,
+					( Bytef* ) compressedData.Data, static_cast< const uLong >( compressedData.Size ) );
+
+				if( result != Z_OK )
+				{
+					SAT_CORE_ERROR( "Failed to uncompress data!" );
+
+					return AssetBundleResult::FailedToUncompress;
+				}
+
+				compressedData.Free();
+
+				file->FileContent.resize( uncompSize );
+				std::memcpy( file->FileContent.data(), uncompressedData.Data, uncompressedData.Size );
+
+				uncompressedData.Free();
+			}
+
+			switch( resType )
+			{
+				default:
+				case EngineAssetBundleResource::Unknown:
+					SAT_CORE_VERIFY( false, "AssetBundle (Engine): Invalid resource type!" );
+						break;
+			
+				case EngineAssetBundleResource::DefaultFont:
+				{
+				} break;
+				
+				case EngineAssetBundleResource::SMAA_AreaTexture:
+				{
+				} break;
+				
+				case EngineAssetBundleResource::BRDFLutTexture:
+				{
+				} break;
+			
+				case EngineAssetBundleResource::DefaultBloomDirtTexture:
+				{
+				} break;
+			}
+		}
+
+		stream.close();
 	}
 
 }

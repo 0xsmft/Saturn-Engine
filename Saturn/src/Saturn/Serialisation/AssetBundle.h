@@ -28,7 +28,9 @@
 
 #pragma once
 
+#include "Saturn/Asset/EngineAssetBundleResource.h"
 #include "Saturn/Asset/AssetRegistry.h"
+
 #include "Saturn/ImGui/JobProgress.h"
 
 namespace Saturn {
@@ -85,8 +87,29 @@ namespace Saturn {
 		// Minimal assets bundles are just the project data.
 					  static AssetBundleResult BundleMinimal();
 		[[nodiscard]] static AssetBundleResult ReadMinimal();
+	};
+
+	class EngineAssetBundle
+	{
+	public:
+		static EngineAssetBundle* Get() { return SingletonStorage::GetSingleton<EngineAssetBundle>(); }
+
+	public:
+		EngineAssetBundle();
+		virtual ~EngineAssetBundle();
+
+		AssetBundleResult ReadAll();
+
+	public:
+		Ref<class Asset> GetResource( EngineAssetBundleResource res );
+
+	public:
+		static void Bundle();
+
 	private:
-		static void RTDumpAsset( const Ref<Asset>& rAsset, Ref<AssetRegistry>& AssetBundleRegistry );
+		static void MountToVFS();
+
+		std::unordered_map<EngineAssetBundleResource, Ref<Asset>> m_LoadedAssets;
 	};
 
 }

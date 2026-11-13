@@ -2103,6 +2103,17 @@ namespace Saturn {
 		m_Renderer->PopClipRect();
 	}
 
+	Ref<AluraFont> AluraCanvas::LoadEditorFont_ForEngineAB( Passkey< class EngineAssetBundle > pk )
+	{
+		// Load editor font
+		Ref<AluraFont> font = Ref<AluraFont>::Create();
+
+		// NB: Remember this is an editor filepath!
+		font->Deserialise_ForAluraCanvas( Passkey<AluraCanvas>(), "content/Templates/NotoSansMono-Regular.saf" );
+	
+		return font;
+	}
+
 	std::string AluraCanvas::RetrieveTextFromLocTable( const std::string& rTableEntry )
 	{
 		// If we do not have any tables in the stack, we'll just return the

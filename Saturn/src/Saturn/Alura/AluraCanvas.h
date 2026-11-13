@@ -445,6 +445,8 @@ namespace Saturn {
 		void PushClipRect_ForItem( const AluraRect& bb );
 		void PopClipRect_ForItem();
 
+	public:
+		[[nodiscard]] static Ref<AluraFont> LoadEditorFont_ForEngineAB( Passkey< class EngineAssetBundle > pk );
 
 	private:
 		UUID m_ID;

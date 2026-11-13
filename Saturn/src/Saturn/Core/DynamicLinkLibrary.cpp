@@ -49,6 +49,10 @@ namespace Saturn {
 		m_Handle = ::LoadLibraryW( rPath.wstring().data() );
 #else
 		m_Handle = dlopen( rPath.string().data(), RTLD_NOW );
+		if( !m_Handle )
+		{
+			SAT_CORE_ERROR( "Failed to load library: {0}", dlerror() );
+		}
 #endif
 
 		return m_Handle != nullptr;

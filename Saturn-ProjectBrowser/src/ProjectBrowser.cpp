@@ -63,8 +63,6 @@ Saturn::Application* Saturn::CreateApplication( int argc, char** argv )
 {
 	Saturn::ApplicationSpecification spec;
 	spec.Flags = Saturn::ApplicationFlag_UIOnly;
-	spec.WindowWidth = 1200;
-	spec.WindowHeight = 780;
 
 	return new ProjectBrowserApplication( spec );
 }

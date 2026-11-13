@@ -75,12 +75,11 @@
 #define SAT_GCC_TYPENAME typename
 #define SAT_MSVC_TYPENAME
 
-// We only support x86_64
-#if defined(_MSC_VER) && defined(_M_X64)
+#if defined(__x86_64__)
 #define SAT_PLATFORM_BINARY_FOLDER "linux-x86_64"
 // Name must match with output binary path name.
 #define SAT_PLATFORM_ARCHITECTURE_NAME "x86_64"
-#elif defined(_MSC_VER) && defined(_M_ARM64)
+#elif defined(__aarch64__)
 #define SAT_PLATFORM_BINARY_FOLDER "linux-AARCH64"
 // Name must match with output binary path name.
 #define SAT_PLATFORM_ARCHITECTURE_NAME "AARCH64"

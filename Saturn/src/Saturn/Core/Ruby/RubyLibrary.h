@@ -36,6 +36,7 @@
 #if defined(SAT_PLATFORM_LINUX)
 #include <xcb/xcb.h>
 #include <unordered_map>
+#include <xkbcommon/xkbcommon-x11.h>
 #endif
 
 namespace Saturn {
@@ -127,8 +128,16 @@ namespace Saturn {
 		RubyNSApplicationData* GetMacOSData();
 		
 		void ChangeToBundlePath();
-#endif
+#elif defined(SAT_PLATFORM_LINUX)
+	public:
+		xkb_context* GetXkbContext() const { return m_pXkbContext; }
+		xkb_keymap* GetXkbKeymap() const { return m_pXkbKeymap; }
+		xkb_state* GetXkbState() const { return m_pXkbState; }
 
+	private:
+		void InitXkb();
+		void TerminateXkb();
+#endif
 	private:
 		std::unordered_set<RubyKey> m_Keys;
 		std::unordered_set<RubyMouseButton> m_CurrentMouseButtons;
@@ -137,6 +146,9 @@ namespace Saturn {
 #if defined(SAT_PLATFORM_LINUX)
 		std::unordered_map<xcb_window_t, RubyXcbBackend*> m_Windows;
 		xcb_connection_t* m_pConnection = NULL;
+		xkb_context* m_pXkbContext = NULL;
+		xkb_keymap* m_pXkbKeymap = NULL;
+		xkb_state* m_pXkbState = NULL;
 #elif defined(SAT_PLATFORM_MACOS)
 		RubyNSApplicationData* m_pMacOSData;
 #endif

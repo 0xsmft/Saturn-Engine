@@ -592,7 +592,8 @@ namespace Saturn {
 
 		DetachedProcess dp( CommandLine );
 #elif defined(SAT_PLATFORM_LINUX)
-		SAT_CORE_ASSERT( false, "Application::OpenNativeFileExplorer not implemented on Linux!" );
+		std::wstring CommandLine = std::format( L"xdg-open \"{0}\"", rPath.wstring() );
+		DetachedProcess dp( CommandLine );
 #elif defined(SAT_PLATFORM_MACOS)
 		Auxiliary::MacOS::OpenFolderInExplorer( rPath, select );
 #endif

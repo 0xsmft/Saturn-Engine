@@ -22,15 +22,7 @@ namespace SaturnBuildTool
             var Args = new List<string>();
 
             ProcessStartInfo processStart = new ProcessStartInfo();
-            switch( Shared.ProjectInfo.TargetArchitectureKind )
-            {
-                default:
-                    {
-                        processStart.FileName = "clang++";
-                    }
-                    break;
-            }
-
+            processStart.FileName = "clang++";
             processStart.CreateNoWindow = true;
             processStart.RedirectStandardOutput = true;
             processStart.RedirectStandardError = true;
@@ -48,7 +40,7 @@ namespace SaturnBuildTool
             {
                 case LinkerOutput.SharedLibrary:
                     {
-                        Args.Add( $" -dynamiclib -Wl,-install_name,@rpath/{LinkSettings.OutputName}" );
+                        Args.Add( $" -shared -Wl,-soname={LinkSettings.OutputName}" );
                     } break;
             }
 
@@ -63,37 +55,28 @@ namespace SaturnBuildTool
                 Args.Add( string.Format( " -L\"{0}\" ", libPath ) );
             }
 
+            Args.Add( " -Wl,--start-group" );
             foreach( string link in LinkSettings.Links )
             {
                 Args.Add( string.Format( " -l\"{0}\"", link ) );
             }
+            Args.Add( " -Wl,--end-group" );
 
             foreach( string rpath in LinkSettings.RTLibraryPaths )
             {
                 Args.Add( string.Format( " -Wl,-rpath,{0}", rpath ) );
             }
 
-            // TODO: This should not be hard coded... works for now.
-            switch( Shared.Platform.PlatformType )
-            {
-                default: break;
-                
-                case PlatformType.MacApple:
-                    {
-                        Args.Add( " -framework Cocoa -framework CoreFoundation -framework IOKit -framework CoreVideo -framework CoreAudio -framework QuartzCore -framework UniformTypeIdentifiers" );
-                    } break;
-            }
-
             switch( Shared.ProjectInfo.TargetArchitectureKind )
             {
                 case ArchitectureKind.x86_64:
                     {
-                        Args.Add( " -arch x86_64" );
+                        Args.Add( " -m64 -L/usr/lib64" );
                     } break;
 
                 case ArchitectureKind.AArch64:
                     {
-                        Args.Add( " -arch arm64" );
+                        Args.Add( " -march=armv8-a" );
                     } break;
             }
 

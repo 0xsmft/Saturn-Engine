@@ -106,17 +106,34 @@ namespace SaturnBuildTool
                         binPath = VulkanSDKPath.FindVulkanSDKPath();
                         if( string.IsNullOrEmpty( binPath ) ) break;
 
-                        binPath = Path.Combine( binPath, "Lib" );
+                        // On Linux, the Vulkan SDK has a "lib" folder but on Windows and Mac, it is "Lib"
+                        // cheers vulkan devs.
+                        if( Shared.Platform.PlatformType == PlatformType.Linux )
+                        {
+                            binPath = Path.Combine( binPath, "lib" );
+                        }
+                        else
+                        {
+                            binPath = Path.Combine( binPath, "Lib" );
+                        }
                     }
                     break;
-
 
                 case VendorProject.VULKANSDK:
                     {
                         binPath = VulkanSDKPath.FindVulkanSDKPath();
                         if( string.IsNullOrEmpty( binPath ) ) break;
 
-                        binPath = Path.Combine( binPath, "Bin" );
+                        // On Linux, the Vulkan SDK has a "bin" folder but on Windows and Mac, it is "Bin"
+                        // cheers vulkan devs.
+                        if( Shared.Platform.PlatformType == PlatformType.Linux )
+                        {
+                            binPath = Path.Combine( binPath, "bin" );
+                        }
+                        else
+                        {
+                            binPath = Path.Combine( binPath, "Bin" );
+                        }
                     }
                     break;
 

@@ -40,7 +40,7 @@ namespace Saturn {
 	{
 	public:
 		RubyXcbBackend( const RubyWindowSpecification& rSpec, RubyWindow* pWindow );
-		~RubyXcbBackend();
+		virtual ~RubyXcbBackend();
 
 		RubyWindow* GetParent() { return m_pWindow; }
 
@@ -65,7 +65,7 @@ namespace Saturn {
 		virtual void SetIcon( Ref<class Texture2D> icon ) override;
 
 		void ResizeWindow( uint32_t Width, uint32_t Height ) override;
-		RubyIVec2 GetSize() override;
+		virtual RubyIVec2 GetSize() const override;
 
 		void MoveWindow( int x, int y ) override;
 
@@ -96,6 +96,9 @@ namespace Saturn {
 
 		void FlashAttention() override;
 
+		virtual RubyVec2 GetFramebufferScale() const override;
+		virtual RubyIVec2 GetFramebufferSize() const override;
+
 	public:
 		void BlockMouseCursor() { m_BlockMouseCursor = true; }
 		void UnblockMouseCursor() { m_BlockMouseCursor = false; }
@@ -123,6 +126,7 @@ namespace Saturn {
 
 		// For disabled mouse mode.
 		RubyIVec2 m_MouseRestorePoint{};
+		RubyVec2 m_LockedMouseDelta{};
 		RubyCursorType m_CurrentCursorType = RubyCursorType::None;
 
 		bool m_MouseTracked = false;

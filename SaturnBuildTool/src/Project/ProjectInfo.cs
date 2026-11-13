@@ -287,7 +287,7 @@ namespace SaturnBuildTool
             }
             else if( CommandLineParser.Instance.FindFlag( "LINUX64" ) )
             {
-                TargetArchitectureKind = ArchitectureKind.AArch64;
+                TargetArchitectureKind = ArchitectureKind.x86_64;
             }
             else if( CommandLineParser.Instance.FindFlag( "APPLE" ) )
             {

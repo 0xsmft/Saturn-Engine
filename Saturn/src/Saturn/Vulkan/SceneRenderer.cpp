@@ -208,9 +208,7 @@ namespace Saturn {
 	void SceneRenderer::InitGeometryPass()
 	{
 		// Create render pass.
-		if( m_RendererData.GeometryPass )
-			m_RendererData.GeometryPass->Recreate();
-		else
+		if( !m_RendererData.GeometryPass )
 		{
 			PassSpecification PassSpec = {};
 			PassSpec.Name = "Geometry Pass";
@@ -419,11 +417,7 @@ namespace Saturn {
 
 	void SceneRenderer::InitPreDepth()
 	{
-		if( m_RendererData.PreDepthPass ) 
-		{
-			m_RendererData.PreDepthPass->Recreate();
-		}
-		else
+		if( !m_RendererData.PreDepthPass ) 
 		{
 			PassSpecification PassSpec = {};
 			PassSpec.Name = "PreDepth";
@@ -795,11 +789,7 @@ namespace Saturn {
 			m_RendererData.SSAOMaterial->UploadDataToUB( 1, &u_Data, sizeof( u_Data ) );
 		}
 
-		if( m_RendererData.SSAORenderPass )
-		{
-			m_RendererData.SSAORenderPass->Recreate();
-		}
-		else
+		if( !m_RendererData.SSAORenderPass )
 		{
 			PassSpecification PassSpec = {};
 			PassSpec.Name = "SSAO RP";
@@ -917,11 +907,7 @@ namespace Saturn {
 
 		m_RendererData.AOBlurMaterial->SetResource( "u_AOTexture", m_RendererData.SSAOFramebuffer->GetColorAttachmentsResources()[ 0 ] );
 
-		if( m_RendererData.AOBlurRenderPass )
-		{
-			m_RendererData.AOBlurRenderPass->Recreate();
-		}
-		else
+		if( !m_RendererData.AOBlurRenderPass )
 		{
 			PassSpecification PassSpec = {};
 			PassSpec.Name = "AO-Blur RP";
@@ -968,9 +954,7 @@ namespace Saturn {
 
 	void SceneRenderer::InitSelectionPass()
 	{
-		if( m_RendererData.SelectedGeometryPass )
-			m_RendererData.SelectedGeometryPass->Recreate();
-		else
+		if( !m_RendererData.SelectedGeometryPass )
 		{
 			// Create the scene composite render pass.
 			PassSpecification PassSpec = {};
@@ -1082,9 +1066,7 @@ namespace Saturn {
 
 	void SceneRenderer::InitJmpfFirstPass()
 	{
-		if( m_RendererData.JumpFloodFirstPass )
-			m_RendererData.JumpFloodFirstPass->Recreate();
-		else
+		if( !m_RendererData.JumpFloodFirstPass )
 		{
 			// Create the scene composite render pass.
 			PassSpecification PassSpec = {};
@@ -1135,9 +1117,7 @@ namespace Saturn {
 
 	void SceneRenderer::InitJmpfEvenPass()
 	{
-		if( m_RendererData.JumpFloodEvenPass )
-			m_RendererData.JumpFloodEvenPass->Recreate();
-		else
+		if( !m_RendererData.JumpFloodEvenPass )
 		{
 			// Create the scene composite render pass.
 			PassSpecification PassSpec = {};
@@ -1188,9 +1168,7 @@ namespace Saturn {
 
 	void SceneRenderer::InitJmpfOddPass()
 	{
-		if( m_RendererData.JumpFloodOddPass )
-			m_RendererData.JumpFloodOddPass->Recreate();
-		else
+		if( !m_RendererData.JumpFloodOddPass )
 		{
 			// Create the scene composite render pass.
 			PassSpecification PassSpec = {};

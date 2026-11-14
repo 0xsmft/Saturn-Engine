@@ -42,6 +42,7 @@
 #include "StorageBufferSet.h"
 #include "UniformBufferSet.h"
 #include "Sampler.h"
+#include "Image3D.h"
 #include "SceneRendererTiering.h"
 
 #include "Pipeline.h"
@@ -567,6 +568,14 @@ namespace Saturn {
 		size_t GTAODenoisePassCount = 5llu;
 		std::vector<PerDenoisePassInformation> GTAODenoisePassesInformation;
 
+		// Volumetric Clouds
+		//////////////////////////////////////////////////////////////////////////
+
+		// Noise
+		Ref<Image3D> CloudsNoiseOut;
+		Ref<ComputePipeline> CloudsNoisePipeline;
+		Ref<Material> CloudsNoiseMaterial;
+
 		// Instanced Rendering
 		//////////////////////////////////////////////////////////////////////////
 		// 		
@@ -608,6 +617,7 @@ namespace Saturn {
 		Ref< Shader > GTAOPrefilterShader;
 		Ref< Shader > GTAOMainPassShader;
 		Ref< Shader > GTAODenoiseShader;
+		Ref< Shader > CloudsNoiseShader;
 	};
 
 	struct SceneRendererSpecification
@@ -735,6 +745,8 @@ namespace Saturn {
 		void InitGTAOPrefilter();
 		void InitGTAOMainPass();
 		void InitGTAODenoisePass();
+		void InitVolumetricCloudsPass();
+		void InitVolumetricCloudsNoise();
 
 		void InitBuffers();
 		void InitRenderer2D();

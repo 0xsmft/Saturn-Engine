@@ -165,6 +165,8 @@ namespace Saturn {
 
 		InitAO( AOTechnique::None );
 
+		InitVolumetricCloudsPass();
+
 		// TODO: Package BRDF texture into AssetBundle in dist
 		m_RendererData.BRDFLUT_Texture = Ref<Texture2D>::Create( "content/textures/BRDF_LUT.tga", AddressingMode::Repeat, TextureLoadFlags_LoadOnMainThread );
 
@@ -1463,6 +1465,47 @@ namespace Saturn {
 			rPassInfo.Material->SetResource( "s_LinearSampler", m_RendererData.GeneralUseLinearSampler );
 			rPassInfo.Material->SetResource( "o_GTAOOut", rPassInfo.OutImage );
 		}
+	}
+
+	void SceneRenderer::InitVolumetricCloudsPass()
+	{
+		InitVolumetricCloudsNoise();
+	}
+
+	void SceneRenderer::InitVolumetricCloudsNoise()
+	{
+		m_RendererData.CloudsNoiseOut = Ref<Image3D>::Create( ImageFormat::RED8, 128u, 128u, 128u, 1u, ImageTiling::Optimal, true );
+		m_RendererData.CloudsNoiseOut->SetDebugName( "CloudsBasicNoise" );
+
+		if( !m_RendererData.CloudsNoiseShader )
+		{
+			m_RendererData.CloudsNoiseShader = ShaderLibrary::Get().FindOrLoad( "CloudsBasicNoise", "content/shaders/CloudsBasicNoise.glsl" );
+		}
+
+		m_RendererData.CloudsNoisePipeline = Ref<ComputePipeline>::Create( m_RendererData.CloudsNoiseShader );
+
+		m_RendererData.CloudsNoiseMaterial = Ref<Material>::Create( m_RendererData.CloudsNoiseShader, "CloudsNoiseMat" );
+		m_RendererData.CloudsNoiseMaterial->SetResource( "o_Output", m_RendererData.CloudsNoiseOut );
+
+		constexpr size_t LOCAL_SIZE = 8llu;
+		const auto imgSize = m_RendererData.CloudsNoiseOut->GetWidth();
+
+		// Execute to generate the noise.
+		m_RendererData.CloudsNoisePipeline->Bind();
+		m_RendererData.CloudsNoisePipeline->Execute( m_RendererData.CloudsNoiseMaterial, 
+			glm::ceil( ( ( imgSize + LOCAL_SIZE ) - 1 ) / LOCAL_SIZE ),
+			glm::ceil( ( ( imgSize + LOCAL_SIZE ) - 1 ) / LOCAL_SIZE ),
+			m_RendererData.CloudsNoiseOut->GetDepth() );
+
+		// TRANSITION: GENERAL TO SHADER READ ONLY
+		//			   so that we can use it again in our shaders again
+		//             we also want to make sure that we do it in the
+		//			   same cmd buffer as the compute shader.
+		m_RendererData.CloudsNoiseOut->TransitionImageLayout( 
+			m_RendererData.CloudsNoisePipeline->GetCommandBuffer(), 
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
+
+		m_RendererData.CloudsNoisePipeline->Unbind();
 	}
 
 	void SceneRenderer::RenderGrid()
@@ -3010,7 +3053,9 @@ namespace Saturn {
 		dependencyInfo.imageMemoryBarrierCount = 1;
 		dependencyInfo.pImageMemoryBarriers = &barrier;
 
+		CmdBeginDebugLabel( CommandBuffer, "Sync" );
 		vkCmdPipelineBarrier2( CommandBuffer, &dependencyInfo );
+		CmdEndDebugLabel( CommandBuffer );
 
 		CmdBeginDebugLabel( CommandBuffer, "CompositionPass" );
 		SMAACompositionPass();

@@ -1469,43 +1469,88 @@ namespace Saturn {
 
 	void SceneRenderer::InitVolumetricCloudsPass()
 	{
-		InitVolumetricCloudsNoise();
+		InitVolumetricCloudsBasicNoise();
+		InitVolumetricCloudsDetailedNoise();
+		InitVolumetricCloudsTextureResources();
 	}
 
-	void SceneRenderer::InitVolumetricCloudsNoise()
+	void SceneRenderer::InitVolumetricCloudsBasicNoise()
 	{
-		m_RendererData.CloudsNoiseOut = Ref<Image3D>::Create( ImageFormat::RED8, 128u, 128u, 128u, 1u, ImageTiling::Optimal, true );
-		m_RendererData.CloudsNoiseOut->SetDebugName( "CloudsBasicNoise" );
+		m_RendererData.CloudsNoiseBasicOut = Ref<Image3D>::Create( ImageFormat::RED8, 128u, 128u, 128u, 1u, ImageTiling::Optimal, true );
+		m_RendererData.CloudsNoiseBasicOut->SetDebugName( "CloudsBasicNoise" );
 
-		if( !m_RendererData.CloudsNoiseShader )
+		if( !m_RendererData.CloudsNoiseBasicShader )
 		{
-			m_RendererData.CloudsNoiseShader = ShaderLibrary::Get().FindOrLoad( "CloudsBasicNoise", "content/shaders/CloudsBasicNoise.glsl" );
+			m_RendererData.CloudsNoiseBasicShader = ShaderLibrary::Get().FindOrLoad( "CloudsBasicNoise", "content/shaders/CloudsBasicNoise.glsl" );
 		}
 
-		m_RendererData.CloudsNoisePipeline = Ref<ComputePipeline>::Create( m_RendererData.CloudsNoiseShader );
+		m_RendererData.CloudsNoiseBasicPipeline = Ref<ComputePipeline>::Create( m_RendererData.CloudsNoiseBasicShader );
 
-		m_RendererData.CloudsNoiseMaterial = Ref<Material>::Create( m_RendererData.CloudsNoiseShader, "CloudsNoiseMat" );
-		m_RendererData.CloudsNoiseMaterial->SetResource( "o_Output", m_RendererData.CloudsNoiseOut );
+		m_RendererData.CloudsNoiseBasicMaterial = Ref<Material>::Create( m_RendererData.CloudsNoiseBasicShader, "CloudsNoiseMat" );
+		m_RendererData.CloudsNoiseBasicMaterial->SetResource( "o_Output", m_RendererData.CloudsNoiseBasicOut );
 
 		constexpr size_t LOCAL_SIZE = 8llu;
-		const auto imgSize = m_RendererData.CloudsNoiseOut->GetWidth();
+		const auto imgSize = m_RendererData.CloudsNoiseBasicOut->GetWidth();
 
 		// Execute to generate the noise.
-		m_RendererData.CloudsNoisePipeline->Bind();
-		m_RendererData.CloudsNoisePipeline->Execute( m_RendererData.CloudsNoiseMaterial, 
+		m_RendererData.CloudsNoiseBasicPipeline->Bind();
+		m_RendererData.CloudsNoiseBasicPipeline->Execute( m_RendererData.CloudsNoiseBasicMaterial, 
 			glm::ceil( ( ( imgSize + LOCAL_SIZE ) - 1 ) / LOCAL_SIZE ),
 			glm::ceil( ( ( imgSize + LOCAL_SIZE ) - 1 ) / LOCAL_SIZE ),
-			m_RendererData.CloudsNoiseOut->GetDepth() );
+			m_RendererData.CloudsNoiseBasicOut->GetDepth() );
 
 		// TRANSITION: GENERAL TO SHADER READ ONLY
 		//			   so that we can use it again in our shaders again
 		//             we also want to make sure that we do it in the
 		//			   same cmd buffer as the compute shader.
-		m_RendererData.CloudsNoiseOut->TransitionImageLayout( 
-			m_RendererData.CloudsNoisePipeline->GetCommandBuffer(), 
+		m_RendererData.CloudsNoiseBasicOut->TransitionImageLayout( 
+			m_RendererData.CloudsNoiseBasicPipeline->GetCommandBuffer(), 
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
 
-		m_RendererData.CloudsNoisePipeline->Unbind();
+		m_RendererData.CloudsNoiseBasicPipeline->Unbind();
+	}
+
+	void SceneRenderer::InitVolumetricCloudsDetailedNoise()
+	{
+		m_RendererData.CloudsNoiseDetailedOut = Ref<Image3D>::Create( ImageFormat::RED8, 64u, 64u, 64u, 1u, ImageTiling::Optimal, true );
+		m_RendererData.CloudsNoiseDetailedOut->SetDebugName( "CloudsDetailNoise" );
+
+		if( !m_RendererData.CloudsNoiseDetailedShader )
+		{
+			m_RendererData.CloudsNoiseDetailedShader = ShaderLibrary::Get().FindOrLoad( "CloudsDetailNoise", "content/shaders/CloudsDetailNoise.glsl" );
+		}
+
+		m_RendererData.CloudsNoiseDetailedPipeline = Ref<ComputePipeline>::Create( m_RendererData.CloudsNoiseDetailedShader );
+
+		m_RendererData.CloudsNoiseDetailedMaterial = Ref<Material>::Create( m_RendererData.CloudsNoiseDetailedShader, "CloudsNoiseMat" );
+		m_RendererData.CloudsNoiseDetailedMaterial->SetResource( "o_Output", m_RendererData.CloudsNoiseDetailedOut );
+
+		constexpr size_t LOCAL_SIZE = 8llu;
+		const auto imgSize = m_RendererData.CloudsNoiseDetailedOut->GetWidth();
+
+		// Execute to generate the noise.
+		m_RendererData.CloudsNoiseDetailedPipeline->Bind();
+		m_RendererData.CloudsNoiseDetailedPipeline->Execute( m_RendererData.CloudsNoiseDetailedMaterial,
+			glm::ceil( ( ( imgSize + LOCAL_SIZE ) - 1 ) / LOCAL_SIZE ),
+			glm::ceil( ( ( imgSize + LOCAL_SIZE ) - 1 ) / LOCAL_SIZE ),
+			m_RendererData.CloudsNoiseDetailedOut->GetDepth() );
+
+		// TRANSITION: GENERAL TO SHADER READ ONLY
+		//			   so that we can use it again in our shaders again
+		//             we also want to make sure that we do it in the
+		//			   same cmd buffer as the compute shader.
+		m_RendererData.CloudsNoiseDetailedOut->TransitionImageLayout(
+			m_RendererData.CloudsNoiseDetailedPipeline->GetCommandBuffer(),
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
+
+		m_RendererData.CloudsNoiseDetailedPipeline->Unbind();
+	}
+
+	void SceneRenderer::InitVolumetricCloudsTextureResources()
+	{
+		m_RendererData.CloudsWeatherMap = Ref<Texture2D>::Create( "content/textures/CloudsWeatherMap.tga", AddressingMode::Repeat, TextureLoadFlags_LoadOnMainThread );
+	
+		m_RendererData.CurlTexture = Ref<Texture2D>::Create( "content/textures/CloudsCurlNoise.tga", AddressingMode::Repeat, TextureLoadFlags_LoadOnMainThread );
 	}
 
 	void SceneRenderer::RenderGrid()

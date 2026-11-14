@@ -571,10 +571,19 @@ namespace Saturn {
 		// Volumetric Clouds
 		//////////////////////////////////////////////////////////////////////////
 
-		// Noise
-		Ref<Image3D> CloudsNoiseOut;
-		Ref<ComputePipeline> CloudsNoisePipeline;
-		Ref<Material> CloudsNoiseMaterial;
+		// Noise (basic)
+		Ref<Image3D> CloudsNoiseBasicOut;
+		Ref<ComputePipeline> CloudsNoiseBasicPipeline;
+		Ref<Material> CloudsNoiseBasicMaterial;
+
+		// Noise (detailed)
+		Ref<Image3D> CloudsNoiseDetailedOut;
+		Ref<ComputePipeline> CloudsNoiseDetailedPipeline;
+		Ref<Material> CloudsNoiseDetailedMaterial;
+		
+		// Weather map
+		Ref<Texture2D> CloudsWeatherMap;
+		Ref<Texture2D> CurlTexture;
 
 		// Instanced Rendering
 		//////////////////////////////////////////////////////////////////////////
@@ -617,7 +626,8 @@ namespace Saturn {
 		Ref< Shader > GTAOPrefilterShader;
 		Ref< Shader > GTAOMainPassShader;
 		Ref< Shader > GTAODenoiseShader;
-		Ref< Shader > CloudsNoiseShader;
+		Ref< Shader > CloudsNoiseBasicShader;
+		Ref< Shader > CloudsNoiseDetailedShader;
 	};
 
 	struct SceneRendererSpecification
@@ -746,7 +756,9 @@ namespace Saturn {
 		void InitGTAOMainPass();
 		void InitGTAODenoisePass();
 		void InitVolumetricCloudsPass();
-		void InitVolumetricCloudsNoise();
+		void InitVolumetricCloudsBasicNoise();
+		void InitVolumetricCloudsDetailedNoise();
+		void InitVolumetricCloudsTextureResources();
 
 		void InitBuffers();
 		void InitRenderer2D();

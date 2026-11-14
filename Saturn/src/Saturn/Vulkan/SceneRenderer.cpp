@@ -2987,6 +2987,31 @@ namespace Saturn {
 		SMAABlendingPass();
 		CmdEndDebugLabel( CommandBuffer );
 
+		VkImageMemoryBarrier2 barrier{ VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2 };
+		barrier.srcStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
+		barrier.srcAccessMask = VK_ACCESS_2_SHADER_WRITE_BIT;
+		barrier.dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+		barrier.dstAccessMask = VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+		barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+		barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.image = m_RendererData.SMAAFinalOutImage->GetImage();
+		barrier.subresourceRange = 
+		{
+			.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+			.baseMipLevel = 0,
+			.levelCount = 1,
+			.baseArrayLayer = 0,
+			.layerCount = 1,
+		};
+
+		VkDependencyInfo dependencyInfo{ VK_STRUCTURE_TYPE_DEPENDENCY_INFO };
+		dependencyInfo.imageMemoryBarrierCount = 1;
+		dependencyInfo.pImageMemoryBarriers = &barrier;
+
+		vkCmdPipelineBarrier2( CommandBuffer, &dependencyInfo );
+
 		CmdBeginDebugLabel( CommandBuffer, "CompositionPass" );
 		SMAACompositionPass();
 		CmdEndDebugLabel( CommandBuffer );

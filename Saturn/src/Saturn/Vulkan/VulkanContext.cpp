@@ -319,13 +319,16 @@ namespace Saturn {
 		m_DeviceExtensions.push_back( "VK_KHR_portability_subset" );
 #endif
 
+		VkPhysicalDeviceVulkan13Features vulkan13Features{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES };
+		vulkan13Features.synchronization2 = true;
+
 		VkDeviceCreateInfo DeviceInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
 		DeviceInfo.enabledExtensionCount = ( uint32_t ) m_DeviceExtensions.size();
 		DeviceInfo.ppEnabledExtensionNames = m_DeviceExtensions.data();
 		DeviceInfo.pQueueCreateInfos = QueueCreateInfos.data();
 		DeviceInfo.queueCreateInfoCount = ( uint32_t ) QueueCreateInfos.size();
 		DeviceInfo.pEnabledFeatures = &Features;
-		DeviceInfo.pNext = nullptr;
+		DeviceInfo.pNext = &vulkan13Features;
 
 		VK_CHECK( vkCreateDevice( m_PhysicalDevice, &DeviceInfo, nullptr, &m_LogicalDevice ) );
 		SetDebugUtilsObjectName( "Physical Device", ( uint64_t ) m_LogicalDevice, VK_OBJECT_TYPE_DEVICE );

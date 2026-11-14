@@ -45,8 +45,8 @@ namespace Saturn {
 	class Image2D : public RefTarget
 	{
 	public:
-		Image2D( ImageFormat Format, uint32_t Width, uint32_t Height, uint32_t ArrayLevels = 1, uint32_t MipCount = 1, uint32_t MSAASamples = 1, ImageTiling Tiling = ImageTiling::Optimal, bool storage = false );
-		~Image2D();
+		Image2D( ImageFormat Format, uint32_t Width, uint32_t Height, uint32_t ArrayLevels = 1u, uint32_t MipCount = 1u, uint32_t MSAASamples = 1u, ImageTiling Tiling = ImageTiling::Optimal, bool storage = false );
+		virtual ~Image2D();
 
 		void SetDebugName( const std::string& rName ) const;
 

@@ -32,6 +32,7 @@
 #include "Renderer.h"
 #include "Texture.h"
 #include "VulkanContext.h"
+#include "Image3D.h"
 
 #include "Saturn/Core/Profiler.h"
 
@@ -365,6 +366,36 @@ namespace Saturn {
 		{
 			const ShaderSampledImage& ssi = *( Itr );
 			m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &sampler->GetDescriptorImageInfo();
+		}
+	}
+
+	void Material::SetResource( const std::string& Name, Ref<class Image3D> rImage )
+	{
+		auto Itr = std::find_if( m_DescriptorSetTemplate.SampledImages.begin(), m_DescriptorSetTemplate.SampledImages.end(),
+			[ Name ]( const ShaderSampledImage& rImage )
+		{
+			return rImage.Name == Name;
+		} );
+
+		if( Itr != m_DescriptorSetTemplate.SampledImages.end() )
+		{
+			const ShaderSampledImage& ssi = *( Itr );
+			m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &rImage->GetDescriptorInfo();
+		}
+		else
+		{
+			// Check for if resource is a storage image
+			Itr = std::find_if( m_DescriptorSetTemplate.StorageImages.begin(), m_DescriptorSetTemplate.StorageImages.end(),
+				[ Name ]( const ShaderSampledImage& rImage )
+			{
+				return rImage.Name == Name;
+			} );
+
+			if( Itr != m_DescriptorSetTemplate.StorageImages.end() )
+			{
+				const ShaderSampledImage& ssi = *( Itr );
+				m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &rImage->GetDescriptorInfo();
+			}
 		}
 	}
 

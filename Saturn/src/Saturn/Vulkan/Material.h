@@ -113,6 +113,15 @@ namespace Saturn {
 		void SetResource( const std::string& Name, Ref<Image2D> rImage );
 
 		// 
+		// Set a Image3D resource.
+		// 
+		// NOTE: Not used by MaterialAssets! But used by other shader materials
+		// 
+		// @param Name -- the name of the resource in the SHADER e.g. u_MyTexture
+		//
+		void SetResource( const std::string& Name, Ref<class Image3D> rImage );
+
+		// 
 		// Set a Sampler resource.
 		// 
 		// NOTE: Not used by MaterialAssets! But used by other shader materials

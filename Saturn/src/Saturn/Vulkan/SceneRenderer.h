@@ -43,6 +43,7 @@
 #include "UniformBufferSet.h"
 #include "Sampler.h"
 #include "Image3D.h"
+#include "AtmosphereParameters.h"
 #include "SceneRendererTiering.h"
 
 #include "Pipeline.h"
@@ -585,6 +586,11 @@ namespace Saturn {
 		Ref<Texture2D> CloudsWeatherMap;
 		Ref<Texture2D> CurlTexture;
 
+		// Sky transmittance
+		Ref<Image2D> TransmittanceLutOut;
+		Ref<ComputePipeline> TransmittanceLutPipeline;
+		Ref<Material> TransmittanceLutMaterial;
+
 		// Instanced Rendering
 		//////////////////////////////////////////////////////////////////////////
 		// 		
@@ -628,6 +634,7 @@ namespace Saturn {
 		Ref< Shader > GTAODenoiseShader;
 		Ref< Shader > CloudsNoiseBasicShader;
 		Ref< Shader > CloudsNoiseDetailedShader;
+		Ref< Shader > TransmittanceLutShader;
 	};
 
 	struct SceneRendererSpecification
@@ -759,6 +766,7 @@ namespace Saturn {
 		void InitVolumetricCloudsBasicNoise();
 		void InitVolumetricCloudsDetailedNoise();
 		void InitVolumetricCloudsTextureResources();
+		void InitAtmosSkyTransmittance();
 
 		void InitBuffers();
 		void InitRenderer2D();
@@ -768,6 +776,7 @@ namespace Saturn {
 		void DirShadowMapPass();
 		void PreDepthPass();
 		void LightCullingPass();
+		void AtmospherePass();
 		void GeometryPass();
 		void BloomPass();
 		void SSAOPass();

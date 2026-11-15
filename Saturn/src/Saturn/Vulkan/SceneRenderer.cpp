@@ -1469,9 +1469,11 @@ namespace Saturn {
 
 	void SceneRenderer::InitVolumetricCloudsPass()
 	{
+		InitVolumetricCloudsTextureResources();
+		InitAtmosSkyTransmittance();
+
 		InitVolumetricCloudsBasicNoise();
 		InitVolumetricCloudsDetailedNoise();
-		InitVolumetricCloudsTextureResources();
 	}
 
 	void SceneRenderer::InitVolumetricCloudsBasicNoise()
@@ -1551,6 +1553,24 @@ namespace Saturn {
 		m_RendererData.CloudsWeatherMap = Ref<Texture2D>::Create( "content/textures/CloudsWeatherMap.tga", AddressingMode::Repeat, TextureLoadFlags_LoadOnMainThread );
 	
 		m_RendererData.CurlTexture = Ref<Texture2D>::Create( "content/textures/CloudsCurlNoise.tga", AddressingMode::Repeat, TextureLoadFlags_LoadOnMainThread );
+	}
+
+	void SceneRenderer::InitAtmosSkyTransmittance()
+	{
+		m_RendererData.TransmittanceLutOut = Ref<Image2D>::Create( ImageFormat::RGBA16F, 256u, 64u, 1u, 1u, 1u, ImageTiling::Optimal, true );
+		m_RendererData.TransmittanceLutOut->SetDebugName( "SkyTransmittanceLut" );
+
+		if( !m_RendererData.TransmittanceLutShader )
+		{
+			m_RendererData.TransmittanceLutShader = ShaderLibrary::Get().FindOrLoad( "SkyAtmosphereTransmittanceLut", "content/shaders/SkyAtmosphereTransmittanceLut.glsl" );
+		}
+
+		m_RendererData.TransmittanceLutPipeline = Ref<ComputePipeline>::Create( m_RendererData.TransmittanceLutShader );
+
+		m_RendererData.TransmittanceLutMaterial = Ref<Material>::Create( m_RendererData.TransmittanceLutShader, "SkyTrnsLut" );
+		m_RendererData.TransmittanceLutMaterial->SetResource( "o_OutTransmittanceLut", m_RendererData.TransmittanceLutOut );
+		m_RendererData.TransmittanceLutMaterial->SetResource( "u_TransmittanceLut", m_RendererData.TransmittanceLutOut );
+		m_RendererData.TransmittanceLutMaterial->SetResource( "u_DepthTexture", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
 	}
 
 	void SceneRenderer::RenderGrid()
@@ -2439,6 +2459,8 @@ namespace Saturn {
 		CreateSkyboxComponents();
 		CreateGridComponents();
 
+		m_RendererData.TransmittanceLutMaterial->SetResource( "u_DepthTexture", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
+
 		if( /*HasFlag( SceneRendererFlag_MasterInstance )*/ !HasFlag( SceneRendererFlag_NoRenderer2D ) )
 		{
 			m_Renderer2D->SetInitialRenderPass( m_RendererData.LateCompositePass, m_RendererData.LateCompositeFramebuffer );
@@ -2541,11 +2563,11 @@ namespace Saturn {
 
 		u_DebugData.TilesCountX = ( int ) m_RendererData.LightCullingWorkGroups.x;
 
-		const auto dirLight = m_pScene->m_Lights.DirectionalLights[ 0 ];
+		const auto& rDirLight = m_pScene->m_Lights.DirectionalLights[ 0 ];
 		const auto invView = glm::inverse( u_Matrices.View );
 
 		u_SceneData.CameraPosition = invView[ 3 ];
-		u_SceneData.Lights = { .Direction = dirLight.Direction, .Radiance = dirLight.Radiance, .Multiplier = dirLight.Intensity };
+		u_SceneData.Lights = { .Direction = rDirLight.Direction, .Radiance = rDirLight.Radiance, .Multiplier = rDirLight.Intensity };
 
 		if( m_RendererData.EnableShadows )
 		{
@@ -3225,6 +3247,119 @@ namespace Saturn {
 		CullingPipeline->Unbind();
 
 		m_RendererData.LightCullingTimer.Stop();
+	}
+
+	static AtmosphereParameters CreateDefaultAtmosphereParameters()
+	{
+		AtmosphereParameters atmos;
+		
+		constexpr float kEarthBottomRadius = 6360.0f;
+		constexpr float kEarthTopRadius = kEarthBottomRadius + 60.0f;
+		constexpr float kEarthRayleighScaleHeight = 8.0f;
+		constexpr float kEarthMieScaleHeight = 1.2f;
+
+		struct DensityProfileLayer
+		{
+			float Width = 0.0f;
+			float ExpTerm = 0.0f;
+			float ExpScale = 0.0f;
+			float LinearTerm = 0.0f;
+			float ConstantTerm = 0.0f;
+		};
+
+		struct DensityProfile
+		{
+			DensityProfileLayer Layers[ 2 ];
+		};
+
+		atmos.BottomRadius = kEarthBottomRadius;
+		atmos.TopRadius = kEarthTopRadius;
+		atmos.GroundAlbedo = glm::vec3{ 0.3f };
+
+		DensityProfile rayleighDP{};
+		DensityProfile meDP{};
+		DensityProfile absorptionDP{};
+
+		rayleighDP.Layers[ 0 ] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+		rayleighDP.Layers[ 1 ] = { 0.0f, 1.0f, -1.0f / kEarthRayleighScaleHeight, 0.0f, 0.0f };
+
+		meDP.Layers[ 0 ] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+		meDP.Layers[ 1 ] = { 0.0f, 1.0f, -1.0f / kEarthMieScaleHeight, 0.0f, 0.0f };
+
+		absorptionDP.Layers[ 0 ] = { 25.0f, 0.0f, 0.0f,  1.0f / 15.0f, -2.0f / 3.0f };
+		absorptionDP.Layers[ 1 ] = { 0.0f, 0.0f, 0.0f, -1.0f / 15.0f,  8.0f / 3.0f };
+
+		std::memcpy( &atmos.RayleighDensity[ 0 ].x, &rayleighDP, sizeof( rayleighDP ) );
+		std::memcpy( &atmos.MieDensity[ 0 ].x, &meDP, sizeof( meDP ) );
+		std::memcpy( &atmos.AbsorptionDensity[ 0 ].x, &absorptionDP, sizeof( absorptionDP ) );
+
+		glm::vec3 rayleighScattering = { 0.005802f, 0.013558f, 0.033100f };
+		atmos.RayleighScatteringColor = glm::normalize( rayleighScattering );
+		atmos.RayleighScatterLength = glm::length( rayleighScattering );
+
+		glm::vec3 mieScattering = { 0.003996f, 0.003996f, 0.003996f };
+		atmos.MieScatteringColor = glm::normalize( mieScattering );
+		atmos.MieScatteringLength = glm::length( mieScattering );
+
+		glm::vec3 mieExtinction = { 0.004440f, 0.004440f, 0.004440f };
+		glm::vec3 mieAbs = ( mieExtinction - mieScattering );
+
+		atmos.MieAbsLength = glm::length( mieAbs );
+		atmos.MieAbsColor = glm::normalize( mieAbs );
+
+		atmos.MiePhaseFunctionG = 0.8f;
+		
+		glm::vec3 absorptionExtinction = { 0.000650f, 0.001881f, 0.000085f };
+		atmos.AbsorptionColor = glm::normalize( absorptionExtinction );
+		atmos.AbsorptionLength = glm::length( absorptionExtinction );
+
+		atmos.MultipleScatteringFactor = 1.0f;
+		atmos.ViewRayMarchMaxSPP = 31;
+		atmos.ViewRayMarchMinSPP = 14;
+
+		return atmos;
+	}
+
+	void SceneRenderer::AtmospherePass()
+	{
+		SAT_PF_EVENT();
+
+		struct USkyData
+		{
+			glm::vec3 SunDir;
+		} u_SkyData{};
+		
+		struct CameraData
+		{
+			glm::mat4 InverseCameraViewProj;
+		} u_CameraData;
+
+		u_CameraData.InverseCameraViewProj = glm::inverse( m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix );
+
+		struct UAtmosParam
+		{
+			AtmosphereParameters Params;
+		} u_AtmosphereParameters{};
+
+		u_AtmosphereParameters.Params = CreateDefaultAtmosphereParameters();
+
+		const auto& rDirLight = m_pScene->m_Lights.DirectionalLights[ 0 ];
+		u_SkyData.SunDir = rDirLight.Direction;
+
+		m_RendererData.TransmittanceLutMaterial->UploadDataToUB( 6, &u_AtmosphereParameters, sizeof( UAtmosParam ) );
+		m_RendererData.TransmittanceLutMaterial->UploadDataToUB( 7, &u_CameraData, sizeof( CameraData ) );
+
+		m_RendererData.TransmittanceLutMaterial->SetPC( "u_SkyData.SunDir", u_SkyData.SunDir );
+
+		m_RendererData.TransmittanceLutPipeline->BindWithCommandBuffer( m_RendererData.CommandBuffer );
+
+		m_RendererData.TransmittanceLutPipeline->Execute( 
+			m_RendererData.TransmittanceLutMaterial, 
+			( uint32_t ) glm::ceil( ( float ) m_RendererData.TransmittanceLutOut->GetWidth() / 8.F ),
+			( uint32_t ) glm::ceil( ( float ) m_RendererData.TransmittanceLutOut->GetHeight() / 8.0F ),
+			1u );
+
+		m_RendererData.TransmittanceLutPipeline->Unbind();
 	}
 
 	void SceneRenderer::BloomPass()
@@ -4111,6 +4246,11 @@ namespace Saturn {
 			LightCullingPass();
 		}
 	
+		{
+			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Atmosphere" );
+			AtmospherePass();
+		}
+
 		{
 			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Geometry" );
 			GeometryPass();

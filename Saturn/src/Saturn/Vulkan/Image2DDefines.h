@@ -30,6 +30,14 @@
 
 namespace Saturn {
 
+	//
+	// Image format...
+	// 
+	// When adding a new format you'll need to add the new format to
+	// the VulkanFormat conversion function. 
+	// 
+	// Ditto to SaturnFormat as well.
+	//
 	enum class ImageFormat
 	{
 		// VK_FORMAT_UNDEFINED
@@ -38,42 +46,45 @@ namespace Saturn {
 		// Color
 
 		// VK_FORMAT_R8G8B8A8_UNORM
-		RGBA8 = 1,
+		RGBA8,
 
 		// VK_FORMAT_R16G16B16A16_UNORM
-		RGBA16 = 2,
+		RGBA16,
+
+		// VK_FORMAT_R16G16B16A16_SFLOAT
+		RGBA16F,
 
 		// VK_FORMAT_R32G32B32A32_SFLOAT
-		RGBA32F = 3,
+		RGBA32F,
 
 		// VK_FORMAT_R32G32B32_SFLOAT
-		RGB32F = 4,
+		RGB32F,
 
 		// VK_FORMAT_B8G8R8A8_UNORM
-		BGRA8 = 5,
+		BGRA8,
 
 		// VK_FORMAT_R8_UNORM
-		RED8 = 6,
+		RED8,
 
 		// VK_FORMAT_R8G8B8_UNORM
-		RGB8 = 7,
+		RGB8,
 
 		// VK_FORMAT_R8G8_UNORM
-		RG8 = 8,
+		RG8,
 
 		// VK_FORMAT_R32_SFLOAT
-		RED32F = 9,
+		RED32F,
 
 		// VK_FORMAT_R8_UINT
-		RED8UI = 10,
+		RED8UI,
 
 		// Depth
 
 		// VK_FORMAT_D32_SFLOAT
-		DEPTH32F = 11,
+		DEPTH32F,
 
 		// VK_FORMAT_D32_SFLOAT_S8_UINT
-		DEPTH24STENCIL8 = 12,
+		DEPTH24STENCIL8,
 
 		// VK_FORMAT_D32_SFLOAT
 		Depth = DEPTH32F

@@ -42,6 +42,9 @@ namespace Saturn {
 			case Saturn::ImageFormat::RGBA16:
 				return VK_FORMAT_R16G16B16A16_UNORM;
 
+			case Saturn::ImageFormat::RGBA16F:
+				return VK_FORMAT_R16G16B16A16_SFLOAT;
+
 			case Saturn::ImageFormat::RGBA32F:
 				return VK_FORMAT_R32G32B32A32_SFLOAT;
 
@@ -109,6 +112,9 @@ namespace Saturn {
 
 			case VK_FORMAT_R8_UINT:
 				return ImageFormat::RED8UI;
+
+			case VK_FORMAT_R16G16B16A16_SFLOAT:
+				return ImageFormat::RGBA16F;
 
 			case VK_FORMAT_D32_SFLOAT_S8_UINT:
 				return ImageFormat::DEPTH24STENCIL8;

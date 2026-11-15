@@ -65,7 +65,7 @@ namespace Saturn {
 
 	struct AssetBundleHeader
 	{
-		// .AB + null
+		// .AB + type
 		const unsigned char Magic[ 4 ] = { 0x2E, 0x41, 0x42, 0x00 };
 		uint32_t Version = 0u;
 		size_t Assets = 0llu;
@@ -73,10 +73,18 @@ namespace Saturn {
 
 	struct AssetBundleMinimalHeader
 	{
-		// .AB + null
-		const unsigned char Magic[ 4 ] = { 0x2E, 0x41, 0x42, 0x00 };
+		// .AB + type
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x41, 0x42, 0x01 };
 		uint32_t Version = 0u;
 		uint64_t BuildTime = 0llu;
+	};
+
+	struct AssetBundleEngineHeader
+	{
+		// .AB + type
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x41, 0x42, 0x02 };
+		uint32_t Version = 0u;
+		size_t Assets = 0llu;
 	};
 
 	struct DumpFileHeader
@@ -912,22 +920,36 @@ namespace Saturn {
 		// THREAD-TRANSTION, Block main thread
 		Application::Get()->SuspendMainThreadCV();
 
+		std::filesystem::path enginePath = SAT_CURRENT_VERSION_BUILD_TAG;
+		enginePath /= "(predefined).res";
+
 		Ref<Asset> memoryOnlyTemporaryAsset = Ref<Asset>::Create();
 		memoryOnlyTemporaryAsset->ID = 1;
 		
 		memoryOnlyTemporaryAsset->Name = SAT_CURRENT_VERSION_BUILD_TAG "-Eng-BRDFLut";
+		memoryOnlyTemporaryAsset->Path = enginePath / memoryOnlyTemporaryAsset->Name;
 
 		Ref<TextureSourceAsset> brdfLut = Ref< TextureSourceAsset >::Create( memoryOnlyTemporaryAsset, "content/Textures/BRDF_LUT.tga", TextureLoadFlags_FlipVertically );
 		
 		memoryOnlyTemporaryAsset->ID = 2;
 		memoryOnlyTemporaryAsset->Name = SAT_CURRENT_VERSION_BUILD_TAG "-Eng-SMAAAreaTexture";
+		memoryOnlyTemporaryAsset->Path = enginePath / memoryOnlyTemporaryAsset->Name;
+
 		Ref<TextureSourceAsset> smaaAreaTexture = Ref< TextureSourceAsset >::Create( memoryOnlyTemporaryAsset, "content/Textures/SMAA_AreaTex.tga", TextureLoadFlags_FlipVertically );
 
 		Ref<AluraFont> editorFont = AluraCanvas::LoadEditorFont_ForEngineAB( Passkey< EngineAssetBundle >() );
 		editorFont->ID = 3;
 		editorFont->Name = SAT_CURRENT_VERSION_BUILD_TAG "-Eng-AluraFont";
+		editorFont->Path = enginePath / editorFont->Name;
 
 		std::vector<Ref<Asset>> assetsToDump{ brdfLut, editorFont, smaaAreaTexture };
+
+		std::unordered_map< std::filesystem::path, Ref< Asset > > pathToAsset;
+		pathToAsset.reserve( SAT_NUMBER_OF_PREPACKAGED_ASSETS );
+
+		pathToAsset[ "1.vfs" ] = brdfLut;
+		pathToAsset[ "2.vfs" ] = smaaAreaTexture;
+		pathToAsset[ "3.vfs" ] = editorFont;
 
 		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
 
@@ -967,8 +989,8 @@ namespace Saturn {
 
 		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
 
-		AssetBundleHeader header{};
-		header.Assets = 3llu;
+		AssetBundleEngineHeader header{};
+		header.Assets = SAT_NUMBER_OF_PREPACKAGED_ASSETS;
 		header.Version = SAT_CURRENT_VERSION;
 
 		RawSerialisation::WriteObject( header, fout );
@@ -977,6 +999,8 @@ namespace Saturn {
 		for( auto& rAsset : assetsToDump )
 		{
 			rAsset->SerialiseData( fout );
+
+			RawSerialisation::WriteObject( ( uint8_t ) DetermineResourceTypeFromID( rAsset->ID ), fout );
 		}
 
 		/////////////////////////////////////
@@ -985,7 +1009,7 @@ namespace Saturn {
 
 		const auto compressionThreshold = ActiveProject->GetCompressionThresholdForAssetBundle();
 
-		uint64_t offset = 0;
+		uint64_t offset = 0llu;
 
 		// Next, now that we have dumped all of the assets we can now pack and compress the assets.
 		// And we also make sure that we write the uncompressed/compressed file data + the header into the VFS.
@@ -1003,8 +1027,21 @@ namespace Saturn {
 			// File size in bytes
 			const uint64_t fileSize = stream.tellg();
 
+			// Try to figure out what asset we are packaging...
+			Ref<Asset> asset;
+			const auto itr = pathToAsset.find( path.filename() );
+			if( itr == pathToAsset.end() )
+			{
+				SAT_CORE_ERROR( "AssetBundle (engine): Skipping {0} as it doesn't belong to this asset bundle", path.filename().string() );
+				continue;
+			}
+			else
+			{
+				asset = itr->second;
+			}
+
 			DumpFileHeader dfh;
-			dfh.Asset = assetsToDump[ index++ ]->ID;
+			dfh.Asset = asset->ID;
 			dfh.Version = SAT_CURRENT_VERSION;
 			dfh.OrginalSize = fileSize;
 			dfh.Offset = offset;
@@ -1031,7 +1068,7 @@ namespace Saturn {
 				SAT_CORE_ERROR( "Failed to compress {0}! zlib error is: {1}. Writing uncompressed data.", path.string(), result );
 
 				RawSerialisation::WriteObject( dfh, fout );
-				RawSerialisation::WriteObject( ( uint8_t ) DetermineResourceTypeFromID( dfh.Asset ), fout );
+				RawSerialisation::WriteObject( ( std::underlying_type_t<EngineAssetBundleResource> )DetermineResourceTypeFromID( dfh.Asset ), fout );
 				RawSerialisation::WriteSaturnBuffer( fileBuffer, fout );
 			}
 
@@ -1041,7 +1078,7 @@ namespace Saturn {
 			dfh.CompressedSize = compressedSize;
 
 			RawSerialisation::WriteObject( dfh, fout );
-			RawSerialisation::WriteObject( ( uint8_t ) DetermineResourceTypeFromID( dfh.Asset ), fout );
+			RawSerialisation::WriteObject( ( std::underlying_type_t<EngineAssetBundleResource> )DetermineResourceTypeFromID( dfh.Asset ), fout );
 			RawSerialisation::WriteSaturnBuffer( compressedData, fout );
 
 			compressedData.Free();
@@ -1069,19 +1106,22 @@ namespace Saturn {
 	AssetBundleResult EngineAssetBundle::ReadAll()
 	{
 		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
-		cachePath /= "AssetBundle.sab";
+		cachePath /= "AssetBundle-Engine.res.sab";
 
 		if( !std::filesystem::exists( cachePath ) )
 			return AssetBundleResult::FileNotFound;
 
 		Timer timer;
 
+		VirtualFS::Get().SetActiveMountBase( "Saturn-" SAT_CURRENT_VERSION_BUILD_TAG );
+
 		std::ifstream stream( cachePath, std::ios::binary | std::ios::in );
 
 		AssetBundleHeader header{};
 		RawSerialisation::ReadObject( header, stream );
 
-		if( std::memcmp( header.Magic, ".AB", 4 ) != 0 )
+		// TODO: COME BACK TO THIS, THIS IS INCORRECT!
+		if( std::memcmp( header.Magic, ".AB", 3 ) != 0 )
 		{
 			SAT_CORE_ERROR( "Invalid engine asset bundle file header or corrupt asset bundle file!" );
 			return AssetBundleResult::InvalidFileHeader;
@@ -1107,7 +1147,10 @@ namespace Saturn {
 			Ref<Asset> asset = Ref<Asset>::Create();
 			asset->DeserialiseData( stream );
 
-			m_LoadedAssets.push_back( asset );
+			EngineAssetBundleResource resType = EngineAssetBundleResource::Unknown;
+			RawSerialisation::ReadObject( resType, stream );
+
+			m_LoadedAssets[ resType ] = asset;
 		}
 
 		std::vector<DumpFileHeader> FileEntries( header.Assets );
@@ -1116,9 +1159,6 @@ namespace Saturn {
 		{
 			DumpFileHeader dfh;
 			RawSerialisation::ReadObject( dfh, stream );
-
-			EngineAssetBundleResource resType = EngineAssetBundleResource::Unknown;
-			RawSerialisation::ReadObject( resType, stream );
 
 			if( std::memcmp( dfh.Magic, ".PAK", 4 ) != 0 )
 			{
@@ -1133,6 +1173,15 @@ namespace Saturn {
 				SAT_CORE_ERROR( "Pack file version mismatch!" );
 
 				return AssetBundleResult::PackFileVersionMismatch;
+			}
+
+			EngineAssetBundleResource resType = EngineAssetBundleResource::Unknown;
+			RawSerialisation::ReadObject( resType, stream );
+
+			if( resType == EngineAssetBundleResource::Unknown )
+			{
+				SAT_CORE_ERROR( "Invalid EngineAssetBundleResource type!" );
+				return AssetBundleResult::FailedToUncompress;
 			}
 
 			// Find the VFile
@@ -1176,28 +1225,32 @@ namespace Saturn {
 			{
 				default:
 				case EngineAssetBundleResource::Unknown:
-					SAT_CORE_VERIFY( false, "AssetBundle (Engine): Invalid resource type!" );
-						break;
-			
+					SAT_CORE_VERIFY( "AssetBundle (engine): Invalid resource type!" );
+					break;
+
 				case EngineAssetBundleResource::DefaultFont:
 				{
+					Ref<Asset> asset = m_LoadedAssets[ resType ];
+					
+					RawFontSerialiser s;
+					SAT_CORE_VERIFY( s.TryLoadData( asset ) );
 				} break;
-				
-				case EngineAssetBundleResource::SMAA_AreaTexture:
-				{
-				} break;
-				
+
 				case EngineAssetBundleResource::BRDFLutTexture:
-				{
-				} break;
-			
+				case EngineAssetBundleResource::SMAA_AreaTexture:
 				case EngineAssetBundleResource::DefaultBloomDirtTexture:
 				{
+					Ref<Asset> asset = m_LoadedAssets[ resType ];
+
+					RawTextureSourceAssetSerialiser s;
+					SAT_CORE_VERIFY( s.TryLoadData( asset ) );
 				} break;
 			}
 		}
 
 		stream.close();
+
+		return AssetBundleResult::Success;
 	}
 
 }

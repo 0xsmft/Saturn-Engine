@@ -89,7 +89,9 @@ namespace Saturn {
 		[[nodiscard]] static AssetBundleResult ReadMinimal();
 	};
 
-	class EngineAssetBundle
+	static constexpr size_t SAT_NUMBER_OF_PREPACKAGED_ASSETS = 3llu;
+
+	class EngineAssetBundle : public RefTarget
 	{
 	public:
 		static EngineAssetBundle* Get() { return SingletonStorage::GetSingleton<EngineAssetBundle>(); }

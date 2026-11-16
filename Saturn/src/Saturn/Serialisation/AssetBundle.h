@@ -28,7 +28,6 @@
 
 #pragma once
 
-#include "Saturn/Asset/EngineAssetBundleResource.h"
 #include "Saturn/Asset/AssetRegistry.h"
 
 #include "Saturn/ImGui/JobProgress.h"
@@ -88,32 +87,6 @@ namespace Saturn {
 					  static AssetBundleResult BundleMinimal();
 		[[nodiscard]] static AssetBundleResult ReadMinimal();
 	};
-
-	static constexpr size_t SAT_NUMBER_OF_PREPACKAGED_ASSETS = 3llu;
-
-	class EngineAssetBundle : public RefTarget
-	{
-	public:
-		static EngineAssetBundle* Get() { return SingletonStorage::GetSingleton<EngineAssetBundle>(); }
-
-	public:
-		EngineAssetBundle();
-		virtual ~EngineAssetBundle();
-
-		AssetBundleResult ReadAll();
-
-	public:
-		Ref<class Asset> GetResource( EngineAssetBundleResource res );
-
-	public:
-		static void Bundle();
-
-	private:
-		static void MountToVFS();
-
-		std::unordered_map<EngineAssetBundleResource, Ref<Asset>> m_LoadedAssets;
-	};
-
 }
 
 namespace std {

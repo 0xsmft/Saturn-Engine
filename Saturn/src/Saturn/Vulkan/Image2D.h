@@ -68,6 +68,8 @@ namespace Saturn {
 
 		void TransitionImageLayout( VkCommandBuffer CommandBuffer, VkImageLayout OldLayout, VkImageLayout NewLayout, VkPipelineStageFlags DstStage, VkPipelineStageFlags SrcStage );
 
+		void TransitionImageLayout( VkCommandBuffer CommandBuffer, VkImageLayout NewLayout );
+
 		uint32_t GetWidth() const { return m_Width; }
 		uint32_t GetHeight() const { return m_Height; }
 
@@ -76,7 +78,7 @@ namespace Saturn {
 		void CopyBufferToImage( VkBuffer Buffer );
 		
 		// Internal TransitionImageLayout
-		void TransitionImageLayout( VkFormat Format, VkImageLayout OldLayout, VkImageLayout NewLayout );
+		void TransitionImageLayout( VkFormat Format, VkImageLayout OldLayout, VkImageLayout NewLayout, VkCommandBuffer buffer = nullptr );
 
 	private:
 		uint32_t m_Width = 0;

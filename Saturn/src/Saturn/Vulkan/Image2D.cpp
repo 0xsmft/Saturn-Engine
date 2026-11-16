@@ -392,9 +392,13 @@ namespace Saturn {
 		VulkanContext::Get()->EndSingleTimeCommands( CommandBuffer );
 	}
 
-	void Image2D::TransitionImageLayout( VkFormat Format, VkImageLayout OldLayout, VkImageLayout NewLayout )
+	void Image2D::TransitionImageLayout( 
+		VkFormat Format, 
+		VkImageLayout OldLayout, 
+		VkImageLayout NewLayout,
+		VkCommandBuffer buffer )
 	{
-		VkCommandBuffer CommandBuffer = VulkanContext::Get()->BeginSingleTimeCommands();
+		VkCommandBuffer CommandBuffer = buffer ? buffer : VulkanContext::Get()->BeginSingleTimeCommands();
 
 		VkPipelineStageFlags SrcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		VkPipelineStageFlags DstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
@@ -459,7 +463,8 @@ namespace Saturn {
 
 		vkCmdPipelineBarrier( CommandBuffer, SrcStage, DstStage, 0, 0, nullptr, 0, nullptr, 1, &ImageBarrier );
 
-		VulkanContext::Get()->EndSingleTimeCommands( CommandBuffer );
+		if( !buffer )
+			VulkanContext::Get()->EndSingleTimeCommands( CommandBuffer );
 	}
 
 	void Image2D::TransitionImageLayout( 
@@ -492,6 +497,12 @@ namespace Saturn {
 			0, nullptr,
 			0, nullptr,
 			1, &ImageBarrier );
+	}
+
+	void Image2D::TransitionImageLayout( VkCommandBuffer CommandBuffer, VkImageLayout NewLayout )
+	{
+		TransitionImageLayout( VulkanFormat( m_Format ), m_DescriptorImageInfo.imageLayout, NewLayout, CommandBuffer );
+		m_DescriptorImageInfo.imageLayout = NewLayout;
 	}
 
 }

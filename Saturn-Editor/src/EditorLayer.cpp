@@ -106,6 +106,8 @@
 #include <Saturn/Online/Steam/SteamOnlineSystemAPI.h>
 #endif
 
+#include <Saturn/PackagedResources/BuiltinResourceManager.h>
+
 #include <ImGuizmo/ImGuizmo.h>
 
 #include <imspinner/imspinner.h>
@@ -145,6 +147,8 @@ namespace Saturn {
 
 		m_ConsoleCommandManager = Ref<ConsoleCommandManager>::Create();
 		m_ConsoleCommandManager->RegisterEngineDefaultCommands();
+
+		m_BuiltinResourceManager = Ref<BuiltinResourceManager>::Create();
 
 		m_GameModule = FSObjectAllocator::AllocateSObject<GameModule>();
 

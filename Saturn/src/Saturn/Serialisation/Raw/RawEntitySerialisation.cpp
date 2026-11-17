@@ -235,6 +235,9 @@ namespace Saturn {
 				RawSerialisation::WriteVec3( dlc.Radiance, rStream );
 				RawSerialisation::WriteObject( dlc.Intensity, rStream );
 				RawSerialisation::WriteObject( dlc.CastShadows, rStream );
+
+				RawSerialisation::WriteObjectChecked( dlc.Clouds, rStream );
+				RawSerialisation::WriteObjectChecked( dlc.Sky, rStream );
 			} );
 
 		// Point Light Component
@@ -556,6 +559,8 @@ namespace Saturn {
 				RawSerialisation::ReadVec3( dlc.Radiance, rStream );
 				RawSerialisation::ReadObject( dlc.Intensity, rStream );
 				RawSerialisation::ReadObject( dlc.CastShadows, rStream );
+				RawSerialisation::ReadObject( dlc.Clouds, rStream );
+				RawSerialisation::ReadObject( dlc.Sky, rStream );
 			} );
 
 		// Point Light Component

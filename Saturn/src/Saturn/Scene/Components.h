@@ -202,12 +202,91 @@ namespace Saturn {
 		operator Ref<Saturn::SkeletalMesh>() { return Mesh; }
 	};
 	
+	struct VolumetricCloudSettings
+	{
+		bool Enabled = true;
+		bool CastShadows = true;
+
+		float BottomKm = 1.5f;
+		float TopKm = 4.5f;
+
+		// Shape
+		float Coverage = 0.6f;
+		
+		float Density = 0.02f;
+		
+		// 0 = weather map type, 1 = all cumulus
+		float CloudType = 0.5f;
+		
+		// Detail erosion strength
+		float Erosion = 0.3f;
+		
+		// 1/km
+		float BasicNoiseScale = 0.12f;
+		
+		// 1/km
+		float DetailNoiseScale = 0.6f;
+		
+		// 1/km
+		float WeatherScale = 0.016f;        
+		// km
+		float CurlStrength = 0.3f;
+
+		// Wind
+		glm::vec3 WindDirection = { 0.866f, 0.0f, 0.5f };
+		// Speed (km/s)
+		float WindSpeed = 0.02f;
+
+		// Lighting
+		float SunIlluminance = 20.0f;
+		glm::vec3 SkyAmbientColor = { 0.45f, 0.55f, 0.75f };
+		float AmbientScale = 1.0f;
+		glm::vec3 GroundBounceColor = { 0.20f, 0.18f, 0.15f };
+		bool GroundContribution = true;
+		float PhaseForward = 0.8f;
+		float PhaseBackward = -0.3f;
+		float PhaseMix = 0.3f;
+		float MultiScatterExtinction = 0.5f;
+		float MultiScatterScatter = 0.5f;
+		float PowderScale = 1.0f;
+
+		// Quality
+		uint32_t MarchSteps = 64u;
+		uint32_t LightSteps = 6u;
+		float LightMarchLengthKm = 2.0f;
+		float MaxTracingDistanceKm = 60.0f;
+		float TracingStartMaxDistanceKm = 60.0f;
+
+		// Shadows
+		float ShadowStrength = 0.25f;
+		float ShadowMinLight = 0.2f;
+	};
+
+	struct AtmosphereSkySettings
+	{
+		bool Enabled = true;
+
+		float SunIlluminance = 20.0f;
+		float Intensity = 1.0f;
+		float SunDiskSizeDeg = 0.8f;
+		float SunDiskIntensity = 100.0f;
+
+		glm::vec3 GroundAlbedo = { 0.3f, 0.3f, 0.3f };
+
+		// 0 = velow the horizon so physical ground is very dark around sunrise or sunset,
+		// 1 = continue the horizon colour downwards, darkening towards straight down.
+		float HorizonFill = 1.0f;
+	};
+
 	struct DirectionalLightComponent
 	{
 		glm::vec3 Radiance = { 1.0f, 1.0f, 1.0f };
-		
+
 		float Intensity = 1.0f;
 		bool CastShadows = true;
+
+		VolumetricCloudSettings Clouds;
+		AtmosphereSkySettings Sky;
 	};
 
 	struct CameraComponent

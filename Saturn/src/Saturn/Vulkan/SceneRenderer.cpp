@@ -3759,9 +3759,9 @@ namespace Saturn {
 		float     CloudPowderPow;
 		float     CloudPowderScale;
 
-		int32_t   CloudMarchingStepNum;
-		int32_t   CloudLightStepNum;
-		int32_t   CloudEnableGroundContribution;
+		uint32_t  CloudMarchingStepNum;
+		uint32_t  CloudLightStepNum;
+		uint32_t  CloudEnableGroundContribution;
 		uint32_t  FrameIndex;
 
 		float     CloudBottomKm;
@@ -3845,8 +3845,8 @@ namespace Saturn {
 		// Marching
 		c.CloudMaxTracingDistance = glm::max( rSettings.MaxTracingDistanceKm, 1.0f );
 		c.CloudTracingStartMaxDistance = glm::max( rSettings.TracingStartMaxDistanceKm, 1.0f );
-		c.CloudMarchingStepNum = glm::max( rSettings.MarchSteps, 1 );
-		c.CloudLightStepNum = glm::max( rSettings.LightSteps, 1 );
+		c.CloudMarchingStepNum = glm::max( rSettings.MarchSteps, 1u );
+		c.CloudLightStepNum = glm::max( rSettings.LightSteps, 1u );
 		c.CloudLightBasicStep = glm::max( rSettings.LightMarchLengthKm, 0.01f );
 
 		// Lighting

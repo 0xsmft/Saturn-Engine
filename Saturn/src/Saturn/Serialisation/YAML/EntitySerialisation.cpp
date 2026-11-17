@@ -378,6 +378,67 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "Intensity" << YAML::Value << dlc.Intensity;
 			rEmitter << YAML::Key << "CastShadows" << YAML::Value << dlc.CastShadows;
 
+			// Sky data.
+			{
+				const auto& s = dlc.Sky;
+
+				rEmitter << YAML::Key << "Sky";
+				rEmitter << YAML::BeginMap;
+
+				rEmitter << YAML::Key << "Enabled" << YAML::Value << s.Enabled;
+				rEmitter << YAML::Key << "SunIlluminance" << YAML::Value << s.SunIlluminance;
+				rEmitter << YAML::Key << "Intensity" << YAML::Value << s.Intensity;
+				rEmitter << YAML::Key << "SunDiskSizeDeg" << YAML::Value << s.SunDiskSizeDeg;
+				rEmitter << YAML::Key << "SunDiskIntensity" << YAML::Value << s.SunDiskIntensity;
+				rEmitter << YAML::Key << "GroundAlbedo" << YAML::Value << s.GroundAlbedo;
+				rEmitter << YAML::Key << "HorizonFill" << YAML::Value << s.HorizonFill;
+
+				rEmitter << YAML::EndMap;
+			}
+
+			// Volumetric clouds.
+			{
+				const auto& c = dlc.Clouds;
+
+				rEmitter << YAML::Key << "Clouds";
+				rEmitter << YAML::BeginMap;
+
+				rEmitter << YAML::Key << "Enabled" << YAML::Value << c.Enabled;
+				rEmitter << YAML::Key << "CastShadows" << YAML::Value << c.CastShadows;
+				rEmitter << YAML::Key << "BottomKm" << YAML::Value << c.BottomKm;
+				rEmitter << YAML::Key << "TopKm" << YAML::Value << c.TopKm;
+				rEmitter << YAML::Key << "Coverage" << YAML::Value << c.Coverage;
+				rEmitter << YAML::Key << "Density" << YAML::Value << c.Density;
+				rEmitter << YAML::Key << "CloudType" << YAML::Value << c.CloudType;
+				rEmitter << YAML::Key << "Erosion" << YAML::Value << c.Erosion;
+				rEmitter << YAML::Key << "BasicNoiseScale" << YAML::Value << c.BasicNoiseScale;
+				rEmitter << YAML::Key << "DetailNoiseScale" << YAML::Value << c.DetailNoiseScale;
+				rEmitter << YAML::Key << "WeatherScale" << YAML::Value << c.WeatherScale;
+				rEmitter << YAML::Key << "CurlStrength" << YAML::Value << c.CurlStrength;
+				rEmitter << YAML::Key << "WindDirection" << YAML::Value << c.WindDirection;
+				rEmitter << YAML::Key << "WindSpeed" << YAML::Value << c.WindSpeed;
+				rEmitter << YAML::Key << "SunIlluminance" << YAML::Value << c.SunIlluminance;
+				rEmitter << YAML::Key << "SkyAmbientColor" << YAML::Value << c.SkyAmbientColor;
+				rEmitter << YAML::Key << "AmbientScale" << YAML::Value << c.AmbientScale;
+				rEmitter << YAML::Key << "GroundBounceColor" << YAML::Value << c.GroundBounceColor;
+				rEmitter << YAML::Key << "GroundContribution" << YAML::Value << c.GroundContribution;
+				rEmitter << YAML::Key << "PhaseForward" << YAML::Value << c.PhaseForward;
+				rEmitter << YAML::Key << "PhaseBackward" << YAML::Value << c.PhaseBackward;
+				rEmitter << YAML::Key << "PhaseMix" << YAML::Value << c.PhaseMix;
+				rEmitter << YAML::Key << "MultiScatterExtinction" << YAML::Value << c.MultiScatterExtinction;
+				rEmitter << YAML::Key << "MultiScatterScatter" << YAML::Value << c.MultiScatterScatter;
+				rEmitter << YAML::Key << "PowderScale" << YAML::Value << c.PowderScale;
+				rEmitter << YAML::Key << "MarchSteps" << YAML::Value << c.MarchSteps;
+				rEmitter << YAML::Key << "LightSteps" << YAML::Value << c.LightSteps;
+				rEmitter << YAML::Key << "LightMarchLengthKm" << YAML::Value << c.LightMarchLengthKm;
+				rEmitter << YAML::Key << "MaxTracingDistanceKm" << YAML::Value << c.MaxTracingDistanceKm;
+				rEmitter << YAML::Key << "TracingStartMaxDistanceKm" << YAML::Value << c.TracingStartMaxDistanceKm;
+				rEmitter << YAML::Key << "ShadowStrength" << YAML::Value << c.ShadowStrength;
+				rEmitter << YAML::Key << "ShadowMinLight" << YAML::Value << c.ShadowMinLight;
+
+				rEmitter << YAML::EndMap;
+			}
+
 			rEmitter << YAML::EndMap;
 		}
 
@@ -936,6 +997,71 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 			d.Radiance = dlc[ "Radiance" ].as< glm::vec3 >();
 			d.Intensity = dlc[ "Intensity" ].as< float >();
 			d.CastShadows = dlc[ "CastShadows" ].as< bool >();
+
+			// Sky data, keys are optional so that we can support older scenes.
+			if( const auto sky = dlc[ "Sky" ] )
+			{
+				auto& s = d.Sky;
+
+				const auto tryReadValue = [ &sky ]< typename T >( const char* pKey, T& rValue )
+				{
+					if( const auto node = sky[ pKey ] )
+						rValue = node.as< T >();
+				};
+
+				tryReadValue( "Enabled", s.Enabled );
+				tryReadValue( "SunIlluminance", s.SunIlluminance );
+				tryReadValue( "Intensity", s.Intensity );
+				tryReadValue( "SunDiskSizeDeg", s.SunDiskSizeDeg );
+				tryReadValue( "SunDiskIntensity", s.SunDiskIntensity );
+				tryReadValue( "GroundAlbedo", s.GroundAlbedo );
+				tryReadValue( "HorizonFill", s.HorizonFill );
+			}
+
+			// Volumetric cloud data.
+			if( const auto clouds = dlc[ "Clouds" ] )
+			{
+				auto& c = d.Clouds;
+
+				auto tryReadValue = [ &clouds ]< typename T >( const char* pKey, T& rValue )
+				{
+					if( const auto node = clouds[ pKey ] )
+						rValue = node.as< T >();
+				};
+
+				tryReadValue( "Enabled", c.Enabled );
+				tryReadValue( "CastShadows", c.CastShadows );
+				tryReadValue( "BottomKm", c.BottomKm );
+				tryReadValue( "TopKm", c.TopKm );
+				tryReadValue( "Coverage", c.Coverage );
+				tryReadValue( "Density", c.Density );
+				tryReadValue( "CloudType", c.CloudType );
+				tryReadValue( "Erosion", c.Erosion );
+				tryReadValue( "BasicNoiseScale", c.BasicNoiseScale );
+				tryReadValue( "DetailNoiseScale", c.DetailNoiseScale );
+				tryReadValue( "WeatherScale", c.WeatherScale );
+				tryReadValue( "CurlStrength", c.CurlStrength );
+				tryReadValue( "WindDirection", c.WindDirection );
+				tryReadValue( "WindSpeed", c.WindSpeed );
+				tryReadValue( "SunIlluminance", c.SunIlluminance );
+				tryReadValue( "SkyAmbientColor", c.SkyAmbientColor );
+				tryReadValue( "AmbientScale", c.AmbientScale );
+				tryReadValue( "GroundBounceColor", c.GroundBounceColor );
+				tryReadValue( "GroundContribution", c.GroundContribution );
+				tryReadValue( "PhaseForward", c.PhaseForward );
+				tryReadValue( "PhaseBackward", c.PhaseBackward );
+				tryReadValue( "PhaseMix", c.PhaseMix );
+				tryReadValue( "MultiScatterExtinction", c.MultiScatterExtinction );
+				tryReadValue( "MultiScatterScatter", c.MultiScatterScatter );
+				tryReadValue( "PowderScale", c.PowderScale );
+				tryReadValue( "MarchSteps", c.MarchSteps );
+				tryReadValue( "LightSteps", c.LightSteps );
+				tryReadValue( "LightMarchLengthKm", c.LightMarchLengthKm );
+				tryReadValue( "MaxTracingDistanceKm", c.MaxTracingDistanceKm );
+				tryReadValue( "TracingStartMaxDistanceKm", c.TracingStartMaxDistanceKm );
+				tryReadValue( "ShadowStrength", c.ShadowStrength );
+				tryReadValue( "ShadowMinLight", c.ShadowMinLight );
+			}
 		}
 
 		const auto plc = rEntityNode[ "PointLightComponent" ];

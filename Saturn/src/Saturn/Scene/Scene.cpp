@@ -550,7 +550,7 @@ namespace Saturn {
 
 				const glm::vec3 direction = -glm::normalize( glm::mat3( transformComponent.GetTransform() ) * glm::vec3( 1.0f ) );
 
-				m_Lights.DirectionalLights[ lightCount++ ] = { direction, lightComponent.Radiance, lightComponent.Intensity };
+				m_Lights.DirectionalLights[ lightCount++ ] = { direction, lightComponent.Radiance, lightComponent.Intensity, lightComponent.Clouds, lightComponent.Sky };
 			}
 		}
 

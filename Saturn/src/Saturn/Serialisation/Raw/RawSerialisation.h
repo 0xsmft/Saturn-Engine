@@ -201,7 +201,7 @@ namespace Saturn {
 		static void WriteObjectChecked( const Ty& rObject, OStream& rStream )
 		{
 			// If trivial, write directly
-			if constexpr( std::is_trivial<Ty>() )
+			if constexpr( std::is_trivial<Ty>() || std::is_trivially_copyable<Ty>() )
 			{
 				WriteObject( rObject, rStream );
 			}

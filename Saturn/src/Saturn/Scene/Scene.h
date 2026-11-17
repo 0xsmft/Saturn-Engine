@@ -85,6 +85,9 @@ namespace Saturn {
 
 		float Intensity = 1.0f;
 
+		VolumetricCloudSettings Clouds;
+		AtmosphereSkySettings Sky;
+
 		static void Serialise( const DirectionalLight& rObject, std::ofstream& rStream )
 		{
 			RawSerialisation::WriteVec3( rObject.Direction, rStream );

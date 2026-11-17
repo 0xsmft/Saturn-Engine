@@ -57,7 +57,7 @@
 
 namespace Saturn {
 
-	SceneHierarchyPanel::SceneHierarchyPanel() 
+	SceneHierarchyPanel::SceneHierarchyPanel()
 		: ImGuiWindow( "Scene Hierarchy" ), m_EditIcon( EditorIcons::GetIcon( "EditIcon" ) )
 	{
 	}
@@ -1203,6 +1203,115 @@ namespace Saturn {
 			modified =  Auxiliary::DrawFloatControl( "Intensity", dlc.Intensity, 0.0f, 110.0f );
 			modified |= Auxiliary::DrawBoolControl( "Cast shadows", dlc.CastShadows );
 			modified |= Auxiliary::DrawColorVec3Control( "Radiance", dlc.Radiance, 1.0f );
+
+			ImGui::PushID( "AtmosphereSky" );
+
+			if( ImGui::CollapsingHeader( "Atmosphere Sky" ) )
+			{
+				ImGui::Indent();
+
+				auto& rSky = dlc.Sky;
+
+				modified |= Auxiliary::DrawBoolControl( "Enabled", rSky.Enabled );
+				modified |= Auxiliary::DrawFloatControl( "Sun illuminance", rSky.SunIlluminance, 0.0f, 500.0f );
+				modified |= Auxiliary::DrawFloatControl( "Sky intensity", rSky.Intensity, 0.0f, 20.0f );
+				modified |= Auxiliary::DrawFloatControl( "Sun disk size (deg)", rSky.SunDiskSizeDeg, 0.05f, 10.0f );
+				modified |= Auxiliary::DrawFloatControl( "Sun disk intensity", rSky.SunDiskIntensity, 0.0f, 10000.0f );
+				modified |= Auxiliary::DrawColorVec3Control( "Ground albedo", rSky.GroundAlbedo );
+				modified |= Auxiliary::DrawFloatControl( "Horizon fill", rSky.HorizonFill, 0.0f, 1.0f );
+
+				if( ImGui::Button( "Reset to defaults" ) )
+				{
+					rSky = AtmosphereSkySettings{};
+					modified = true;
+				}
+
+				ImGui::Unindent();
+			}
+
+			ImGui::PopID();
+
+			ImGui::PushID( "VolumetricClouds" );
+
+			if( ImGui::CollapsingHeader( "Volumetric Clouds" ) )
+			{
+				auto& rClouds = dlc.Clouds;
+
+				ImGui::Indent();
+
+				modified |= Auxiliary::DrawBoolControl( "Enabled", rClouds.Enabled );
+				modified |= Auxiliary::DrawBoolControl( "Cast cloud shadows", rClouds.CastShadows );
+
+				if( ImGui::TreeNodeEx( "Layer", ImGuiTreeNodeFlags_DefaultOpen ) )
+				{
+					modified |= Auxiliary::DrawFloatControl( "Bottom (km)", rClouds.BottomKm, 0.0f, 20.0f );
+					modified |= Auxiliary::DrawFloatControl( "Top (km)", rClouds.TopKm, 0.1f, 20.0f );
+					ImGui::TreePop();
+				}
+
+				if( ImGui::TreeNodeEx( "Shape", ImGuiTreeNodeFlags_DefaultOpen ) )
+				{
+					modified |= Auxiliary::DrawFloatControl( "Coverage", rClouds.Coverage, 0.0f, 1.0f );
+					modified |= Auxiliary::DrawFloatControl( "Density (1/m)", rClouds.Density, 0.0f, 0.5f );
+					modified |= Auxiliary::DrawFloatControl( "Cloud type", rClouds.CloudType, 0.0f, 1.0f );
+					modified |= Auxiliary::DrawFloatControl( "Erosion", rClouds.Erosion, 0.0f, 1.0f );
+					modified |= Auxiliary::DrawFloatControl( "Base noise scale (1/km)", rClouds.BasicNoiseScale, 0.001f, 2.0f );
+					modified |= Auxiliary::DrawFloatControl( "Detail noise scale (1/km)", rClouds.DetailNoiseScale, 0.01f, 10.0f );
+					modified |= Auxiliary::DrawFloatControl( "Weather scale (1/km)", rClouds.WeatherScale, 0.0005f, 1.0f );
+					modified |= Auxiliary::DrawFloatControl( "Curl strength (km)", rClouds.CurlStrength, 0.0f, 5.0f );
+					ImGui::TreePop();
+				}
+
+				if( ImGui::TreeNodeEx( "Wind" ) )
+				{
+					modified |= Auxiliary::DrawVec3Control( "Direction", rClouds.WindDirection, 0.01f );
+					modified |= Auxiliary::DrawFloatControl( "Speed (km/s)", rClouds.WindSpeed, 0.0f, 1.0f );
+					ImGui::TreePop();
+				}
+
+				if( ImGui::TreeNodeEx( "Lighting" ) )
+				{
+					modified |= Auxiliary::DrawFloatControl( "Sun illuminance", rClouds.SunIlluminance, 0.0f, 500.0f );
+					modified |= Auxiliary::DrawColorVec3Control( "Sky ambient", rClouds.SkyAmbientColor );
+					modified |= Auxiliary::DrawFloatControl( "Ambient scale", rClouds.AmbientScale, 0.0f, 20.0f );
+					modified |= Auxiliary::DrawBoolControl( "Ground bounce", rClouds.GroundContribution );
+					modified |= Auxiliary::DrawColorVec3Control( "Ground bounce colour", rClouds.GroundBounceColor );
+					modified |= Auxiliary::DrawFloatControl( "Phase forward (g)", rClouds.PhaseForward, -0.99f, 0.99f );
+					modified |= Auxiliary::DrawFloatControl( "Phase backward (g)", rClouds.PhaseBackward, -0.99f, 0.99f );
+					modified |= Auxiliary::DrawFloatControl( "Phase mix", rClouds.PhaseMix, 0.0f, 1.0f );
+					modified |= Auxiliary::DrawFloatControl( "Multi scatter extinction", rClouds.MultiScatterExtinction, 0.0f, 1.0f );
+					modified |= Auxiliary::DrawFloatControl( "Multi scatter scatter", rClouds.MultiScatterScatter, 0.0f, 1.0f );
+					modified |= Auxiliary::DrawFloatControl( "Powder", rClouds.PowderScale, 0.0f, 1.0f );
+					ImGui::TreePop();
+				}
+
+				if( ImGui::TreeNodeEx( "Shadows" ) )
+				{
+					modified |= Auxiliary::DrawFloatControl( "Strength", rClouds.ShadowStrength, 0.0f, 4.0f );
+					modified |= Auxiliary::DrawFloatControl( "Min light", rClouds.ShadowMinLight, 0.0f, 1.0f );
+					ImGui::TreePop();
+				}
+
+				if( ImGui::TreeNodeEx( "Quality" ) )
+				{
+					modified |= Auxiliary::DrawUInt32Control( "March steps", rClouds.MarchSteps, 8u, 256u );
+					modified |= Auxiliary::DrawUInt32Control( "Light steps", rClouds.LightSteps, 1u, 16u );
+					modified |= Auxiliary::DrawFloatControl( "Light march length (km)", rClouds.LightMarchLengthKm, 0.1f, 10.0f );
+					modified |= Auxiliary::DrawFloatControl( "Max march distance (km)", rClouds.MaxTracingDistanceKm, 1.0f, 500.0f );
+					modified |= Auxiliary::DrawFloatControl( "Max start distance (km)", rClouds.TracingStartMaxDistanceKm, 1.0f, 500.0f );
+					ImGui::TreePop();
+				}
+
+				if( ImGui::Button( "Reset to defaults" ) )
+				{
+					rClouds = VolumetricCloudSettings{};
+					modified = true;
+				}
+
+				ImGui::Unindent();
+			}
+
+			ImGui::PopID();
 
 			if( modified ) m_Context->MarkDirty();
 		} );

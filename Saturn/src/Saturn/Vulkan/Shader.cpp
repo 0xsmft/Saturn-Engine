@@ -634,6 +634,7 @@ namespace Saturn {
 			SHADER_INFO( "Sampled image: {0}", Name );
 			SHADER_INFO( " Binding: {0}", binding );
 			SHADER_INFO( " Set: {0}", set );
+			SHADER_INFO( " ArraySize: {0}", arraySizes );
 
 			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
 				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );

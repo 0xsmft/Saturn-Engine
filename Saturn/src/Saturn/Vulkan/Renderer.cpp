@@ -580,7 +580,7 @@ namespace Saturn {
 		}
 	}
 
-	void Renderer::SetSceneEnvironment( Ref<Image2D> ShadowMap, const EnvironmentMap& rEnvironment, Ref<Texture2D> BRDF )
+	void Renderer::SetSceneEnvironment( Ref<Image2D> ShadowMap, const EnvironmentMap& rEnvironment, Ref<Texture2D> BRDF, Ref<Image2D> CloudShadowMap )
 	{
 		SAT_PF_EVENT();
 
@@ -590,6 +590,7 @@ namespace Saturn {
 
 		shader->WriteDescriptor( "u_ShadowMap", ShadowMap->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameInFlightIndex ] );
 		shader->WriteDescriptor( "u_BRDFLUTTexture", BRDF->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameInFlightIndex ] );
+		shader->WriteDescriptor( "u_CloudShadowMap", CloudShadowMap->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameInFlightIndex ] );
 
 		if( rEnvironment.RadianceMap && rEnvironment.IrradianceMap )
 		{

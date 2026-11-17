@@ -312,6 +312,8 @@ namespace Saturn {
 	
 		Timer GeometryPassTimer;
 		Timer ShadowMapTimers[SHADOW_CASCADE_COUNT];
+		Timer AtmosphereTimer;
+		Timer AtmosphereVCTimer;
 		Timer PreDepthTimer;
 		Timer LightCullingTimer;
 		Timer BloomTimer;
@@ -584,12 +586,51 @@ namespace Saturn {
 		
 		// Weather map
 		Ref<Texture2D> CloudsWeatherMap;
-		Ref<Texture2D> CurlTexture;
+		Ref<Texture2D> CloudsCurlTexture;
 
 		// Sky transmittance
 		Ref<Image2D> TransmittanceLutOut;
 		Ref<ComputePipeline> TransmittanceLutPipeline;
 		Ref<Material> TransmittanceLutMaterial;
+
+		// Multi scattering
+		Ref<Image2D> MultiScatteringLutOut;
+		Ref<ComputePipeline> MultiScatteringLutPipeline;
+		Ref<Material> MultiScatteringLutMaterial;
+
+		bool AtmosphereTransmittanceValid = false;
+		bool AtmosphereMultiScatteringValid = false;
+		glm::vec3 AtmosphereLutGroundAlbedo = glm::vec3( -1.0f );
+
+		// Sky view
+		Ref<Image2D> SkyViewLutOut;
+		Ref<ComputePipeline> SkyViewLutPipeline;
+		Ref<Material> SkyViewLutMaterial;
+
+		Ref<Pipeline> SkyAtmospherePipeline;
+		Ref<Material> SkyAtmosphereMaterial;
+
+		// Raymarched result
+		Ref<Image2D> CloudsRaymarchOut;
+		Ref<Image2D> CloudsDistanceOut;
+		Ref<ComputePipeline> CloudsRaymarchPipeline;
+		Ref<Material> CloudsRaymarchMaterial;
+
+		// Reconstruction (at half res)
+		// Sampled by SceneComposite
+		Ref<Image2D> CloudsReconstructOut;     
+		Ref<Image2D> CloudsHistory;
+		Ref<ComputePipeline> CloudsReconstructPipeline;
+		Ref<Material> CloudsReconstructMaterial;
+
+		glm::mat4 CloudsPrevViewProj = glm::mat4( 1.0f );
+		uint32_t CloudsFrameIndex = 0;
+		bool CloudsHistoryValid = false;
+
+		// Clouds shadow mapping
+		Ref<Image2D> CloudShadowMap;
+		Ref<ComputePipeline> CloudShadowPipeline;
+		Ref<Material> CloudShadowMaterial;
 
 		// Instanced Rendering
 		//////////////////////////////////////////////////////////////////////////
@@ -635,6 +676,12 @@ namespace Saturn {
 		Ref< Shader > CloudsNoiseBasicShader;
 		Ref< Shader > CloudsNoiseDetailedShader;
 		Ref< Shader > TransmittanceLutShader;
+		Ref< Shader > SkyViewLutShader;
+		Ref< Shader > MultiScatteringLutShader;
+		Ref< Shader > SkyAtmosphereShader;
+		Ref< Shader > CloudsRaymarchShader;
+		Ref< Shader > CloudsReconstructShader;
+		Ref< Shader > CloudShadowShader;
 	};
 
 	struct SceneRendererSpecification
@@ -766,7 +813,11 @@ namespace Saturn {
 		void InitVolumetricCloudsBasicNoise();
 		void InitVolumetricCloudsDetailedNoise();
 		void InitVolumetricCloudsTextureResources();
+		void InitVolumetricCloudsRaymarch();
+		void InitVolumetricCloudsShadow();
 		void InitAtmosSkyTransmittance();
+		void InitAtmosSkyView();
+		void RenderPhysicalSky();
 
 		void InitBuffers();
 		void InitRenderer2D();
@@ -777,6 +828,7 @@ namespace Saturn {
 		void PreDepthPass();
 		void LightCullingPass();
 		void AtmospherePass();
+		void VolumetricCloudsPass();
 		void GeometryPass();
 		void BloomPass();
 		void SSAOPass();

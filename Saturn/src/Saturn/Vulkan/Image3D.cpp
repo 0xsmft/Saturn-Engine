@@ -178,12 +178,13 @@ namespace Saturn {
 
 		// Create sampler.
 		VkSamplerCreateInfo SamplerCreateInfo = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-		SamplerCreateInfo.magFilter = VK_FILTER_NEAREST;
-		SamplerCreateInfo.minFilter = VK_FILTER_NEAREST;
+		// TODO: Add settings for these values...
+		SamplerCreateInfo.magFilter = VK_FILTER_LINEAR;
+		SamplerCreateInfo.minFilter = VK_FILTER_LINEAR;
 		SamplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-		SamplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		SamplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		SamplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		SamplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		SamplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		SamplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		SamplerCreateInfo.mipLodBias = 0.0f;
 		SamplerCreateInfo.maxAnisotropy = 1.0f;
 		SamplerCreateInfo.compareOp = VK_COMPARE_OP_NEVER;

@@ -151,6 +151,8 @@ namespace Saturn {
 
 		InitBloom();
 
+		InitVolumetricCloudsPass();
+
 		InitSceneComposite();
 
 		InitLateComposite();
@@ -563,6 +565,7 @@ namespace Saturn {
 		m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomTexture", m_RendererData.BloomTextures[ 2 ].Texture );
 		m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomDirtTexture", Renderer::Get()->GetPinkTexture() );
 		m_RendererData.SceneCompositeMaterial->SetResource( "u_DepthTexture", m_RendererData.GeometryFramebuffer->GetDepthAttachmentResource() );
+		m_RendererData.SceneCompositeMaterial->SetResource( "u_CloudsTexture", m_RendererData.CloudsReconstructOut );
 
 		if( !m_RendererData.SceneCompositePipeline )
 		{
@@ -1274,8 +1277,7 @@ namespace Saturn {
 				&s_SMAASearchTexBytes,
 				true );
 
-			m_RendererData.SMAAAreaTexture = Ref<Texture2D>::Create( "content/textures/SMAA_AreaTex.tga",
-				AddressingMode::Repeat, loadFlags );
+			m_RendererData.SMAAAreaTexture = BuiltinResourceManager::Get()->GetOrLoadResource<Texture2D>( PackagedResourceType::SMAA_AreaTexture );
 		}
 
 		m_RendererData.SMAAFinalPipeline = Ref<ComputePipeline>::Create( m_RendererData.SMAABlendingShader );
@@ -1464,13 +1466,123 @@ namespace Saturn {
 		}
 	}
 
+	static AtmosphereParameters CreateDefaultAtmosphereParameters()
+	{
+		AtmosphereParameters atmos;
+
+		constexpr float kEarthBottomRadius = 6360.0f;
+		constexpr float kEarthTopRadius = kEarthBottomRadius + 60.0f;
+		constexpr float kEarthRayleighScaleHeight = 8.0f;
+		constexpr float kEarthMieScaleHeight = 1.2f;
+
+		struct DensityProfileLayer
+		{
+			float Width = 0.0f;
+			float ExpTerm = 0.0f;
+			float ExpScale = 0.0f;
+			float LinearTerm = 0.0f;
+			float ConstantTerm = 0.0f;
+		};
+
+		struct DensityProfile
+		{
+			DensityProfileLayer Layers[ 2 ];
+		};
+
+		atmos.BottomRadius = kEarthBottomRadius;
+		atmos.TopRadius = kEarthTopRadius;
+		atmos.GroundAlbedo = glm::vec3{ 0.3f };
+
+		DensityProfile rayleighDP{};
+		DensityProfile meDP{};
+		DensityProfile absorptionDP{};
+
+		rayleighDP.Layers[ 0 ] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+		rayleighDP.Layers[ 1 ] = { 0.0f, 1.0f, -1.0f / kEarthRayleighScaleHeight, 0.0f, 0.0f };
+
+		meDP.Layers[ 0 ] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+		meDP.Layers[ 1 ] = { 0.0f, 1.0f, -1.0f / kEarthMieScaleHeight, 0.0f, 0.0f };
+
+		absorptionDP.Layers[ 0 ] = { 25.0f, 0.0f, 0.0f,  1.0f / 15.0f, -2.0f / 3.0f };
+		absorptionDP.Layers[ 1 ] = { 0.0f, 0.0f, 0.0f, -1.0f / 15.0f,  8.0f / 3.0f };
+
+		std::memcpy( &atmos.RayleighDensity[ 0 ].x, &rayleighDP, sizeof( rayleighDP ) );
+		std::memcpy( &atmos.MieDensity[ 0 ].x, &meDP, sizeof( meDP ) );
+		std::memcpy( &atmos.AbsorptionDensity[ 0 ].x, &absorptionDP, sizeof( absorptionDP ) );
+
+		glm::vec3 rayleighScattering = { 0.005802f, 0.013558f, 0.033100f };
+		atmos.RayleighScatteringColor = glm::normalize( rayleighScattering );
+		atmos.RayleighScatterLength = glm::length( rayleighScattering );
+
+		glm::vec3 mieScattering = { 0.003996f, 0.003996f, 0.003996f };
+		atmos.MieScatteringColor = glm::normalize( mieScattering );
+		atmos.MieScatteringLength = glm::length( mieScattering );
+
+		glm::vec3 mieExtinction = { 0.004440f, 0.004440f, 0.004440f };
+		glm::vec3 mieAbs = ( mieExtinction - mieScattering );
+
+		atmos.MieAbsLength = glm::length( mieAbs );
+		atmos.MieAbsColor = glm::normalize( mieAbs );
+
+		atmos.MiePhaseFunctionG = 0.8f;
+
+		glm::vec3 absorptionExtinction = { 0.000650f, 0.001881f, 0.000085f };
+		atmos.AbsorptionColor = glm::normalize( absorptionExtinction );
+		atmos.AbsorptionLength = glm::length( absorptionExtinction );
+
+		atmos.MultipleScatteringFactor = 1.0f;
+		atmos.ViewRayMarchMaxSPP = 31;
+		atmos.ViewRayMarchMinSPP = 14;
+
+		return atmos;
+	}
+
+	static void GetSceneSun( const DirectionalLight& rLight, glm::vec3& rDirection, glm::vec3& rColor )
+	{
+		rDirection = glm::vec3( 0.3f, 0.6f, 0.4f );
+		rColor = glm::vec3( 1.0f, 0.95f, 0.9f );
+
+		if( glm::length( rLight.Direction ) > 1e-4f )
+		{
+			rDirection = rLight.Direction;
+			rColor = rLight.Radiance * rLight.Intensity;
+		}
+
+		rDirection = glm::normalize( rDirection );
+	}
+
 	void SceneRenderer::InitVolumetricCloudsPass()
 	{
 		InitVolumetricCloudsTextureResources();
 		InitAtmosSkyTransmittance();
+		InitAtmosSkyView();
 
 		InitVolumetricCloudsBasicNoise();
 		InitVolumetricCloudsDetailedNoise();
+
+		InitVolumetricCloudsRaymarch();
+		InitVolumetricCloudsShadow();
+	}
+
+	void SceneRenderer::InitVolumetricCloudsShadow()
+	{
+		// 1024 texels over 40 km (CLOUD_SHADOW_EXTENT_M) is ~39 m per texel, plenty for soft cloud shadows.
+		m_RendererData.CloudShadowMap = Ref<Image2D>::Create( ImageFormat::RED32F, 1024u, 1024u, 1u, 1u, 1u, ImageTiling::Optimal, true );
+		m_RendererData.CloudShadowMap->SetDebugName( "CloudShadowMap" );
+
+		if( !m_RendererData.CloudShadowShader )
+		{
+			m_RendererData.CloudShadowShader = ShaderLibrary::Get().FindOrLoad( "CloudsShadow", "content/shaders/CloudsShadow.glsl" );
+		}
+
+		m_RendererData.CloudShadowPipeline = Ref<ComputePipeline>::Create( m_RendererData.CloudShadowShader );
+
+		m_RendererData.CloudShadowMaterial = Ref<Material>::Create( m_RendererData.CloudShadowShader, "CloudShadowMat" );
+		m_RendererData.CloudShadowMaterial->SetResource( "u_WeatherMapTexture", m_RendererData.CloudsWeatherMap );
+		m_RendererData.CloudShadowMaterial->SetResource( "u_CurlTexture", m_RendererData.CloudsCurlTexture );
+		m_RendererData.CloudShadowMaterial->SetResource( "u_BasicNoiseTexture", m_RendererData.CloudsNoiseBasicOut );
+		m_RendererData.CloudShadowMaterial->SetResource( "u_DetailNoiseTexture", m_RendererData.CloudsNoiseDetailedOut );
+		m_RendererData.CloudShadowMaterial->SetResource( "o_CloudShadow", m_RendererData.CloudShadowMap );
 	}
 
 	void SceneRenderer::InitVolumetricCloudsBasicNoise()
@@ -1551,12 +1663,68 @@ namespace Saturn {
 	
 		m_RendererData.CloudsCurlTexture = BuiltinResourceManager::Get()->GetOrLoadResource<Texture2D>( PackagedResourceType::CurlTexture );
 	}
+
+	void SceneRenderer::InitVolumetricCloudsRaymarch()
+	{
+		const uint32_t reconstructWidth  = std::max( 2u, m_RendererData.Width );
+		const uint32_t reconstructHeight = std::max( 2u, m_RendererData.Height );
+		const uint32_t traceWidth  = ( reconstructWidth + 1u ) / 2u;
+		const uint32_t traceHeight = ( reconstructHeight + 1u ) / 2u;
+
+		m_RendererData.CloudsRaymarchOut = Ref<Image2D>::Create( ImageFormat::RGBA16F, traceWidth, traceHeight, 1u, 1u, 1u, ImageTiling::Optimal, true );
+		m_RendererData.CloudsRaymarchOut->SetDebugName( "CloudsRaymarchOut" );
+
+		m_RendererData.CloudsDistanceOut = Ref<Image2D>::Create( ImageFormat::RED32F, traceWidth, traceHeight, 1u, 1u, 1u, ImageTiling::Optimal, true );
+		m_RendererData.CloudsDistanceOut->SetDebugName( "CloudsDistanceOut" );
+
+		m_RendererData.CloudsReconstructOut = Ref<Image2D>::Create( ImageFormat::RGBA16F, reconstructWidth, reconstructHeight, 1u, 1u, 1u, ImageTiling::Optimal, true );
+		m_RendererData.CloudsReconstructOut->SetDebugName( "CloudsReconstructOut" );
+
+		m_RendererData.CloudsHistory = Ref<Image2D>::Create( ImageFormat::RGBA16F, reconstructWidth, reconstructHeight, 1u, 1u, 1u, ImageTiling::Optimal, true );
+		m_RendererData.CloudsHistory->SetDebugName( "CloudsHistory" );
+
+		m_RendererData.CloudsHistoryValid = false;
+
+		if( !m_RendererData.CloudsRaymarchShader )
+		{
+			m_RendererData.CloudsRaymarchShader = ShaderLibrary::Get().FindOrLoad( "CloudsRender", "content/shaders/CloudsRender.glsl" );
+		}
+
+		m_RendererData.CloudsRaymarchPipeline = Ref<ComputePipeline>::Create( m_RendererData.CloudsRaymarchShader );
+
+		m_RendererData.CloudsRaymarchMaterial = Ref<Material>::Create( m_RendererData.CloudsRaymarchShader, "CloudsRaymarchMat" );
+		m_RendererData.CloudsRaymarchMaterial->SetResource( "u_WeatherMapTexture", m_RendererData.CloudsWeatherMap );
+		m_RendererData.CloudsRaymarchMaterial->SetResource( "u_CurlTexture", m_RendererData.CloudsCurlTexture );
+		m_RendererData.CloudsRaymarchMaterial->SetResource( "u_BasicNoiseTexture", m_RendererData.CloudsNoiseBasicOut );
+		m_RendererData.CloudsRaymarchMaterial->SetResource( "u_DetailNoiseTexture", m_RendererData.CloudsNoiseDetailedOut );
+		m_RendererData.CloudsRaymarchMaterial->SetResource( "u_TransmittanceLut", m_RendererData.TransmittanceLutOut );
+		m_RendererData.CloudsRaymarchMaterial->SetResource( "u_DepthTexture", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
+
+		m_RendererData.CloudsRaymarchMaterial->SetResource( "o_Clouds", m_RendererData.CloudsRaymarchOut );
+		m_RendererData.CloudsRaymarchMaterial->SetResource( "o_CloudsDistance", m_RendererData.CloudsDistanceOut );
+		m_RendererData.CloudsRaymarchMaterial->SetResource( "u_SkyViewLut", m_RendererData.SkyViewLutOut );
+		m_RendererData.CloudsRaymarchMaterial->SetResource( "u_MultiScatteringLut", m_RendererData.MultiScatteringLutOut );
+
+		// Temporal reconstruction
+		if( !m_RendererData.CloudsReconstructShader )
+		{
+			m_RendererData.CloudsReconstructShader = ShaderLibrary::Get().FindOrLoad( "CloudsReconstruct", "content/shaders/CloudsReconstruct.glsl" );
+		}
+
+		m_RendererData.CloudsReconstructPipeline = Ref<ComputePipeline>::Create( m_RendererData.CloudsReconstructShader );
+
+		m_RendererData.CloudsReconstructMaterial = Ref<Material>::Create( m_RendererData.CloudsReconstructShader, "CloudsReconstructMat" );
+		m_RendererData.CloudsReconstructMaterial->SetResource( "u_CloudsCurrent", m_RendererData.CloudsRaymarchOut );
+		m_RendererData.CloudsReconstructMaterial->SetResource( "u_CloudsDistance", m_RendererData.CloudsDistanceOut );
+		m_RendererData.CloudsReconstructMaterial->SetResource( "u_CloudsHistory", m_RendererData.CloudsHistory );
+		m_RendererData.CloudsReconstructMaterial->SetResource( "o_CloudsOut", m_RendererData.CloudsReconstructOut );
 	}
 
 	void SceneRenderer::InitAtmosSkyTransmittance()
 	{
 		m_RendererData.TransmittanceLutOut = Ref<Image2D>::Create( ImageFormat::RGBA16F, 256u, 64u, 1u, 1u, 1u, ImageTiling::Optimal, true );
 		m_RendererData.TransmittanceLutOut->SetDebugName( "SkyTransmittanceLut" );
+		m_RendererData.AtmosphereTransmittanceValid = false;
 
 		if( !m_RendererData.TransmittanceLutShader )
 		{
@@ -1569,6 +1737,70 @@ namespace Saturn {
 		m_RendererData.TransmittanceLutMaterial->SetResource( "o_OutTransmittanceLut", m_RendererData.TransmittanceLutOut );
 		m_RendererData.TransmittanceLutMaterial->SetResource( "u_TransmittanceLut", m_RendererData.TransmittanceLutOut );
 		m_RendererData.TransmittanceLutMaterial->SetResource( "u_DepthTexture", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
+	}
+
+	void SceneRenderer::InitAtmosSkyView()
+	{
+		// Multiple scattering LUT, 32x32 as is specified Hillaire 2020.
+		m_RendererData.MultiScatteringLutOut = Ref<Image2D>::Create( ImageFormat::RGBA16F, 32u, 32u, 1u, 1u, 1u, ImageTiling::Optimal, true );
+		m_RendererData.MultiScatteringLutOut->SetDebugName( "SkyMultiScatteringLut" );
+		m_RendererData.AtmosphereMultiScatteringValid = false;
+
+		if( !m_RendererData.MultiScatteringLutShader )
+		{
+			m_RendererData.MultiScatteringLutShader = ShaderLibrary::Get().FindOrLoad( "SkyAtmosphereMultiScatteringLut", "content/shaders/SkyAtmosphereMultiScatteringLut.glsl" );
+		}
+
+		m_RendererData.MultiScatteringLutPipeline = Ref<ComputePipeline>::Create( m_RendererData.MultiScatteringLutShader );
+
+		m_RendererData.MultiScatteringLutMaterial = Ref<Material>::Create( m_RendererData.MultiScatteringLutShader, "SkyMultiScatLutMat" );
+		m_RendererData.MultiScatteringLutMaterial->SetResource( "o_MultiScatteringLut", m_RendererData.MultiScatteringLutOut );
+		m_RendererData.MultiScatteringLutMaterial->SetResource( "u_TransmittanceLut", m_RendererData.TransmittanceLutOut );
+		m_RendererData.MultiScatteringLutMaterial->SetResource( "u_DepthTexture", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
+
+		// Sky-view LUT, 192x108 as in Hillaire 2020.
+		m_RendererData.SkyViewLutOut = Ref<Image2D>::Create( ImageFormat::RGBA16F, 192u, 108u, 1u, 1u, 1u, ImageTiling::Optimal, true );
+		m_RendererData.SkyViewLutOut->SetDebugName( "SkyViewLut" );
+
+		if( !m_RendererData.SkyViewLutShader )
+		{
+			m_RendererData.SkyViewLutShader = ShaderLibrary::Get().FindOrLoad( "SkyAtmosphereSkyViewLut", "content/shaders/SkyAtmosphereSkyViewLut.glsl" );
+		}
+
+		m_RendererData.SkyViewLutPipeline = Ref<ComputePipeline>::Create( m_RendererData.SkyViewLutShader );
+
+		m_RendererData.SkyViewLutMaterial = Ref<Material>::Create( m_RendererData.SkyViewLutShader, "SkyViewLutMat" );
+		m_RendererData.SkyViewLutMaterial->SetResource( "o_SkyViewLut", m_RendererData.SkyViewLutOut );
+		m_RendererData.SkyViewLutMaterial->SetResource( "u_TransmittanceLut", m_RendererData.TransmittanceLutOut );
+		m_RendererData.SkyViewLutMaterial->SetResource( "u_MultiScatteringLut", m_RendererData.MultiScatteringLutOut );
+		m_RendererData.SkyViewLutMaterial->SetResource( "u_DepthTexture", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
+
+		// Full screen sky draw in the geometry pass, set up like the skybox.
+		if( !m_RendererData.SkyAtmosphereShader )
+		{
+			m_RendererData.SkyAtmosphereShader = ShaderLibrary::Get().FindOrLoad( "SkyAtmosphere", "content/shaders/SkyAtmosphere.glsl" );
+		}
+
+		m_RendererData.SkyAtmosphereMaterial = Ref<Material>::Create( m_RendererData.SkyAtmosphereShader, "SkyAtmosphereMat" );
+		m_RendererData.SkyAtmosphereMaterial->SetResource( "u_SkyViewLut", m_RendererData.SkyViewLutOut );
+		m_RendererData.SkyAtmosphereMaterial->SetResource( "u_TransmittanceLut", m_RendererData.TransmittanceLutOut );
+
+		if( !m_RendererData.SkyAtmospherePipeline )
+		{
+			PipelineSpecification PipelineSpec = {};
+			PipelineSpec.Name = "SkyAtmosphere";
+			PipelineSpec.Shader = m_RendererData.SkyAtmosphereShader;
+			PipelineSpec.RenderPass = m_RendererData.GeometryPass;
+			PipelineSpec.UseDepthTest = true;
+			PipelineSpec.CullMode = CullMode::Back;
+			PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
+			PipelineSpec.VertexLayout = {
+				{ ShaderDataType::Float3, "a_Position" },
+				{ ShaderDataType::Float2, "a_TexCoord" }
+			};
+
+			m_RendererData.SkyAtmospherePipeline = Ref<Pipeline>::Create( PipelineSpec );
+		}
 	}
 
 	void SceneRenderer::RenderGrid()
@@ -1617,8 +1849,12 @@ namespace Saturn {
 
 		auto& rSceneEnvironment = m_RendererData.SceneEnvironment;
 
+		// The cubemap environment is still needed for image based lighting, so keep it up to
+		// date even when the physical sky is what gets drawn.
+		const bool hasCubemapSky = !( rSceneEnvironment.Azimuth == 0 && rSceneEnvironment.Inclination == 0 && rSceneEnvironment.Turbidity == 0 );
+
 		// We have no skybox.
-		if( rSceneEnvironment.Azimuth == 0 && rSceneEnvironment.Inclination == 0 && rSceneEnvironment.Turbidity == 0 )
+		if( !hasCubemapSky )
 		{
 			// I don't really like this.
 			// TODO: Come back to this.
@@ -1627,12 +1863,22 @@ namespace Saturn {
 				rSceneEnvironment.RadianceMap = nullptr;
 				rSceneEnvironment.IrradianceMap = nullptr;
 			}
+		}
+		else
+		{
+			// Skybox values where set, but check if out textures exist or update them accordingly.
+			CheckInvalidSkybox();
+		}
 
+		// Physical sky from the directional light replaces the cubemap draw.
+		if( m_pScene->m_Lights.DirectionalLights[ 0 ].Sky.Enabled )
+		{
+			RenderPhysicalSky();
 			return;
 		}
 
-		// Skybox values where set, but check if out textures exist or update them accordingly.
-		CheckInvalidSkybox();
+		if( !hasCubemapSky )
+			return;
 
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 		m_RendererData.SkyboxMaterial->SetResource( "u_CubeTexture", m_RendererData.SceneEnvironment.IrradianceMap );
@@ -1659,6 +1905,49 @@ namespace Saturn {
 			m_RendererData.SkyboxPipeline, 
 			m_RendererData.SkyboxMaterial,
 			m_RendererData.QuadIndexBuffer, 
+			m_RendererData.QuadVertexBuffer );
+	}
+
+	void SceneRenderer::RenderPhysicalSky()
+	{
+		SAT_PF_EVENT();
+
+		const auto& rDirLight = m_pScene->m_Lights.DirectionalLights[ 0 ];
+		const AtmosphereSkySettings& rSky = rDirLight.Sky;
+
+		glm::vec3 sunDirection, sunColor;
+		GetSceneSun( rDirLight, sunDirection, sunColor );
+
+		const AtmosphereParameters atmosphere = CreateDefaultAtmosphereParameters();
+		const glm::vec3 cameraPosMeters = glm::vec3( glm::inverse( m_RendererData.CurrentCamera.ViewMatrix )[ 3 ] );
+
+		struct USkyData
+		{
+			glm::mat4 InverseViewProj;
+			glm::vec4 CameraPosKm;
+			glm::vec4 SunDirection;
+			glm::vec4 SkyLight;
+			glm::vec4 SunDisk;
+			glm::vec4 Radii;
+			glm::vec4 GroundAlbedo;
+		} u_SkyData{};
+
+		const float sunRadius = glm::radians( glm::max( rSky.SunDiskSizeDeg, 0.01f ) * 0.5f );
+
+		u_SkyData.InverseViewProj = glm::inverse( m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix );
+		u_SkyData.CameraPosKm = glm::vec4( cameraPosMeters * 0.001f + glm::vec3( 0.0f, atmosphere.BottomRadius, 0.0f ), 1.0f );
+		u_SkyData.SunDirection = glm::vec4( sunDirection, 0.0f );
+		u_SkyData.SkyLight = glm::vec4( sunColor * rSky.SunIlluminance * rSky.Intensity, 0.0f );
+		u_SkyData.SunDisk = glm::vec4( glm::cos( sunRadius ), rSky.SunDiskIntensity, 0.0f, 0.0f );
+		u_SkyData.Radii = glm::vec4( atmosphere.BottomRadius, atmosphere.TopRadius, 0.0f, 0.0f );
+		u_SkyData.GroundAlbedo = glm::vec4( glm::clamp( rSky.GroundAlbedo, glm::vec3( 0.0f ), glm::vec3( 1.0f ) ), glm::clamp( rSky.HorizonFill, 0.0f, 1.0f ) );
+
+		m_RendererData.SkyAtmosphereMaterial->UploadDataToUB( 3, &u_SkyData, sizeof( USkyData ) );
+
+		Renderer::Get()->SubmitFullscreenQuad( m_RendererData.CommandBuffer,
+			m_RendererData.SkyAtmospherePipeline,
+			m_RendererData.SkyAtmosphereMaterial,
+			m_RendererData.QuadIndexBuffer,
 			m_RendererData.QuadVertexBuffer );
 	}
 
@@ -1938,6 +2227,10 @@ namespace Saturn {
 			ImGui::Text( "SceneRenderer::ShadowMapPass: %.3f ms", shadowPassTime );
 
 			ImGui::Text( "SceneRenderer::LightCulling: %.4f ms", m_RendererData.LightCullingTimer.ElapsedMilliseconds() );
+
+			ImGui::Text( "SceneRenderer::Atmosphere: %.3f ms", m_RendererData.AtmosphereTimer.ElapsedMilliseconds() );
+
+			ImGui::Text( "SceneRenderer::AtmosphereVC: %.3f ms", m_RendererData.AtmosphereVCTimer.ElapsedMilliseconds() );
 
 			ImGui::Text( "SceneRenderer::GeometryPass: %.3f ms", m_RendererData.GeometryPassTimer.ElapsedMilliseconds() );
 
@@ -2445,6 +2738,9 @@ namespace Saturn {
 		const float size = m_RendererData.LightCullingWorkGroups.x * m_RendererData.LightCullingWorkGroups.y * 4.0f * 1024.0f;
 		m_RendererData.StorageBufferSet->Resize( 0, 14, ( size_t ) size );
 
+		// Cloud buffers depend on the viewport size, recreate before SceneComposite binds them.
+		InitVolumetricCloudsRaymarch();
+
 		InitSceneComposite();
 		InitLateComposite();
 		
@@ -2458,6 +2754,9 @@ namespace Saturn {
 		CreateGridComponents();
 
 		m_RendererData.TransmittanceLutMaterial->SetResource( "u_DepthTexture", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
+		m_RendererData.CloudsRaymarchMaterial->SetResource( "u_DepthTexture", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
+		m_RendererData.SkyViewLutMaterial->SetResource( "u_DepthTexture", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
+		m_RendererData.MultiScatteringLutMaterial->SetResource( "u_DepthTexture", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
 
 		if( /*HasFlag( SceneRendererFlag_MasterInstance )*/ !HasFlag( SceneRendererFlag_NoRenderer2D ) )
 		{
@@ -2514,7 +2813,7 @@ namespace Saturn {
 		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "Static meshes" );
 		
 		// Set environment resource.
-		Renderer::Get()->SetSceneEnvironment( m_RendererData.ShadowCascades[ 0 ].Framebuffer->GetDepthAttachmentResource(), m_RendererData.SceneEnvironment, m_RendererData.BRDFLUT_Texture );
+		Renderer::Get()->SetSceneEnvironment( m_RendererData.ShadowCascades[ 0 ].Framebuffer->GetDepthAttachmentResource(), m_RendererData.SceneEnvironment, m_RendererData.BRDFLUT_Texture, m_RendererData.CloudShadowMap );
 
 		RenderStaticMeshes();
 
@@ -3247,87 +3546,18 @@ namespace Saturn {
 		m_RendererData.LightCullingTimer.Stop();
 	}
 
-	static AtmosphereParameters CreateDefaultAtmosphereParameters()
-	{
-		AtmosphereParameters atmos;
-		
-		constexpr float kEarthBottomRadius = 6360.0f;
-		constexpr float kEarthTopRadius = kEarthBottomRadius + 60.0f;
-		constexpr float kEarthRayleighScaleHeight = 8.0f;
-		constexpr float kEarthMieScaleHeight = 1.2f;
-
-		struct DensityProfileLayer
-		{
-			float Width = 0.0f;
-			float ExpTerm = 0.0f;
-			float ExpScale = 0.0f;
-			float LinearTerm = 0.0f;
-			float ConstantTerm = 0.0f;
-		};
-
-		struct DensityProfile
-		{
-			DensityProfileLayer Layers[ 2 ];
-		};
-
-		atmos.BottomRadius = kEarthBottomRadius;
-		atmos.TopRadius = kEarthTopRadius;
-		atmos.GroundAlbedo = glm::vec3{ 0.3f };
-
-		DensityProfile rayleighDP{};
-		DensityProfile meDP{};
-		DensityProfile absorptionDP{};
-
-		rayleighDP.Layers[ 0 ] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
-		rayleighDP.Layers[ 1 ] = { 0.0f, 1.0f, -1.0f / kEarthRayleighScaleHeight, 0.0f, 0.0f };
-
-		meDP.Layers[ 0 ] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
-		meDP.Layers[ 1 ] = { 0.0f, 1.0f, -1.0f / kEarthMieScaleHeight, 0.0f, 0.0f };
-
-		absorptionDP.Layers[ 0 ] = { 25.0f, 0.0f, 0.0f,  1.0f / 15.0f, -2.0f / 3.0f };
-		absorptionDP.Layers[ 1 ] = { 0.0f, 0.0f, 0.0f, -1.0f / 15.0f,  8.0f / 3.0f };
-
-		std::memcpy( &atmos.RayleighDensity[ 0 ].x, &rayleighDP, sizeof( rayleighDP ) );
-		std::memcpy( &atmos.MieDensity[ 0 ].x, &meDP, sizeof( meDP ) );
-		std::memcpy( &atmos.AbsorptionDensity[ 0 ].x, &absorptionDP, sizeof( absorptionDP ) );
-
-		glm::vec3 rayleighScattering = { 0.005802f, 0.013558f, 0.033100f };
-		atmos.RayleighScatteringColor = glm::normalize( rayleighScattering );
-		atmos.RayleighScatterLength = glm::length( rayleighScattering );
-
-		glm::vec3 mieScattering = { 0.003996f, 0.003996f, 0.003996f };
-		atmos.MieScatteringColor = glm::normalize( mieScattering );
-		atmos.MieScatteringLength = glm::length( mieScattering );
-
-		glm::vec3 mieExtinction = { 0.004440f, 0.004440f, 0.004440f };
-		glm::vec3 mieAbs = ( mieExtinction - mieScattering );
-
-		atmos.MieAbsLength = glm::length( mieAbs );
-		atmos.MieAbsColor = glm::normalize( mieAbs );
-
-		atmos.MiePhaseFunctionG = 0.8f;
-		
-		glm::vec3 absorptionExtinction = { 0.000650f, 0.001881f, 0.000085f };
-		atmos.AbsorptionColor = glm::normalize( absorptionExtinction );
-		atmos.AbsorptionLength = glm::length( absorptionExtinction );
-
-		atmos.MultipleScatteringFactor = 1.0f;
-		atmos.ViewRayMarchMaxSPP = 31;
-		atmos.ViewRayMarchMinSPP = 14;
-
-		return atmos;
-	}
-
 	void SceneRenderer::AtmospherePass()
 	{
 		SAT_PF_EVENT();
+
+		m_RendererData.AtmosphereTimer.Reset();
 
 		struct USkyData
 		{
 			glm::vec3 SunDir;
 		} u_SkyData{};
 		
-		struct CameraData
+		struct UCameraData
 		{
 			glm::mat4 InverseCameraViewProj;
 		} u_CameraData;
@@ -3344,20 +3574,574 @@ namespace Saturn {
 		const auto& rDirLight = m_pScene->m_Lights.DirectionalLights[ 0 ];
 		u_SkyData.SunDir = rDirLight.Direction;
 
-		m_RendererData.TransmittanceLutMaterial->UploadDataToUB( 6, &u_AtmosphereParameters, sizeof( UAtmosParam ) );
-		m_RendererData.TransmittanceLutMaterial->UploadDataToUB( 7, &u_CameraData, sizeof( CameraData ) );
+		const glm::vec3 groundAlbedo = glm::clamp( rDirLight.Sky.GroundAlbedo, glm::vec3( 0.0f ), glm::vec3( 1.0f ) );
 
-		m_RendererData.TransmittanceLutMaterial->SetPC( "u_SkyData.SunDir", u_SkyData.SunDir );
+		// Only rebuild the transmittance and multiple scattering LUTs if their inputs changed.
+		const bool needsToRebuildTransmittance = !m_RendererData.AtmosphereTransmittanceValid;
+		const bool needsToRebuildMultiScattering = needsToRebuildTransmittance
+			|| !m_RendererData.AtmosphereMultiScatteringValid
+			|| groundAlbedo != m_RendererData.AtmosphereLutGroundAlbedo;
 
-		m_RendererData.TransmittanceLutPipeline->BindWithCommandBuffer( m_RendererData.CommandBuffer );
+		if( needsToRebuildTransmittance )
+		{
+			m_RendererData.TransmittanceLutMaterial->UploadDataToUB( 6, &u_AtmosphereParameters, sizeof( UAtmosParam ) );
+			m_RendererData.TransmittanceLutMaterial->UploadDataToUB( 7, &u_CameraData, sizeof( UCameraData ) );
 
-		m_RendererData.TransmittanceLutPipeline->Execute( 
-			m_RendererData.TransmittanceLutMaterial, 
-			( uint32_t ) glm::ceil( ( float ) m_RendererData.TransmittanceLutOut->GetWidth() / 8.F ),
-			( uint32_t ) glm::ceil( ( float ) m_RendererData.TransmittanceLutOut->GetHeight() / 8.0F ),
+			m_RendererData.TransmittanceLutMaterial->SetPC( "u_SkyData.SunDir", u_SkyData.SunDir );
+
+			m_RendererData.TransmittanceLutPipeline->BindWithCommandBuffer( m_RendererData.CommandBuffer );
+
+			m_RendererData.TransmittanceLutPipeline->Execute(
+				m_RendererData.TransmittanceLutMaterial,
+				( uint32_t ) glm::ceil( ( float ) m_RendererData.TransmittanceLutOut->GetWidth() / 8.F ),
+				( uint32_t ) glm::ceil( ( float ) m_RendererData.TransmittanceLutOut->GetHeight() / 8.0F ),
+				1u );
+
+			m_RendererData.TransmittanceLutPipeline->Unbind();
+
+			m_RendererData.AtmosphereTransmittanceValid = true;
+		}
+
+		// Sky-view LUT.
+		{
+			glm::vec3 sunDirection, sunColor;
+			GetSceneSun( rDirLight, sunDirection, sunColor );
+
+			const glm::vec3 cameraPosMeters = glm::vec3( glm::inverse( m_RendererData.CurrentCamera.ViewMatrix )[ 3 ] );
+
+			struct SkyViewLutData
+			{
+				glm::vec4 CameraPosKm;
+				glm::vec4 SunDirection;
+			} skyViewData{};
+
+			skyViewData.CameraPosKm = glm::vec4( cameraPosMeters * 0.001f + glm::vec3( 0.0f, u_AtmosphereParameters.Params.BottomRadius, 0.0f ), 1.0f );
+			skyViewData.SunDirection = glm::vec4( sunDirection, 0.0f );
+
+			// The LUT's ground (direct sun) uses the same albedo as the sky draw's sky light term.
+			u_AtmosphereParameters.Params.GroundAlbedo = groundAlbedo;
+
+			m_RendererData.SkyViewLutMaterial->UploadDataToUB( 6, &u_AtmosphereParameters, sizeof( UAtmosParam ) );
+			m_RendererData.SkyViewLutMaterial->UploadDataToUB( 7, &u_CameraData, sizeof( UCameraData ) );
+			m_RendererData.SkyViewLutMaterial->UploadDataToUB( 8, &skyViewData, sizeof( SkyViewLutData ) );
+
+			const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
+
+			auto barrier = [ & ]( VkImage image,
+				VkPipelineStageFlags2 srcStage, VkAccessFlags2 srcAccess,
+				VkPipelineStageFlags2 dstStage, VkAccessFlags2 dstAccess )
+			{
+				VkImageMemoryBarrier2 barrier{ VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2 };
+				barrier.srcStageMask = srcStage;
+				barrier.srcAccessMask = srcAccess;
+				barrier.dstStageMask = dstStage;
+				barrier.dstAccessMask = dstAccess;
+				barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+				barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+				barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				barrier.image = image;
+				barrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+				return barrier;
+			};
+
+			auto submit = [ & ]( std::initializer_list<VkImageMemoryBarrier2> barriers )
+			{
+				VkDependencyInfo dependencyInfo{ VK_STRUCTURE_TYPE_DEPENDENCY_INFO };
+				dependencyInfo.imageMemoryBarrierCount = ( uint32_t ) barriers.size();
+				dependencyInfo.pImageMemoryBarriers = barriers.begin();
+				vkCmdPipelineBarrier2( CommandBuffer, &dependencyInfo );
+			};
+
+			const VkImage transmittanceImage = m_RendererData.TransmittanceLutOut->GetImage();
+			const VkImage multiScatteringImage = m_RendererData.MultiScatteringLutOut->GetImage();
+			const VkImage skyViewImage = m_RendererData.SkyViewLutOut->GetImage();
+
+			submit( {
+				// The multiple scattering and sky-view LUTs sample the transmittance LUT written just above.
+				barrier( transmittanceImage,
+					VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_WRITE_BIT,
+					VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT, VK_ACCESS_2_SHADER_SAMPLED_READ_BIT ),
+
+				// Last frame's sky-view LUT and clouds read the multiple scattering LUT.
+				barrier( multiScatteringImage,
+					VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_NONE,
+					VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT ),
+
+				// Last frame's sky draw and clouds read the sky-view LUT.
+				barrier( skyViewImage,
+					VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT, VK_ACCESS_2_NONE,
+					VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT ),
+			} );
+
+			// Multiple scattering LUT. Depends only on the atmosphere and ground albedo (not the
+			// sun direction or camera).
+			if( needsToRebuildMultiScattering )
+			{
+				m_RendererData.MultiScatteringLutMaterial->UploadDataToUB( 6, &u_AtmosphereParameters, sizeof( UAtmosParam ) );
+				m_RendererData.MultiScatteringLutMaterial->UploadDataToUB( 7, &u_CameraData, sizeof( UCameraData ) );
+
+				m_RendererData.MultiScatteringLutPipeline->BindWithCommandBuffer( CommandBuffer );
+
+				m_RendererData.MultiScatteringLutPipeline->Execute(
+					m_RendererData.MultiScatteringLutMaterial,
+					( uint32_t ) glm::ceil( ( float ) m_RendererData.MultiScatteringLutOut->GetWidth() / 8.F ),
+					( uint32_t ) glm::ceil( ( float ) m_RendererData.MultiScatteringLutOut->GetHeight() / 8.0F ),
+					1u );
+
+				m_RendererData.MultiScatteringLutPipeline->Unbind();
+
+				// Read by the sky-view LUT below and the clouds' aerial perspective.
+				submit( {
+					barrier( multiScatteringImage,
+						VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT,
+						VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_SAMPLED_READ_BIT ),
+				} );
+
+				m_RendererData.AtmosphereMultiScatteringValid = true;
+				m_RendererData.AtmosphereLutGroundAlbedo = groundAlbedo;
+			}
+
+			m_RendererData.SkyViewLutPipeline->BindWithCommandBuffer( CommandBuffer );
+
+			m_RendererData.SkyViewLutPipeline->Execute(
+				m_RendererData.SkyViewLutMaterial,
+				( uint32_t ) glm::ceil( ( float ) m_RendererData.SkyViewLutOut->GetWidth() / 8.F ),
+				( uint32_t ) glm::ceil( ( float ) m_RendererData.SkyViewLutOut->GetHeight() / 8.0F ),
+				1u );
+
+			m_RendererData.SkyViewLutPipeline->Unbind();
+
+			// Read by the clouds (compute) and the sky draw (fragment).
+			submit( {
+				barrier( skyViewImage,
+					VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT,
+					VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT, VK_ACCESS_2_SHADER_SAMPLED_READ_BIT ),
+			} );
+		}
+
+		m_RendererData.AtmosphereTimer.Stop();
+	}
+
+	struct alignas( 16 ) CloudsData
+	{
+		glm::vec3 CameraPosKm;                  // Planet centred, km
+		float     Time;
+
+		glm::vec3 SunDirection;                 // Towards the sun, normalised
+		float     CloudSpeed;
+
+		glm::vec3 SunColor;                     // Colour * intensity
+		float     CloudCoverage;
+
+		glm::vec3 CloudDirection;               // Wind direction
+		float     CloudDensity;
+
+		glm::vec3 CloudAlbedo;
+		float     CloudBasicNoiseScale;
+
+		glm::vec3 SkyAmbientColor;
+		float     CloudDetailNoiseScale;
+
+		glm::vec3 GroundBounceColor;
+		float     CloudWeatherUVScale;
+
+		float     CloudMaxTracingDistance;      // km
+		float     CloudTracingStartMaxDistance; // km
+		float     CloudLightBasicStep;          // km
+		float     CloudPhaseForward;
+		float     CloudPhaseBackward;
+		float     CloudPhaseMixFactor;
+		float     CloudMultiScatterExtinction;
+		float     CloudMultiScatterScatter;
+		float     CloudShadingSunLightScale;
+		float     CloudAmbientScale;
+		float     CloudPowderPow;
+		float     CloudPowderScale;
+
+		int32_t   CloudMarchingStepNum;
+		int32_t   CloudLightStepNum;
+		int32_t   CloudEnableGroundContribution;
+		uint32_t  FrameIndex;
+
+		float     CloudBottomKm;
+		float     CloudTopKm;
+		float     CloudType;
+		float     CloudErosion;
+
+		float     CloudCurlStrength;            // km
+		int32_t   TraceOffsetX;                 // Pixel of each 2x2 block traced this frame
+		int32_t   TraceOffsetY;
+		float     _Pad0;
+
+		glm::vec2 ReconstructSize;
+		glm::vec2 _Pad1;
+
+		glm::vec3 SkyLightColor;                // Sun illuminance used by the physical sky
+		int32_t   UseSkyAmbient;                // Ambient from the sky-view LUT instead of SkyAmbientColor
+	};
+
+	static_assert( sizeof( CloudsData ) == 240, "CloudsData must match the layout in CloudsDensity.glsl" );
+
+	// Matching with CloudsReconstruct.glsl.
+	struct CloudsReconstructData
+	{
+		glm::mat4 InverseViewProj;
+		glm::mat4 PrevViewProj;
+		glm::vec4 CameraPosMeters;
+
+		int32_t   TraceOffsetX;
+		int32_t   TraceOffsetY;
+		int32_t   HistoryValid;
+		float     BlendTraced;
+		float     BlendOther;
+		float     _Pad0;
+		float     _Pad1;
+		float     _Pad2;
+	};
+
+	static_assert( sizeof( CloudsReconstructData ) == 176, "CloudsReconstructData must match the layout in CloudsReconstruct.glsl" );
+
+	inline CloudsData MakeCloudsData(
+		const VolumetricCloudSettings& rSettings,
+		float timeSeconds, uint32_t frameIndex,
+		const glm::vec3& rCameraPosGroundKm, float planetRadiusKm,
+		const glm::vec3& rSunDirection, const glm::vec3& rSunColor )
+	{
+		CloudsData c{};
+
+		c.CameraPosKm = rCameraPosGroundKm + glm::vec3( 0.0f, planetRadiusKm, 0.0f );
+		c.Time = timeSeconds;
+		c.FrameIndex = frameIndex; 
+
+		c.SunDirection = rSunDirection;
+		c.SunColor = rSunColor * rSettings.SunIlluminance;
+
+		// Wind
+		c.CloudDirection = glm::length( rSettings.WindDirection ) > 1e-4f ? glm::normalize( rSettings.WindDirection ) : glm::vec3( 1.0f, 0.0f, 0.0f );
+		c.CloudSpeed = rSettings.WindSpeed;
+
+		// Layer (kms above the ground).
+		c.CloudBottomKm = glm::max( rSettings.BottomKm, 0.0f );
+		c.CloudTopKm = glm::max( rSettings.TopKm, c.CloudBottomKm + 0.1f );
+
+		// Shape
+		c.CloudCoverage = rSettings.Coverage;
+		c.CloudType = rSettings.CloudType;
+		c.CloudDensity = rSettings.Density;
+		c.CloudErosion = rSettings.Erosion;
+		c.CloudAlbedo = { 1.0f, 1.0f, 1.0f };
+		c.CloudBasicNoiseScale = rSettings.BasicNoiseScale;
+		c.CloudDetailNoiseScale = rSettings.DetailNoiseScale;
+		c.CloudWeatherUVScale = rSettings.WeatherScale;
+		c.CloudCurlStrength = rSettings.CurlStrength;
+
+		// Ambient
+		c.SkyAmbientColor = rSettings.SkyAmbientColor;
+		c.GroundBounceColor = rSettings.GroundBounceColor;
+		c.CloudAmbientScale = rSettings.AmbientScale;
+		c.CloudEnableGroundContribution = rSettings.GroundContribution ? 1 : 0;
+
+		// Marching
+		c.CloudMaxTracingDistance = glm::max( rSettings.MaxTracingDistanceKm, 1.0f );
+		c.CloudTracingStartMaxDistance = glm::max( rSettings.TracingStartMaxDistanceKm, 1.0f );
+		c.CloudMarchingStepNum = glm::max( rSettings.MarchSteps, 1 );
+		c.CloudLightStepNum = glm::max( rSettings.LightSteps, 1 );
+		c.CloudLightBasicStep = glm::max( rSettings.LightMarchLengthKm, 0.01f );
+
+		// Lighting
+		c.CloudPhaseForward = rSettings.PhaseForward;
+		c.CloudPhaseBackward = rSettings.PhaseBackward;
+		c.CloudPhaseMixFactor = rSettings.PhaseMix;
+		c.CloudMultiScatterExtinction = rSettings.MultiScatterExtinction;
+		c.CloudMultiScatterScatter = rSettings.MultiScatterScatter;
+		c.CloudShadingSunLightScale = 1.0f;
+		c.CloudPowderPow = 1.0f;
+		c.CloudPowderScale = rSettings.PowderScale;
+
+		return c;
+	}
+
+	void SceneRenderer::VolumetricCloudsPass()
+	{
+		SAT_PF_EVENT();
+
+		m_RendererData.AtmosphereVCTimer.Reset();
+
+		struct UCameraData
+		{
+			glm::mat4 InverseCameraViewProj;
+		} u_CameraData;
+
+		const glm::mat4 viewProj = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
+		u_CameraData.InverseCameraViewProj = glm::inverse( viewProj );
+
+		struct UAtmosParam
+		{
+			AtmosphereParameters Params;
+		} u_AtmosphereParameters{};
+
+		u_AtmosphereParameters.Params = CreateDefaultAtmosphereParameters();
+
+		static const glm::ivec2 kTraceOffsets[ 4 ] = { { 0, 0 }, { 1, 1 }, { 1, 0 }, { 0, 1 } };
+
+		const uint32_t frameIndex = m_RendererData.CloudsFrameIndex++;
+		const glm::ivec2 traceOffset = kTraceOffsets[ frameIndex % 4u ];
+
+		// Sun from the scene's directional light.
+		const auto& rDirLight = m_pScene->m_Lights.DirectionalLights[ 0 ];
+
+		glm::vec3 sunDirection, sunColor;
+		GetSceneSun( rDirLight, sunDirection, sunColor );
+
+		const VolumetricCloudSettings& rSettings = rDirLight.Clouds;
+
+		const float timeSeconds = ( float ) Application::Get()->GetWindow()->GetTime();
+
+		const glm::vec3 cameraPosMeters = glm::vec3( glm::inverse( m_RendererData.CurrentCamera.ViewMatrix )[ 3 ] );
+
+		auto cloudData = MakeCloudsData(
+			rSettings,
+			timeSeconds,
+			frameIndex,
+			cameraPosMeters * glm::vec3( 0.001f ),
+			u_AtmosphereParameters.Params.BottomRadius,
+			sunDirection,
+			sunColor );
+
+		cloudData.TraceOffsetX = traceOffset.x;
+		cloudData.TraceOffsetY = traceOffset.y;
+		cloudData.ReconstructSize = glm::vec2( m_RendererData.CloudsReconstructOut->GetWidth(), m_RendererData.CloudsReconstructOut->GetHeight() );
+
+		cloudData.SkyLightColor = sunColor * rDirLight.Sky.SunIlluminance * rDirLight.Sky.Intensity;
+		cloudData.UseSkyAmbient = rDirLight.Sky.Enabled ? 1 : 0;
+
+		CloudsReconstructData reconstruct{};
+		reconstruct.InverseViewProj = u_CameraData.InverseCameraViewProj;
+		reconstruct.PrevViewProj = m_RendererData.CloudsPrevViewProj;
+		reconstruct.CameraPosMeters = glm::vec4( cameraPosMeters, 1.0f );
+		reconstruct.TraceOffsetX = traceOffset.x;
+		reconstruct.TraceOffsetY = traceOffset.y;
+		reconstruct.HistoryValid = m_RendererData.CloudsHistoryValid ? 1 : 0;
+		reconstruct.BlendTraced = 0.25f;
+		reconstruct.BlendOther = 0.1f;
+
+		m_RendererData.CloudsReconstructMaterial->UploadDataToUB( 4, &reconstruct, sizeof( CloudsReconstructData ) );
+
+		m_RendererData.CloudsRaymarchMaterial->UploadDataToUB( 6, &u_AtmosphereParameters, sizeof( UAtmosParam ) );
+		m_RendererData.CloudsRaymarchMaterial->UploadDataToUB( 7, &u_CameraData, sizeof( UCameraData ) );
+		m_RendererData.CloudsRaymarchMaterial->UploadDataToUB( 8, ( void* ) &cloudData, sizeof( CloudsData ) );
+
+		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
+
+		// All cloud images stay in GENERAL 
+		// so every barrier only orders the
+		// access and not it's layout.
+		auto imageBarrier = []( VkImage image,
+			VkPipelineStageFlags2 srcStage, VkAccessFlags2 srcAccess,
+			VkPipelineStageFlags2 dstStage, VkAccessFlags2 dstAccess )
+		{
+			VkImageMemoryBarrier2 barrier{ VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2 };
+			barrier.srcStageMask = srcStage;
+			barrier.srcAccessMask = srcAccess;
+			barrier.dstStageMask = dstStage;
+			barrier.dstAccessMask = dstAccess;
+			barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+			barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.image = image;
+			barrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+			return barrier;
+		};
+
+		auto barriers = [ & ]( std::initializer_list<VkImageMemoryBarrier2> barriers )
+		{
+			VkDependencyInfo dependencyInfo{ VK_STRUCTURE_TYPE_DEPENDENCY_INFO };
+			dependencyInfo.imageMemoryBarrierCount = ( uint32_t ) barriers.size();
+			dependencyInfo.pImageMemoryBarriers = barriers.begin();
+
+			vkCmdPipelineBarrier2( CommandBuffer, &dependencyInfo );
+		};
+
+		const VkImage traceImage       = m_RendererData.CloudsRaymarchOut->GetImage();
+		const VkImage distanceImage    = m_RendererData.CloudsDistanceOut->GetImage();
+		const VkImage reconstructImage = m_RendererData.CloudsReconstructOut->GetImage();
+		const VkImage historyImage     = m_RendererData.CloudsHistory->GetImage();
+		const VkImage shadowImage      = m_RendererData.CloudShadowMap->GetImage();
+
+		// Fills an image that is read by fragment shaders (SceneComposite / geometry pass)
+		// with a constant, used when clouds or cloud shadows are switched off.
+		auto clearForFragmentRead = [ & ]( VkImage image, float r, float g, float b, float a )
+		{
+			barriers( {
+				imageBarrier( image,
+					VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_2_COPY_BIT, VK_ACCESS_2_NONE,
+					VK_PIPELINE_STAGE_2_CLEAR_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT ),
+			} );
+
+			VkClearColorValue color{};
+			color.float32[ 0 ] = r;
+			color.float32[ 1 ] = g;
+			color.float32[ 2 ] = b;
+			color.float32[ 3 ] = a;
+
+			const VkImageSubresourceRange range = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+			vkCmdClearColorImage( CommandBuffer, image, VK_IMAGE_LAYOUT_GENERAL, &color, 1, &range );
+
+			barriers( {
+				imageBarrier( image,
+					VK_PIPELINE_STAGE_2_CLEAR_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT,
+					VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT, VK_ACCESS_2_SHADER_SAMPLED_READ_BIT ),
+			} );
+		};
+
+		if( !rSettings.Enabled )
+		{
+			clearForFragmentRead( reconstructImage, 0.0f, 0.0f, 0.0f, 1.0f );
+			clearForFragmentRead( shadowImage, 1.0f, 1.0f, 1.0f, 1.0f );
+
+			// The history is stale once the clouds come back.
+			m_RendererData.CloudsHistoryValid = false;
+
+			m_RendererData.AtmosphereVCTimer.Stop();
+			return;
+		}
+
+		// 1. Trace (quarter res)
+		barriers( {
+			// Transmittance LUT was written by the compute dispatch in AtmospherePass.
+			imageBarrier( m_RendererData.TransmittanceLutOut->GetImage(),
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_WRITE_BIT,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_SAMPLED_READ_BIT ),
+
+			// Last frame's reconstruction read the trace outputs, don't overwrite them early.
+			imageBarrier( traceImage,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_NONE,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT ),
+			imageBarrier( distanceImage,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_NONE,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT ),
+		} );
+
+		m_RendererData.CloudsRaymarchPipeline->BindWithCommandBuffer( CommandBuffer );
+
+		m_RendererData.CloudsRaymarchPipeline->Execute(
+			m_RendererData.CloudsRaymarchMaterial,
+			( uint32_t ) glm::ceil( ( float ) m_RendererData.CloudsRaymarchOut->GetWidth() / 8.F ),
+			( uint32_t ) glm::ceil( ( float ) m_RendererData.CloudsRaymarchOut->GetHeight() / 8.0F ),
 			1u );
 
-		m_RendererData.TransmittanceLutPipeline->Unbind();
+		m_RendererData.CloudsRaymarchPipeline->Unbind();
+
+		// 2. Temporal reconstruction (half res)
+		barriers( {
+			imageBarrier( traceImage,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_SAMPLED_READ_BIT ),
+			imageBarrier( distanceImage,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_SAMPLED_READ_BIT ),
+
+			// History was written by last frame's copy.
+			imageBarrier( historyImage,
+				VK_PIPELINE_STAGE_2_COPY_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_SAMPLED_READ_BIT ),
+
+			// Last frame's SceneComposite and copy read the output, don't overwrite it early.
+			imageBarrier( reconstructImage,
+				VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_2_COPY_BIT, VK_ACCESS_2_NONE,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT ),
+		} );
+
+		m_RendererData.CloudsReconstructPipeline->BindWithCommandBuffer( CommandBuffer );
+
+		m_RendererData.CloudsReconstructPipeline->Execute(
+			m_RendererData.CloudsReconstructMaterial,
+			( uint32_t ) glm::ceil( ( float ) m_RendererData.CloudsReconstructOut->GetWidth() / 8.F ),
+			( uint32_t ) glm::ceil( ( float ) m_RendererData.CloudsReconstructOut->GetHeight() / 8.0F ),
+			1u );
+
+		m_RendererData.CloudsReconstructPipeline->Unbind();
+
+		// 3. Copy the result into the history for next frame. A copy keeps every
+		//    descriptor binding static instead of ping-ponging two images.
+		barriers( {
+			imageBarrier( reconstructImage,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT,
+				VK_PIPELINE_STAGE_2_COPY_BIT | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT, VK_ACCESS_2_TRANSFER_READ_BIT | VK_ACCESS_2_SHADER_SAMPLED_READ_BIT ),
+			imageBarrier( historyImage,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_NONE,
+				VK_PIPELINE_STAGE_2_COPY_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT ),
+		} );
+
+		{
+			VkImageCopy region{};
+			region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+			region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+			region.extent = { m_RendererData.CloudsReconstructOut->GetWidth(), m_RendererData.CloudsReconstructOut->GetHeight(), 1 };
+
+			vkCmdCopyImage( CommandBuffer,
+				reconstructImage, VK_IMAGE_LAYOUT_GENERAL,
+				historyImage, VK_IMAGE_LAYOUT_GENERAL,
+				1, &region );
+		}
+
+		m_RendererData.CloudsPrevViewProj = viewProj;
+		m_RendererData.CloudsHistoryValid = true;
+
+		// 4. Cloud shadow map, sampled by the geometry pass (Lighting.glsl, CloudShadow()).
+		if( !rSettings.CastShadows )
+		{
+			clearForFragmentRead( shadowImage, 1.0f, 1.0f, 1.0f, 1.0f );
+		}
+		else
+		{
+			struct CloudShadowData
+			{
+				glm::vec4 CameraPosMeters;
+				float     PlanetRadiusKm;
+				float     ShadowStrength;
+				int32_t   StepCount;
+				float     MinLight;
+			} shadowData{};
+
+			static_assert( sizeof( CloudShadowData ) == 32, "CloudShadowData must match the std140 layout in CloudsShadow.glsl" );
+
+			// We use the sample value the geometry pass.
+			shadowData.CameraPosMeters = glm::vec4( cameraPosMeters, 1.0f );
+			shadowData.PlanetRadiusKm = u_AtmosphereParameters.Params.BottomRadius;
+			shadowData.ShadowStrength = glm::max( rSettings.ShadowStrength, 0.0f );
+			shadowData.StepCount = 16;
+			shadowData.MinLight = glm::clamp( rSettings.ShadowMinLight, 0.0f, 1.0f );
+
+			m_RendererData.CloudShadowMaterial->UploadDataToUB( 8, ( void* ) &cloudData, sizeof( CloudsData ) );
+			m_RendererData.CloudShadowMaterial->UploadDataToUB( 11, &shadowData, sizeof( CloudShadowData ) );
+
+			barriers( {
+				imageBarrier( shadowImage,
+					VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT, VK_ACCESS_2_NONE,
+					VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT ),
+			} );
+
+			m_RendererData.CloudShadowPipeline->BindWithCommandBuffer( CommandBuffer );
+
+			m_RendererData.CloudShadowPipeline->Execute(
+				m_RendererData.CloudShadowMaterial,
+				( uint32_t ) glm::ceil( ( float ) m_RendererData.CloudShadowMap->GetWidth() / 8.F ),
+				( uint32_t ) glm::ceil( ( float ) m_RendererData.CloudShadowMap->GetHeight() / 8.0F ),
+				1u );
+
+			m_RendererData.CloudShadowPipeline->Unbind();
+
+			barriers( {
+				imageBarrier( shadowImage,
+					VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT,
+					VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT, VK_ACCESS_2_SHADER_SAMPLED_READ_BIT ),
+			} );
+		}
+
+		m_RendererData.AtmosphereVCTimer.Stop();
 	}
 
 	void SceneRenderer::BloomPass()
@@ -4247,6 +5031,11 @@ namespace Saturn {
 		{
 			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Atmosphere" );
 			AtmospherePass();
+		}
+
+		{
+			ScopedDebugLabel label( m_RendererData.CommandBuffer, "AtmosphereVC" );
+			VolumetricCloudsPass();
 		}
 
 		{

@@ -92,6 +92,9 @@ layout (set = 1, binding = 9) uniform samplerCube    u_EnvRadianceTex;
 layout (set = 1, binding = 10) uniform samplerCube   u_EnvIrradianceTex;
 layout (set = 1, binding = 11) uniform sampler2D     u_BRDFLUTTexture;
 
+// Volumetric cloud shadow map
+layout (set = 1, binding = 16) uniform sampler2D     u_CloudShadowMap;
+
 struct PBRParameters
 {
 	vec3 Albedo;

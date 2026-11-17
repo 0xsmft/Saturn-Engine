@@ -200,6 +200,54 @@ float RayIntersectsSphereNearest( vec3 origin, vec3 direction, vec3 sphereCentre
 	return max( 0.0, min( sol0, sol1 ) );
 }
 
+float RaySphereIntersectInside( vec3 r0, vec3 rd, vec3 s0,float sR )
+{
+	float a = dot( rd, rd );
+
+	vec3 s02r0 = r0 - s0;
+	float b = 2.0 * dot( rd, s02r0 );
+
+	float c = dot( s02r0, s02r0 ) - ( sR * sR );
+	float delta = b * b - 4.0 * a * c;
+
+	// float sol0 = (-b - sqrt(delta)) / (2.0 * a);
+	float sol1 = (-b + sqrt(delta)) / (2.0 * a);
+
+	// sol1 > sol0, so just return sol1
+	return sol1;
+}
+
+bool RaySphereIntersectOutSide( vec3 r0, vec3 rd, vec3 s0, float sR, out vec2 t0t1 ) 
+{
+	float a = dot(rd, rd);
+
+	vec3 s02r0 = r0 - s0;
+	float b = 2.0 * dot(rd, s02r0);
+
+	float c = dot(s02r0, s02r0) - (sR * sR);
+	float delta = b * b - 4.0 * a * c;
+
+    // No intersection state.
+	if (delta < 0.0 || a == 0.0)
+	{
+		return false;
+	}
+
+	float sol0 = (-b - sqrt(delta)) / (2.0 * a);
+	float sol1 = (-b + sqrt(delta)) / (2.0 * a);
+	
+
+    // Intersection on negative direction, no suitable for ray.
+	if (sol1 <= 0.0 || sol0 <= 0.0)
+	{
+		return false;
+	}
+
+    // Two positive intersection, return nearest one.
+	t0t1 = vec2(sol0, sol1); // sol1 > sol0
+	return true; 
+}
+
 struct MediumSampleRGB
 {
 	vec3 Scattering;
@@ -288,7 +336,7 @@ void LutTransmittanceParamsToUv(
 	float discriminant = viewHeight * viewHeight * ( viewZenithCosAngle * viewZenithCosAngle - 1.0 ) + atmosphere.TopRadius * atmosphere.TopRadius;
 	float d = max( 0.0, ( -viewHeight * viewZenithCosAngle + sqrt( discriminant ) ) );
 
-	float dMin = atmosphere.TopRadius;
+	float dMin = atmosphere.TopRadius - viewHeight;
 	float dMax = rho + H;
 
 	uv.x = ( d - dMin ) / ( dMax - dMin );
@@ -321,10 +369,37 @@ SingleScatteringResult SingleScatteringResult_Create()
 const float kDefaultMaxT = 9000000.0f;
 const float kAtmospherePlanetRadiusOffset = 21.0f * 0.001f;
 
-float GetShadow( AtmosphereParameters atmosphere, vec3 p ) 
+float GetShadow( AtmosphereParameters atmosphere, vec3 p )
 {
 	return 1.0f;
 }
+
+#if defined( ATMOSPHERE_MULTISCATTERING )
+layout (set = 0, binding = 13) uniform sampler2D u_MultiScatteringLut;
+
+vec3 GetMultipleScattering( AtmosphereParameters atmosphere, vec3 worldPos, float viewZenithCosAngle )
+{
+	// Inverse of the mapping used to write the LUT (edge texels on 0 and 1).
+	float heightRange = atmosphere.TopRadius - atmosphere.BottomRadius - kAtmospherePlanetRadiusOffset;
+	vec2 u = clamp( vec2(
+		viewZenithCosAngle * 0.5 + 0.5,
+		( length( worldPos ) - atmosphere.BottomRadius - kAtmospherePlanetRadiusOffset ) / heightRange ), 0.0, 1.0 );
+
+	// Image2D samplers are NEAREST, filter by hand.
+	ivec2 size = textureSize( u_MultiScatteringLut, 0 );
+	ivec2 maxP = size - 1;
+	vec2 p = u * vec2( maxP );
+	ivec2 i = min( ivec2( floor( p ) ), maxP );
+	vec2 f = p - vec2( i );
+
+	vec3 a = texelFetch( u_MultiScatteringLut, i, 0 ).rgb;
+	vec3 b = texelFetch( u_MultiScatteringLut, min( i + ivec2( 1, 0 ), maxP ), 0 ).rgb;
+	vec3 c = texelFetch( u_MultiScatteringLut, min( i + ivec2( 0, 1 ), maxP ), 0 ).rgb;
+	vec3 d = texelFetch( u_MultiScatteringLut, min( i + ivec2( 1, 1 ), maxP ), 0 ).rgb;
+
+	return mix( mix( a, b, f.x ), mix( c, d, f.x ), f.y );
+}
+#endif
 
 SingleScatteringResult IntegrateScatteredLuminance( 
 								vec2 pixPos, 
@@ -479,7 +554,11 @@ SingleScatteringResult IntegrateScatteredLuminance(
 		float tEarth = RayIntersectsSphereNearest( P, sunDir, kEarthOrigin + kAtmospherePlanetRadiusOffset * upVector, atmosphere.BottomRadius );
 		float earthShadow = tEarth >= 0.0f ? 0.0f : 1.0f;
 
+#if defined( ATMOSPHERE_MULTISCATTERING )
+		vec3 multiScatteredLuminance = GetMultipleScattering( atmosphere, P, sunZenithCosAngle );
+#else
 		vec3 multiScatteredLuminance = vec3( 0.0 );
+#endif
 
 		float shadow = GetShadow( atmosphere, P );
 

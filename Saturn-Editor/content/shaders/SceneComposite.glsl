@@ -25,6 +25,7 @@ layout (binding = 0) uniform sampler2D u_GeometryPassTexture;
 layout (binding = 1) uniform sampler2D u_BloomTexture;
 layout (binding = 2) uniform sampler2D u_AOTexture;
 layout (binding = 3) uniform sampler2D u_DepthTexture;
+layout (binding = 4) uniform sampler2D u_CloudsTexture;
 
 layout(location = 0) out vec4 FinalColor;
 
@@ -34,7 +35,24 @@ layout(location = 1) in VertexOutput
 	vec2 TexCoord;
 } vs_Input;
 
-vec3 GammaCorrect( vec3 color, float gamma ) 
+// TODO: Rethink this.
+vec4 SampleCloudsBilinear( vec2 uv )
+{
+	ivec2 size = textureSize( u_CloudsTexture, 0 );
+	vec2 p = uv * vec2( size ) - 0.5;
+	ivec2 i = ivec2( floor( p ) );
+	vec2 f = p - vec2( i );
+
+	ivec2 maxP = size - 1;
+	vec4 a = texelFetch( u_CloudsTexture, clamp( i,                ivec2( 0 ), maxP ), 0 );
+	vec4 b = texelFetch( u_CloudsTexture, clamp( i + ivec2( 1, 0 ), ivec2( 0 ), maxP ), 0 );
+	vec4 c = texelFetch( u_CloudsTexture, clamp( i + ivec2( 0, 1 ), ivec2( 0 ), maxP ), 0 );
+	vec4 d = texelFetch( u_CloudsTexture, clamp( i + ivec2( 1, 1 ), ivec2( 0 ), maxP ), 0 );
+
+	return mix( mix( a, b, f.x ), mix( c, d, f.x ), f.y );
+}
+
+vec3 GammaCorrect( vec3 color, float gamma )
 {
 	return pow( color, vec3( 1.0f / gamma ) );
 }
@@ -193,6 +211,13 @@ void main()
 	const float GAMMA = 2.2;
 
 	vec3 GeometryPassColor = texture( u_GeometryPassTexture, vs_Input.TexCoord ).rgb;
+
+	// Volumetric clouds. rgb = in-scattered light, a = transmittance.
+	if( texture( u_DepthTexture, vs_Input.TexCoord ).r >= 1.0 )
+	{
+		vec4 clouds = SampleCloudsBilinear( vs_Input.TexCoord );
+		GeometryPassColor = GeometryPassColor * clouds.a + clouds.rgb;
+	}
 
 	// Bloom Composite
 	float sampleScale = 0.5;

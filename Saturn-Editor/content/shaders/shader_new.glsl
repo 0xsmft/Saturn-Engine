@@ -159,7 +159,7 @@ void main()
 	vec3 LightingContribution;
 	vec3 iblContribution;
 
-	LightingContribution = Lighting( F0 ) * ShadowAmount;
+	LightingContribution = Lighting( F0 ) * ShadowAmount * CloudShadow( vs_Input.Position );
 	iblContribution = IBL( F0, Lr );
 	LightingContribution += CalculatePointLights( F0, vs_Input.Position );
 	LightingContribution += m_Params.Albedo * u_Materials.Emissive;

@@ -49,6 +49,8 @@
 #include "Saturn/Core/Profiler.h"
 #include "Saturn/Core/Ruby/RubyWindow.h"
 
+#include "Saturn/PackagedResources/BuiltinResourceManager.h"
+
 #if !defined(SAT_DIST)
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #endif
@@ -165,10 +167,7 @@ namespace Saturn {
 
 		InitAO( AOTechnique::None );
 
-		InitVolumetricCloudsPass();
-
-		// TODO: Package BRDF texture into AssetBundle in dist
-		m_RendererData.BRDFLUT_Texture = Ref<Texture2D>::Create( "content/textures/BRDF_LUT.tga", AddressingMode::Repeat, TextureLoadFlags_LoadOnMainThread );
+		m_RendererData.BRDFLUT_Texture = BuiltinResourceManager::Get()->GetOrLoadResource<Texture2D>( PackagedResourceType::BRDFLutTexture );
 
 		constexpr size_t TransformCount = static_cast<size_t>( 1024 ) * 10;
 		m_RendererData.SubmeshTransformData.resize( MAX_FRAMES_IN_FLIGHT );
@@ -1268,8 +1267,6 @@ namespace Saturn {
 		{
 			m_RendererData.SMAABlendingShader = ShaderLibrary::Get().FindOrLoad( "SMAA-BlendAndDoWeights", "content/shaders/SMAA-BlendAndDoWeights.glsl" );
 
-			constexpr TextureLoadFlags loadFlags = TextureLoadFlags( TextureLoadFlags_LoadOnMainThread | TextureLoadFlags_NoMips );
-
 			m_RendererData.SMAASearchTexture = Ref<Texture2D>::Create( 
 				ImageFormat::RED8, 
 				SAT_SMAA_SEARCHTEX_WIDTH,
@@ -1550,9 +1547,10 @@ namespace Saturn {
 
 	void SceneRenderer::InitVolumetricCloudsTextureResources()
 	{
-		m_RendererData.CloudsWeatherMap = Ref<Texture2D>::Create( "content/textures/CloudsWeatherMap.tga", AddressingMode::Repeat, TextureLoadFlags_LoadOnMainThread );
+		m_RendererData.CloudsWeatherMap = BuiltinResourceManager::Get()->GetOrLoadResource<Texture2D>( PackagedResourceType::WeatherMapTexture );
 	
-		m_RendererData.CurlTexture = Ref<Texture2D>::Create( "content/textures/CloudsCurlNoise.tga", AddressingMode::Repeat, TextureLoadFlags_LoadOnMainThread );
+		m_RendererData.CloudsCurlTexture = BuiltinResourceManager::Get()->GetOrLoadResource<Texture2D>( PackagedResourceType::CurlTexture );
+	}
 	}
 
 	void SceneRenderer::InitAtmosSkyTransmittance()

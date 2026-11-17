@@ -87,23 +87,6 @@ namespace Saturn {
 
 		VolumetricCloudSettings Clouds;
 		AtmosphereSkySettings Sky;
-
-		static void Serialise( const DirectionalLight& rObject, std::ofstream& rStream )
-		{
-			RawSerialisation::WriteVec3( rObject.Direction, rStream );
-			RawSerialisation::WriteVec3( rObject.Radiance, rStream );
-
-			RawSerialisation::WriteObject( rObject.Intensity, rStream );
-		}
-
-		template<typename IStream>
-		static void Deserialise( DirectionalLight& rObject, IStream& rStream )
-		{
-			RawSerialisation::ReadVec3( rObject.Direction, rStream );
-			RawSerialisation::ReadVec3( rObject.Radiance, rStream );
-
-			RawSerialisation::ReadObject( rObject.Intensity, rStream );
-		}
 	};
 
 	struct PointLight
@@ -123,31 +106,6 @@ namespace Saturn {
 		alignas( 4 ) float Radius = 10.0f;
 		alignas( 4 ) float MinRadius = 0.001f;
 		alignas( 4 ) float Falloff = 1.f;
-
-		static void Serialise( const PointLight& rObject, std::ofstream& rStream )
-		{
-			RawSerialisation::WriteVec3( rObject.Position, rStream );
-			RawSerialisation::WriteVec3( rObject.Radiance, rStream );
-
-			RawSerialisation::WriteObject( rObject.Multiplier, rStream );
-			RawSerialisation::WriteObject( rObject.LightSize, rStream );
-			RawSerialisation::WriteObject( rObject.Radius, rStream );
-			RawSerialisation::WriteObject( rObject.MinRadius, rStream );
-			RawSerialisation::WriteObject( rObject.Falloff, rStream );
-		}
-
-		template<typename IStream>
-		static void Deserialise( PointLight& rObject, IStream& rStream )
-		{
-			RawSerialisation::ReadVec3( rObject.Position, rStream );
-			RawSerialisation::ReadVec3( rObject.Radiance, rStream );
-
-			RawSerialisation::ReadObject( rObject.Multiplier, rStream );
-			RawSerialisation::ReadObject( rObject.LightSize, rStream );
-			RawSerialisation::ReadObject( rObject.Radius, rStream );
-			RawSerialisation::ReadObject( rObject.MinRadius, rStream );
-			RawSerialisation::ReadObject( rObject.Falloff, rStream );
-		}
 	};
 
 	struct Lights
@@ -156,27 +114,6 @@ namespace Saturn {
 		std::vector<PointLight> PointLights;
 
 		[[nodiscard]] uint32_t GetPointLightSize() const { return static_cast<uint32_t>( sizeof( PointLight ) * PointLights.size() ); };
-
-		static void Serialise( const Lights& rObject, std::ofstream& rStream )
-		{
-			RawSerialisation::WriteVector( rObject.PointLights, rStream );
-
-			DirectionalLight::Serialise( rObject.DirectionalLights[ 0 ], rStream );
-			DirectionalLight::Serialise( rObject.DirectionalLights[ 1 ], rStream );
-			DirectionalLight::Serialise( rObject.DirectionalLights[ 2 ], rStream );
-			DirectionalLight::Serialise( rObject.DirectionalLights[ 3 ], rStream );
-		}
-
-		template<typename IStream>
-		static void Deserialise( Lights& rObject, IStream& rStream )
-		{
-			RawSerialisation::ReadVector( rObject.PointLights, rStream );
-
-			DirectionalLight::Deserialise( rObject.DirectionalLights[ 0 ], rStream );
-			DirectionalLight::Deserialise( rObject.DirectionalLights[ 1 ], rStream );
-			DirectionalLight::Deserialise( rObject.DirectionalLights[ 2 ], rStream );
-			DirectionalLight::Deserialise( rObject.DirectionalLights[ 3 ], rStream );
-		}
 	};
 
 	struct CreateEntityParameters

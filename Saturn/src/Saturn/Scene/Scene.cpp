@@ -2077,8 +2077,6 @@ namespace Saturn {
 	
 	void Scene::SerialiseInternal( std::ofstream& rStream )
 	{
-		Lights::Serialise( m_Lights, rStream );
-
 		// Serialise the map manually.
 		RawSerialisation::WriteObject( m_EntityIDMap.size(), rStream );
 
@@ -2114,8 +2112,6 @@ namespace Saturn {
 	void Scene::DeserialiseInternal( IStream& rStream )
 	{
 		VariableGuard<Scene*> activeScene( g_ActiveScene, this );
-
-		Lights::Deserialise( m_Lights, rStream );
 
 		// Read the map manually.
 		size_t mapSize = 0;

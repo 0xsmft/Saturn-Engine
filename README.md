@@ -40,6 +40,7 @@
   - Font rendering, Screenspace/Worldspace
   - Normal Mapping
   - Instanced Rendering
+  - Volumetric Clouds
 
 - Editor
   - Node Editors for Materials, Sounds, Animation Graphs and Behaviour Trees.

@@ -238,7 +238,7 @@ namespace Saturn {
 		float WindSpeed = 0.02f;
 
 		// Lighting
-		float SunIlluminance = 20.0f;
+		float SunIlluminance = 10.0f;
 		glm::vec3 SkyAmbientColor = { 0.45f, 0.55f, 0.75f };
 		float AmbientScale = 1.0f;
 		glm::vec3 GroundBounceColor = { 0.20f, 0.18f, 0.15f };
@@ -266,7 +266,7 @@ namespace Saturn {
 	{
 		bool Enabled = true;
 
-		float SunIlluminance = 20.0f;
+		float SunIlluminance = 10.0f;
 		float Intensity = 1.0f;
 		float SunDiskSizeDeg = 0.8f;
 		float SunDiskIntensity = 100.0f;

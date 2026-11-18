@@ -12,7 +12,7 @@
 </p>
 
 <p align=center>
-    Saturn is primarily an early-stage 3D game engine.
+    Saturn is a free cross-platform 3D game engine.
     <br>
 </p>
 
@@ -55,16 +55,22 @@
 - Engine
   - AI Pathfinding and Navmesh generation using [Recast](https://github.com/recastnavigation/recastnavigation/tree/main)
   - Behaviour Trees (Node Editor and Custom Tasks via C++)
-  - C++ Scripting, using an Unreal-like `UClass` and `UObject` reflection system with a Custom Build Tool, with support for SProperties. 
+  - C++ Gameplay Scripting, using an Unreal-like `UClass` and `UObject` reflection system with a Custom Build Tool, with support for SProperties. 
   - Physics System via [JoltPhysics](https://github.com/jrouwe/JoltPhysics)
   - Distribution i.e. shipping the game as a standalone executable via our Asset Bundle system
   - Audio System via [MiniAudio](https://miniaud.io/)
-  - Game UI system (called Alura)
+  - Game UI system (named Alura)
   - Job system
   - ECS via [EnTT](https://github.com/skypjack/entt)
-  - Support for binding custom keys
+  - Support for custom keybinds
   - Online subsystem (Steamworks API)
   - Texture streaming
+
+## Captures
+
+<img src="./Saturn-Editor/content/Captures/2026-17-Nov-VolumetricClouds.PNG" alt="17 November Capture" width="1024" height="auto">
+<img src="./Saturn-Editor/content/Captures/2026-17-Nov-NewSky.PNG" alt="17 November Capture, second" width="1024" height="auto">
+<img src="./Saturn-Editor/content/Captures/2026-18-Nov-Sunset.PNG" alt="18 November Capture" width="1024" height="auto">
 
 ## Roadmap
 
@@ -74,7 +80,10 @@ For upcoming features and a general status of Saturn it is best to view the [Tre
 
 Before anything please make sure you have the [Vulkan SDK](https://vulkan.lunarg.com/sdk/home) installed.
 If you do not have the Vulkan SDK the project will **not** build.
-Saturn uses vulkan version 1.2, however any newer version should "just work". When installing if there's an option about debug binaries make sure to tick that.
+
+Saturn requires a Vulkan SDK of version 1.3, however any newer version should "just work". 
+
+When installing if there's an option about debug binaries make sure to tick that.
 
 If you are on macOS or Linux you should check if your system has the .NET SDK installed, if you do not, you can download it from [here](https://dotnet.microsoft.com/en-us/download/dotnet/10.0).
 
@@ -86,11 +95,11 @@ Make sure to check that you are on the branch `vulkan`. If not you can run `git 
 
 ## Building
 
-See [BUILDING.md](/BUILDING.md)
+See [BUILDING.md](/BUILDING.md).
 
 ## Documention
 
-Documention can be found [here](https://docs.0xsmft.dev)
+Documention can be found [here](https://docs.0xsmft.dev).
 
 ## License
 

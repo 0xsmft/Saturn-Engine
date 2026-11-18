@@ -71,8 +71,10 @@ namespace Saturn {
 	{
 		switch( type )
 		{
-			case PackagedResourceType::DefaultFont:
-				break;
+			case PackagedResourceType::DefaultAluraFont: 
+			{
+				return AluraCanvas::LoadEditorFont_ForEngineAB( Passkey<BuiltinResourceManager>() );
+			}
 
 			case PackagedResourceType::SMAA_AreaTexture: 
 			{

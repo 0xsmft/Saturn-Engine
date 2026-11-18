@@ -39,6 +39,8 @@
 #include "Saturn/Vulkan/AluraRenderer.h"
 #include "Saturn/Asset/AssetManager.h"
 
+#include "Saturn/PackagedResources/BuiltinResourceManager.h"
+
 #include "SharedGlobals.h"
 
 #if !defined(SAT_DIST)
@@ -66,8 +68,19 @@ namespace Saturn {
 	{
 		SAT_CORE_ASSERT( !g_AluraCanvas, "Another canvas already exists!" );
 
-		m_ActiveFont = AssetManager::Get()->GetAssetAs<AluraFont>( rSpecification.MasterFontAssetID );
+		SAT_CORE_VERIFY( LoadEditorFont() );
 
+		// No Font specified? Fall back to editor font.
+		if( rSpecification.MasterFontAssetID == 0 )
+		{
+			m_ActiveFont = m_EditorFont;
+		}
+		else
+		{
+			m_ActiveFont = AssetManager::Get()->GetAssetAs<AluraFont>( rSpecification.MasterFontAssetID );
+		}
+
+		// And we'll push the active font onto the font stack.
 		// Reserve some space for fonts so assume, regular, bold, italics...
 		m_Fonts.reserve( 3 );
 		m_Fonts.push_back( m_ActiveFont );
@@ -83,11 +96,12 @@ namespace Saturn {
 		{
 			m_PrimaryLocalisationTable = locTable;
 		}
-		// Load editor font
-		m_EditorFont = Ref<AluraFont>::Create();
+	}
 
-		// NB: Remember this is an editor filepath!
-		m_EditorFont->Deserialise_ForAluraCanvas( Passkey<AluraCanvas>(), "content/Templates/NotoSansMono-Regular.saf" );
+	bool AluraCanvas::LoadEditorFont()
+	{
+		m_EditorFont = BuiltinResourceManager::Get()->GetOrLoadResource<AluraFont>( PackagedResourceType::DefaultAluraFont );
+		return ( m_EditorFont != nullptr );
 	}
 
 	AluraCanvas::~AluraCanvas()
@@ -2103,7 +2117,7 @@ namespace Saturn {
 		m_Renderer->PopClipRect();
 	}
 
-	Ref<AluraFont> AluraCanvas::LoadEditorFont_ForEngineAB( Passkey< class EngineAssetBundle > pk )
+	Ref<AluraFont> AluraCanvas::LoadEditorFont_ForEngineAB( Passkey< class BuiltinResourceManager > pk )
 	{
 		// Load editor font
 		Ref<AluraFont> font = Ref<AluraFont>::Create();

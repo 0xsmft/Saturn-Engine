@@ -35,7 +35,7 @@ namespace Saturn {
 		Unknown,
 
 		// AluraFont
-		DefaultFont,
+		DefaultAluraFont,
 
 		// Texture2D, non-TSA
 		SMAA_AreaTexture,

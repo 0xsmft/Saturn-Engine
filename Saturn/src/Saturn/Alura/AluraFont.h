@@ -215,11 +215,16 @@ namespace Saturn {
 		// FOR USE BY ALURACANVAS ONLY!
 		void Deserialise_ForAluraCanvas( Passkey<class AluraCanvas> pk, const std::filesystem::path& rPath );
 
+		// FOR USE BY THE BUILT IN RESOURCE MANAGER ONLY!
+		void Serialise_ForBRM( Passkey<class BuiltinResourceManager> pk, std::ofstream& rStream ) const;
+
 	private:
 		void CreateOrLoadAtlas( bool overrideCache = false );
 #if !defined(SAT_DIST)
 		void CreateAtlasTexture( AluraMSDFGenerationData& rGenerationData, int width, int height );
 #endif
+
+		void SerialiseInternal( std::ofstream& rStream, const bool isForDist ) const;
 
 	private:
 #if !defined(SAT_DIST)

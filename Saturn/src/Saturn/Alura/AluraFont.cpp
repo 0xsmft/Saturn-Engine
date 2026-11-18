@@ -328,73 +328,76 @@ namespace Saturn {
 		AluraFontAssetVersion Version = AluraFontAssetVersion::Lowest;
 	};
 
-	void AluraFont::Serialise( const std::filesystem::path& rPath, bool isForDist /*=false*/ ) const
+	void AluraFont::SerialiseInternal( std::ofstream& rStream, const bool isForDist ) const
 	{
-		std::ofstream fout( rPath, std::ios::binary | std::ios::trunc );
-
 		// Header
 		AluraSerialiedFontHeader header{};
-		RawSerialisation::WriteObject( header.Magic, fout );
-		RawSerialisation::WriteObject( ( uint8_t ) m_Version, fout );
+		RawSerialisation::WriteObject( header.Magic, rStream );
+		RawSerialisation::WriteObject( ( uint8_t ) m_Version, rStream );
 
 #if !defined(SAT_DIST)
 		if( !isForDist )
 		{
 			// Name of the font file
-			RawSerialisation::WriteString( m_Name, fout );
+			RawSerialisation::WriteString( m_Name, rStream );
 
 			// Write path
-			RawSerialisation::WriteString( m_FontFilepath, fout );
+			RawSerialisation::WriteString( m_FontFilepath, rStream );
 		}
 #endif
 
 		// Metrics
-		RawSerialisation::WriteObject( m_AluraFontData.GetMetrics(), fout );
+		RawSerialisation::WriteObject( m_AluraFontData.GetMetrics(), rStream );
 
 		// Glyph to codepoint map
-		RawSerialisation::WriteMap( m_AluraFontData.GetCodepointToGlyph(), fout );
+		RawSerialisation::WriteMap( m_AluraFontData.GetCodepointToGlyph(), rStream );
 
 		// Kerning
 		size_t mapSize = m_AluraFontData.GetKerning().size();
-		RawSerialisation::WriteObject( mapSize, fout );
+		RawSerialisation::WriteObject( mapSize, rStream );
 
 		for( const auto& [kv, kerning] : m_AluraFontData.GetKerning() )
 		{
-			RawSerialisation::WriteObject( kv.first, fout );
-			RawSerialisation::WriteObject( kv.second, fout );
-			RawSerialisation::WriteObject( kerning, fout );
+			RawSerialisation::WriteObject( kv.first, rStream );
+			RawSerialisation::WriteObject( kv.second, rStream );
+			RawSerialisation::WriteObject( kerning, rStream );
 		}
 
 		// Write glyph geo.
 		// Write the map manually
 		mapSize = m_AluraFontData.GetGlyphs().size();
-		RawSerialisation::WriteObject( mapSize, fout );
+		RawSerialisation::WriteObject( mapSize, rStream );
 
 		for( size_t i = 0; i < mapSize; ++i )
 		{
 			const AluraSerialisedGlyph& asg = m_AluraFontData.GetGlyphs()[ i ];
-			RawSerialisation::WriteObject( asg.Codepoint, fout );
-			RawSerialisation::WriteObject( asg.Advance, fout );
+			RawSerialisation::WriteObject( asg.Codepoint, rStream );
+			RawSerialisation::WriteObject( asg.Advance, rStream );
 
-			RawSerialisation::WriteObject( asg.PlaneLeft, fout );
-			RawSerialisation::WriteObject( asg.PlaneBottom, fout );
-			RawSerialisation::WriteObject( asg.PlaneRight, fout );
-			RawSerialisation::WriteObject( asg.PlaneTop, fout );
+			RawSerialisation::WriteObject( asg.PlaneLeft, rStream );
+			RawSerialisation::WriteObject( asg.PlaneBottom, rStream );
+			RawSerialisation::WriteObject( asg.PlaneRight, rStream );
+			RawSerialisation::WriteObject( asg.PlaneTop, rStream );
 
-			RawSerialisation::WriteObject( asg.AtlasLeft, fout );
-			RawSerialisation::WriteObject( asg.AtlasBottom, fout );
-			RawSerialisation::WriteObject( asg.AtlasRight, fout );
-			RawSerialisation::WriteObject( asg.AtlasTop, fout );
+			RawSerialisation::WriteObject( asg.AtlasLeft, rStream );
+			RawSerialisation::WriteObject( asg.AtlasBottom, rStream );
+			RawSerialisation::WriteObject( asg.AtlasRight, rStream );
+			RawSerialisation::WriteObject( asg.AtlasTop, rStream );
 		}
 
 		// Now write the texture atlas image
-		RawSerialisation::WriteObject( m_TextureAtlas->Width(), fout );
-		RawSerialisation::WriteObject( m_TextureAtlas->Height(), fout );
+		RawSerialisation::WriteObject( m_TextureAtlas->Width(), rStream );
+		RawSerialisation::WriteObject( m_TextureAtlas->Height(), rStream );
 
 		Buffer TemporaryBuffer = m_TextureAtlas->X31CopyToBuffer();
-		RawSerialisation::WriteSaturnBuffer( TemporaryBuffer, fout );
+		RawSerialisation::WriteSaturnBuffer( TemporaryBuffer, rStream );
 		TemporaryBuffer.Free();
+	}
 
+	void AluraFont::Serialise( const std::filesystem::path& rPath, bool isForDist /*=false*/ ) const
+	{
+		std::ofstream fout( rPath, std::ios::binary | std::ios::trunc );
+		SerialiseInternal( fout, isForDist );
 		fout.close();
 	}
 
@@ -479,6 +482,11 @@ namespace Saturn {
 		std::ifstream stream( rPath, std::ios::binary | std::ios::in );
 		Deserialise( stream );
 		stream.close();
+	}
+
+	void AluraFont::Serialise_ForBRM( Passkey<class BuiltinResourceManager> pk, std::ofstream& rStream ) const
+	{
+		SerialiseInternal( rStream, true );
 	}
 
 	//////////////////////////////////////////////////////////////////////////

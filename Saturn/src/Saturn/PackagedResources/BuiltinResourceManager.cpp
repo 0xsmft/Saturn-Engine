@@ -30,8 +30,11 @@
 #include "BuiltinResourceManager.h"
 
 #include "Saturn/Asset/Asset.h"
-
 #include "Saturn/Vulkan/Texture.h"
+#include "Saturn/Alura/AluraCanvas.h"
+
+#include "Saturn/Project/Project.h"
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
 namespace Saturn {
 
@@ -64,7 +67,14 @@ namespace Saturn {
 #if defined(SAT_DIST)
 	Ref<RefTarget> BuiltinResourceManager::CreateResourceFromType_Dist( PackagedResourceType type )
 	{
+		const auto itr = m_Resources.find( type );
+		if( itr != m_Resources.end() )
+		{
+			return itr->second;
+		}
 
+		SAT_CORE_VERIFY( false, "BuiltinResourceManager: Required built-in resource could not be found. Plese verify the game's integrity." );
+		return nullptr;
 	}
 #else
 	Ref<RefTarget> BuiltinResourceManager::CreateResourceFromType_Development( PackagedResourceType type )
@@ -102,6 +112,71 @@ namespace Saturn {
 
 		SAT_CORE_VERIFY( false );
 		return nullptr;
+	}
+#endif
+
+	//////////////////////////////////////////////////////////////////////////
+	// Packaging
+
+	struct BuiltinAssetBundleFileHeader
+	{
+		// .RM + null
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x52, 0x4D, 0x00 };
+		uint32_t EngineVersion = 0llu;
+	};
+
+#if defined(SAT_DIST)
+	bool BuiltinResourceManager::ReadBundle()
+	{
+
+	}
+#else
+	bool BuiltinResourceManager::Package()
+	{
+		std::filesystem::path outPath = Project::GetActiveProject()->GetFullCachePath();
+		outPath /= "AssetBundle-Builtin.srm";
+
+		std::ofstream fout( outPath, std::ios::out | std::ios::binary );
+
+		BuiltinAssetBundleFileHeader header;
+		header.EngineVersion = SAT_CURRENT_VERSION;
+
+		RawSerialisation::WriteObject( header, fout );
+
+		RawSerialisation::WriteObject( m_Resources.size(), fout );
+
+		for( const auto [type, asset] : m_Resources )
+		{
+			RawSerialisation::WriteObject( ( std::underlying_type_t<PackagedResourceType> )type, fout );
+			
+			switch( type )
+			{
+				case PackagedResourceType::BRDFLutTexture:
+				case PackagedResourceType::CurlTexture:
+				case PackagedResourceType::SMAA_AreaTexture:
+				case PackagedResourceType::DefaultBloomDirtTexture:
+				case PackagedResourceType::WeatherMapTexture:
+				{
+					
+				} break;
+
+				case PackagedResourceType::DefaultAluraFont: 
+				{
+					const Ref<AluraFont> font = asset.As<AluraFont>();
+					if( font )
+					{
+						font->Serialise_ForBRM( Passkey<BuiltinResourceManager>(), fout );
+					}
+				} break;
+
+				default:
+					break;
+			}
+		}
+
+		fout.close();
+
+		return true;
 	}
 #endif
 

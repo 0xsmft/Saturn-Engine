@@ -59,17 +59,26 @@ namespace Saturn {
 			return m_Resources[ type ].As<Ty>();
 		}
 
+#if !defined(SAT_DIST)
+		bool Package();
+#endif
+
 	private:
 		Ref<RefTarget> CreateResourceFromType( PackagedResourceType type );
 		
 #if defined(SAT_DIST)
 		Ref<RefTarget> CreateResourceFromType_Dist( PackagedResourceType type );
+		bool ReadBundle();
 #else
 		Ref<RefTarget> CreateResourceFromType_Development( PackagedResourceType type );
 #endif
 
 	private:
 		std::unordered_map<PackagedResourceType, Ref<class RefTarget>> m_Resources;
+
+#if defined(SAT_DIST)
+		bool m_LoadedBundle = false;
+#endif
 	};
 	
 }

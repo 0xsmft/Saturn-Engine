@@ -31,6 +31,8 @@
 #include "Saturn/Core/UUID.h"
 #include "Saturn/Core/Ref.h"
 
+#include "UndoRedoID.h"
+
 #include <string>
 
 namespace Saturn {
@@ -48,16 +50,16 @@ namespace Saturn {
 
 	public:
 		const std::string& GetName() const { return m_Name; }
-		UUID GetIdentifier() const { return m_Identifier; }
+		UndoRedoID GetIdentifier() const { return m_Identifier; }
 
-		void SetIdentifier( UUID identifier ) { m_Identifier = identifier; }
+		void SetIdentifier( UndoRedoID identifier ) { m_Identifier = identifier; }
 
 	private:
 		std::string m_Name;
 
 		// Every action should have an identifier that states who it's associated with. 
 		// For example any entity action should have the entity handle as the identifier, so when the entity is deleted the action can be removed.
-		UUID m_Identifier{};
+		UndoRedoID m_Identifier = kInvalidUndoRedoID;
 	};
 
 	template<typename Ty>

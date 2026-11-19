@@ -39,8 +39,8 @@ namespace Saturn {
 	{
 		SingletonStorage::AddSingleton( this );
 
-		m_RedoActions.reserve( MAX_UNDO_REDO_ACTIONS );
-		m_UndoActions.reserve( MAX_UNDO_REDO_ACTIONS );
+		m_RedoActions.reserve( kMaxUndoRedoActions );
+		m_UndoActions.reserve( kMaxUndoRedoActions );
 	}
 
 	GlobalUndoRedoGroup::~GlobalUndoRedoGroup()
@@ -98,7 +98,7 @@ namespace Saturn {
 		}
 	}
 
-	void GlobalUndoRedoGroup::RemoveIfActionHasIdentifier( UUID identifier )
+	void GlobalUndoRedoGroup::RemoveIfActionHasIdentifier( UndoRedoID identifier )
 	{
 		auto itr = std::remove_if( m_UndoActions.begin(), m_UndoActions.end(),
 			[ identifier ]( const Ref<UndoRedoActionBase>& action )
@@ -123,14 +123,14 @@ namespace Saturn {
 		m_RedoActions.clear();
 	}
 
-	void GlobalUndoRedoGroup::AddAction( Ref<UndoRedoActionBase> action, UUID identifier )
+	void GlobalUndoRedoGroup::AddAction( Ref<UndoRedoActionBase> action, UndoRedoID identifier )
 	{
 		action->SetIdentifier( identifier );
 		m_UndoActions.push_back( action );
 
 		// TODO: Also remove the action from the redo stack if it exists there?
 		// Remove last action if we exceed the max undo/redo actions
-		if( m_UndoActions.size() > MAX_UNDO_REDO_ACTIONS )
+		if( m_UndoActions.size() > kMaxUndoRedoActions )
 		{
 			m_UndoActions.erase( std::remove( m_UndoActions.begin(), m_UndoActions.end(), m_UndoActions.front() ) );
 		}

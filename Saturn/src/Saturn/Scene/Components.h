@@ -39,7 +39,7 @@
 
 #include "Saturn/Physics/PhysicsBodyType.h"
 
-#include "Saturn/CameraShake/CameraShakeInstance.h"
+#include "Saturn/GameFramework/CameraShake/CameraShakeInstance.h"
 
 // TODO: Should not be included...
 #include "Saturn/Animation/Animator.h"

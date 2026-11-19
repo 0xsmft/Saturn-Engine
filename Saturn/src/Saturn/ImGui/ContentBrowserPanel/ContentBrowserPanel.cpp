@@ -42,7 +42,7 @@
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/ShaderAsset.h"
 #include "Saturn/Asset/AssetExtensions.h"
-#include "Saturn/CameraShake/CameraShakeDescriptorAsset.h"
+#include "Saturn/GameFramework/CameraShake/CameraShakeDescriptorAsset.h"
 #include "Saturn/Asset/ShaderAsset.h"
 #include "Saturn/AI/BehaviourTree/BlackboardSpecificationAsset.h"
 #include "Saturn/Alura/AluraStylingProfile.h"

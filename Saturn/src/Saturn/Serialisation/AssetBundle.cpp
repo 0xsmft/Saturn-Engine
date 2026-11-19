@@ -43,7 +43,7 @@
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/MaterialAsset.h"
-#include "Saturn/CameraShake/CameraShakeDescriptorAsset.h"
+#include "Saturn/GameFramework/CameraShake/CameraShakeDescriptorAsset.h"
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/Audio/GraphSound.h"
 #include "Saturn/AI/BehaviourTree/BlackboardSpecificationAsset.h"

@@ -36,7 +36,7 @@
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Asset/ShaderAsset.h"
-#include "Saturn/CameraShake/CameraShakeDescriptorAsset.h"
+#include "Saturn/GameFramework/CameraShake/CameraShakeDescriptorAsset.h"
 #include "Saturn/Animation/SkeletonAsset.h"
 #include "Saturn/Animation/SkeletalAnimationAsset.h"
 #include "Saturn/Audio/SoundSpecification.h"

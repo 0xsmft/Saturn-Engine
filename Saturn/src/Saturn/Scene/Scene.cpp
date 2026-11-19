@@ -39,8 +39,6 @@
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/TextureSourceAsset.h"
-#include "Saturn/CameraShake/CameraShakeDescriptorAsset.h"
-#include "Saturn/CameraShake/CameraShakeInstance.h"
 
 #include "Saturn/Core/Profiler.h"
 #include "Saturn/Core/VirtualFS.h"
@@ -56,6 +54,8 @@
 
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 #include "Saturn/GameFramework/PlayerInputController.h"
+#include "Saturn/GameFramework/CameraShake/CameraShakeDescriptorAsset.h"
+#include "Saturn/GameFramework/CameraShake/CameraShakeInstance.h"
 
 #include "Saturn/Audio/AudioSystem.h"
 

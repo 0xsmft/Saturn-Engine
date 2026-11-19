@@ -35,7 +35,7 @@
 #include "Saturn/Physics/PhysicsShapes.h"
 #include "Saturn/Physics/PhysicsCharacterController.h"
 
-#include "Saturn/CameraShake/CameraShakeInstance.h"
+#include "Saturn/GameFramework/CameraShake/CameraShakeInstance.h"
 
 namespace Saturn {
 

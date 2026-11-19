@@ -46,7 +46,7 @@
 
 LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LParam );
 
-constexpr const wchar_t* DEFAULT_WINDOW_CLASS_NAME = L"RUBY_WINDOW";
+constexpr const wchar_t* kDefaultWindowClassName = L"RUBY_WINDOW";
 
 struct RubyWindowRegister
 {
@@ -57,14 +57,14 @@ struct RubyWindowRegister
 			.lpfnWndProc = RubyWindowProc, 
 			.hInstance = ::GetModuleHandle( nullptr ), 
 			.hCursor = ::LoadCursor( nullptr, IDC_ARROW ), 
-			.lpszClassName = DEFAULT_WINDOW_CLASS_NAME };
+			.lpszClassName = kDefaultWindowClassName };
 
 		::RegisterClassW( &wc );
 	}
 
 	~RubyWindowRegister()
 	{
-		::UnregisterClassW( DEFAULT_WINDOW_CLASS_NAME, ::GetModuleHandle( nullptr ) );
+		::UnregisterClassW( kDefaultWindowClassName, ::GetModuleHandle( nullptr ) );
 	}
 } static s_RubyWindowRegister;
 
@@ -643,7 +643,7 @@ namespace Saturn {
 
 		m_Handle = ::CreateWindowExW( 
 			0, 
-			DEFAULT_WINDOW_CLASS_NAME, 
+			kDefaultWindowClassName, 
 			m_pWindow->m_WindowTitle.data(), 
 			WindowStyle, 
 			CW_USEDEFAULT, CW_USEDEFAULT, 

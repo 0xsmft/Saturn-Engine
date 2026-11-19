@@ -41,8 +41,8 @@ namespace Saturn {
 	class NavigationOctree
 	{
 	public:
-		constexpr static int MAX_OBJECTS = 8;
-		constexpr static int MAX_DEPTH = 5;
+		constexpr static uint64_t kMaxObjects = 8llu;
+		constexpr static uint64_t kMaxDepth = 5llu;
 
 	public:
 		AABB MaxBounds;
@@ -60,7 +60,7 @@ namespace Saturn {
 		{
 			if( !MaxBounds.Contains( rPoint ) ) return;
 
-			if( Objects.size() < MAX_OBJECTS || Depth >= MAX_DEPTH )
+			if( Objects.size() < kMaxObjects || Depth >= kMaxDepth )
 			{
 				Objects.emplace_back( rData );
 				return;

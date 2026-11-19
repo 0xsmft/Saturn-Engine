@@ -1103,20 +1103,20 @@ namespace Saturn {
 				}
 			}
 
-			constexpr float padding = 16.0f;
-			constexpr int thumbnailSizeX = 180;
-			constexpr int thumbnailSizeY = 180;
-			constexpr int cellSize = thumbnailSizeX + static_cast< int >( padding );
+			constexpr float kPadding = 16.0f;
+			constexpr int kThumbnailSizeX = 180;
+			constexpr int kThumbnailSizeY = 180;
+			constexpr int kCellSize = kThumbnailSizeX + static_cast< int >( kPadding );
 			const float panelWidth = ImGui::GetContentRegionAvail().x - 20.0f + ImGui::GetStyle().ScrollbarSize;
 
-			int columnCount = ( int ) ( panelWidth / cellSize );
+			int columnCount = ( int ) ( panelWidth / kCellSize );
 			if( columnCount < 1 ) columnCount = 1;
 
 			ImGui::Columns( columnCount, 0, false );
 
 			if( m_Searching )
 			{
-				DrawItemsClipped( m_ValidSearchFiles, { thumbnailSizeX, thumbnailSizeY }, padding, columnCount );
+				DrawItemsClipped( m_ValidSearchFiles, { kThumbnailSizeX, kThumbnailSizeY }, kPadding, columnCount );
 
 				// No longer searching, means that user has clicked on a file/folder.
 				if( !m_Searching )
@@ -1126,11 +1126,11 @@ namespace Saturn {
 			{
 				if( m_RenderUnclipped )
 				{
-					DrawItemsUnclipped( m_Files, { thumbnailSizeX, thumbnailSizeY }, padding );
+					DrawItemsUnclipped( m_Files, { kThumbnailSizeX, kThumbnailSizeY }, kPadding );
 				}
 				else
 				{
-					DrawItemsClipped( m_Files, { thumbnailSizeX, thumbnailSizeY }, padding, columnCount );
+					DrawItemsClipped( m_Files, { kThumbnailSizeX, kThumbnailSizeY }, kPadding, columnCount );
 				}
 			}
 

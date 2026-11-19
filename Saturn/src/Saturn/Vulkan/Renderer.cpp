@@ -771,33 +771,33 @@ namespace Saturn {
 			glm::vec2 TexCoord;
 		};
 
-		constexpr float x = -1;
-		constexpr float y = -1;
+		constexpr float kXCoord = -1;
+		constexpr float kYCoord = -1;
 
-		constexpr float width = 2, height = 2;
+		constexpr float kWidth = 2, kHeight = 2;
 
-		QuadVertex* data = new QuadVertex[ 4 ];
+		QuadVertex* pTemporaryData = new QuadVertex[ 4 ];
 
-		data[ 0 ].Position = glm::vec3( x, y, 0.0f );
-		data[ 0 ].TexCoord = glm::vec2( 0, 0 );
+		pTemporaryData[ 0 ].Position = glm::vec3( kXCoord, kYCoord, 0.0f );
+		pTemporaryData[ 0 ].TexCoord = glm::vec2( 0, 0 );
 
-		data[ 1 ].Position = glm::vec3( x + width, y, 0.0f );
-		data[ 1 ].TexCoord = glm::vec2( 1, 0 );
+		pTemporaryData[ 1 ].Position = glm::vec3( kXCoord + kWidth, kYCoord, 0.0f );
+		pTemporaryData[ 1 ].TexCoord = glm::vec2( 1, 0 );
 
-		data[ 2 ].Position = glm::vec3( x + width, y + height, 0.0f );
-		data[ 2 ].TexCoord = glm::vec2( 1, 1 );
+		pTemporaryData[ 2 ].Position = glm::vec3( kXCoord + kWidth, kYCoord + kHeight, 0.0f );
+		pTemporaryData[ 2 ].TexCoord = glm::vec2( 1, 1 );
 
-		data[ 3 ].Position = glm::vec3( x, y + height, 0.0f );
-		data[ 3 ].TexCoord = glm::vec2( 0, 1 );
+		pTemporaryData[ 3 ].Position = glm::vec3( kXCoord, kYCoord + kHeight, 0.0f );
+		pTemporaryData[ 3 ].TexCoord = glm::vec2( 0, 1 );
 
-		vertex = Ref<VertexBuffer>::Create( data, 4 * sizeof( QuadVertex ) );
+		vertex = Ref<VertexBuffer>::Create( pTemporaryData, 4 * sizeof( QuadVertex ) );
 
 		uint32_t indices[ 6 ] = { 0, 1, 2,
 								  2, 3, 0, };
 
 		index = Ref<IndexBuffer>::Create( indices, 6 * sizeof( uint32_t ) );
 
-		delete[] data;
+		delete[] pTemporaryData;
 
 		return { vertex, index };
 	}

@@ -1484,15 +1484,15 @@ namespace Saturn {
 			AddText( "This is text at size 16px" );
 			PopFontSize();
 
-			constexpr float myFloat = 21.1234567f;
-			constexpr uint64_t myUInt = 21lu;
-			constexpr int64_t mySInt = -21;
+			constexpr float kMyFloat = 21.1234567f;
+			constexpr uint64_t kMyUInt = 21lu;
+			constexpr int64_t kMySInt = -21;
 
 			PushFontSize( 32.0f );
-			TextFormatted( "This is formatted floating point text, value: {}", myFloat );
-			TextFormatted( "This is formatted floating point text w. 2 dps, value: {:.2f}", myFloat );
-			TextFormatted( "This is formatted uint text, value: {}", myUInt );
-			TextFormatted( "This is formatted sint text, value: {}", mySInt );
+			TextFormatted( "This is formatted floating point text, value: {}", kMyFloat );
+			TextFormatted( "This is formatted floating point text w. 2 dps, value: {:.2f}", kMyFloat );
+			TextFormatted( "This is formatted uint text, value: {}", kMyUInt );
+			TextFormatted( "This is formatted sint text, value: {}", kMySInt );
 
 			AddText( "Long Text:\nUhm im testing this shit okay...\npenis" );
 

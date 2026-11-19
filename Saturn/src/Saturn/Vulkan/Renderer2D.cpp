@@ -613,7 +613,7 @@ namespace Saturn {
 
 	void Renderer2D::SubmitBillboardTextured( const glm::vec3& position, const glm::vec4& color, const Ref<Texture2D>& rTexture, const glm::vec2& rSize )
 	{
-		constexpr glm::vec2 TexCoord[] = { { 0.0f, 1.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f } };
+		constexpr glm::vec2 kTexCoord[] = { { 0.0f, 1.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f } };
 
 		const glm::vec3 CamRight = { m_CameraView[ 0 ][ 0 ], m_CameraView[ 1 ][ 0 ], m_CameraView[ 2 ][ 0 ] };
 		const glm::vec3 CamUp = { m_CameraView[ 0 ][ 1 ], m_CameraView[ 1 ][ 1 ], m_CameraView[ 2 ][ 1 ] };
@@ -645,7 +645,7 @@ namespace Saturn {
 		{
 			prCurrentQuad->Position = position + CamRight * ( m_QuadVertexPositions[ i ].x ) * rSize.x + CamUp * m_QuadVertexPositions[ i ].y * rSize.y;
 			prCurrentQuad->Color = color;
-			prCurrentQuad->TexCoord = TexCoord[ i ];
+			prCurrentQuad->TexCoord = kTexCoord[ i ];
 			prCurrentQuad->TextureIndex = ( float ) textureID;
 
 			++prCurrentQuad;
@@ -656,7 +656,7 @@ namespace Saturn {
 
 	void Renderer2D::SubmitBillboardTexturedFlipped( const glm::vec3& position, const glm::vec4& color, const Ref<Texture2D>& rTexture, const glm::vec2& rSize )
 	{
-		constexpr glm::vec2 TexCoord[] = { { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f } };
+		constexpr glm::vec2 kTexCoord[] = { { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f } };
 
 		const glm::vec3 CamRight = { m_CameraView[ 0 ][ 0 ], m_CameraView[ 1 ][ 0 ], m_CameraView[ 2 ][ 0 ] };
 		const glm::vec3 CamUp = { m_CameraView[ 0 ][ 1 ], m_CameraView[ 1 ][ 1 ], m_CameraView[ 2 ][ 1 ] };
@@ -688,7 +688,7 @@ namespace Saturn {
 		{
 			prCurrentQuad->Position = position + CamRight * ( m_QuadVertexPositions[ i ].x ) * rSize.x + CamUp * m_QuadVertexPositions[ i ].y * rSize.y;
 			prCurrentQuad->Color = color;
-			prCurrentQuad->TexCoord = TexCoord[ i ];
+			prCurrentQuad->TexCoord = kTexCoord[ i ];
 			prCurrentQuad->TextureIndex = ( float ) textureID;
 
 			++prCurrentQuad;

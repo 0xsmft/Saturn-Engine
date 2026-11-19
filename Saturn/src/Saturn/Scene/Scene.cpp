@@ -302,10 +302,10 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		constexpr float FixedTimestep = 1.0f / 100.0f;
+		constexpr float kFixedTimestep = 1.0f / 100.0f;
 		for( auto&& [id, entity] : m_EntityIDMap )
 		{
-			entity->OnPhysicsUpdate( FixedTimestep );
+			entity->OnPhysicsUpdate( kFixedTimestep );
 		}
 
 		auto rigidBodies = GetAllEntitiesWith<RigidbodyComponent>();

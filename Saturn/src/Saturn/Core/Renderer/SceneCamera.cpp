@@ -87,9 +87,9 @@ namespace Saturn {
 
 			const float yawSign = GetUpDirection().y < 0 ? -1.0f : 1.0f;
 
-			constexpr float maxRate{ 0.12f };
-			m_YawDelta += glm::clamp( yawSign * delta.x, -maxRate, maxRate );
-			m_PitchDelta += glm::clamp( delta.y, -maxRate, maxRate );
+			constexpr float kMaxRate{ 0.12f };
+			m_YawDelta += glm::clamp( yawSign * delta.x, -kMaxRate, kMaxRate );
+			m_PitchDelta += glm::clamp( delta.y, -kMaxRate, kMaxRate );
 
 			m_RightDirection = glm::cross( m_Rotation, glm::vec3{ 0.f, yawSign, 0.f } );
 			m_Rotation = glm::rotate( glm::normalize( glm::cross( glm::angleAxis( -m_PitchDelta, m_RightDirection ),

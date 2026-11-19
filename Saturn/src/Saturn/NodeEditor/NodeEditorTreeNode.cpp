@@ -49,8 +49,8 @@ namespace Saturn {
 	void NodeEditorTreeNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
 	{
 #if !defined(SAT_DIST)
-		constexpr float ROUNDING = 5.0f;
-		constexpr float PADDING = 12.0f;
+		constexpr float kRounding = 5.0f;
+		constexpr float kPadding = 12.0f;
 
 		const auto pinBackground = ed::GetStyle().Colors[ ed::StyleColor_NodeBg ];
 
@@ -60,7 +60,7 @@ namespace Saturn {
 		ed::PushStyleColor( ed::StyleColor_PinRectBorder, ImColor( 60, 180, 255, 150 ) );
 
 		ed::PushStyleVar( ed::StyleVar_NodePadding, ImVec4( 0, 0, 0, 0 ) );
-		ed::PushStyleVar( ed::StyleVar_NodeRounding, ROUNDING );
+		ed::PushStyleVar( ed::StyleVar_NodeRounding, kRounding );
 		ed::PushStyleVar( ed::StyleVar_SourceDirection, ImVec2( 0.0f, 1.0f ) );
 		ed::PushStyleVar( ed::StyleVar_TargetDirection, ImVec2( 0.0f, -1.0f ) );
 		ed::PushStyleVar( ed::StyleVar_LinkStrength, 0.0f );
@@ -130,14 +130,14 @@ namespace Saturn {
 
 		ImGui::BeginVertical( (int)ID );
 		ImGui::BeginHorizontal( "Inputs" );
-		ImGui::Spring( 0, PADDING * 2 );
+		ImGui::Spring( 0, kPadding * 2 );
 
 		NodeEditor* pOuter = dynamic_cast< NodeEditor* >( GetParentObject() );
 
 		ImRect inputRect;
 		for( auto& rInput : Inputs )
 		{
-			ImGui::Dummy( ImVec2( 0.0f, PADDING ) );
+			ImGui::Dummy( ImVec2( 0.0f, kPadding ) );
 			ImGui::Spring( 1.0f, 0.0f );
 		
 			inputRect = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
@@ -148,16 +148,16 @@ namespace Saturn {
 		// Dummy if no inputs
 		if( Inputs.size() == 0 )
 		{
-			ImGui::Dummy( ImVec2( 0.0F, PADDING ) );
+			ImGui::Dummy( ImVec2( 0.0F, kPadding ) );
 		}
 
-		ImGui::Spring( 0, PADDING * 2 );
+		ImGui::Spring( 0, kPadding * 2 );
 		ImGui::EndHorizontal();
 
 		OnRenderNextSection();
 
 		ImGui::BeginHorizontal( "ContentFrame" );
-		ImGui::Spring( 1, PADDING );
+		ImGui::Spring( 1, kPadding );
 
 		ImGui::BeginVertical( "content", ImVec2( 0.0f, 0.0f ) );
 		ImGui::Dummy( ImVec2( 160, 0 ) );
@@ -171,11 +171,11 @@ namespace Saturn {
 
 		ImRect itemRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
 
-		ImGui::Spring( 1, PADDING );
+		ImGui::Spring( 1, kPadding );
 		ImGui::EndHorizontal();
 
 		ImGui::BeginHorizontal( "Outputs" );
-		ImGui::Spring( 0, PADDING * 2 );
+		ImGui::Spring( 0, kPadding * 2 );
 
 		ImRect outputRect;
 		for( auto& rOutput : Outputs )
@@ -183,7 +183,7 @@ namespace Saturn {
 			if( rOutput->Type == PinType::Delegate )
 				continue;
 
-			ImGui::Dummy( ImVec2( 0.0f, PADDING ) );
+			ImGui::Dummy( ImVec2( 0.0f, kPadding ) );
 			ImGui::Spring( 1.0f, 0.0f );
 
 			outputRect = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
@@ -194,10 +194,10 @@ namespace Saturn {
 		// Dummy if no outputs
 		if( Outputs.size() == 0 )
 		{
-			ImGui::Dummy( ImVec2( 0.0F, PADDING ) );
+			ImGui::Dummy( ImVec2( 0.0F, kPadding ) );
 		}
 
-		ImGui::Spring( 0, PADDING * 2 );
+		ImGui::Spring( 0, kPadding * 2 );
 		ImGui::EndHorizontal();
 
 		ImGui::EndVertical();

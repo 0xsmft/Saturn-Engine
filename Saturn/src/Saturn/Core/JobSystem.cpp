@@ -33,7 +33,7 @@
 #include "JobSystem.h"
 
 #if !defined(SAT_DIST)
-constexpr size_t MAX_THREADS_COUNT = 2;
+constexpr size_t kMaxThreads = 2;
 #endif
 
 namespace Saturn {
@@ -41,7 +41,7 @@ namespace Saturn {
 	JobSystem::JobSystem()
 	{
 #if !defined(SAT_DIST)
-		SetMaxThreads( MAX_THREADS_COUNT );
+		SetMaxThreads( kMaxThreads );
 #else
 		SetMaxThreads( std::thread::hardware_concurrency() / 2 );
 #endif

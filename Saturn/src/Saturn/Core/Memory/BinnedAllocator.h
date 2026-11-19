@@ -37,10 +37,10 @@ namespace Saturn {
 	{
 	public:
 		// 4KIB max page
-		static constexpr size_t PAGE_SIZE = 4096;
-		static constexpr size_t NUM_BINS  = 10;
+		static constexpr size_t kPageSize = 4096;
+		static constexpr size_t kBinCount  = 10;
 
-		static constexpr std::array<size_t, NUM_BINS> BIN_SIZES = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
+		static constexpr std::array<size_t, kBinCount> kBinSizes = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
 	public:
 		explicit FBinnedAllocator() 
 		{
@@ -83,9 +83,9 @@ namespace Saturn {
 	private:
 		size_t GetBinIndex( size_t blockSize ) 
 		{
-			for( size_t i = 0; i < NUM_BINS; ++i )
+			for( size_t i = 0; i < kBinCount; ++i )
 			{
-				if( blockSize <= BIN_SIZES[ i ] )
+				if( blockSize <= kBinSizes[ i ] )
 					return i;
 			}
 
@@ -94,10 +94,10 @@ namespace Saturn {
 
 		void AllocateNewPage( size_t binIndex ) 
 		{
-			const size_t blockSize = BIN_SIZES[ binIndex ];
-			const size_t blocksPerPage = PAGE_SIZE / blockSize;
+			const size_t blockSize = kBinSizes[ binIndex ];
+			const size_t blocksPerPage = kPageSize / blockSize;
 
-			void* pPage = std::malloc( PAGE_SIZE );
+			void* pPage = std::malloc( kPageSize );
 			if( !pPage ) throw std::bad_alloc();
 
 			m_AllocatedPages.push_back( pPage );
@@ -115,7 +115,7 @@ namespace Saturn {
 		}
 
 	private:
-		std::array<void*, NUM_BINS> m_FreeLists;
+		std::array<void*, kBinCount> m_FreeLists;
 		std::vector<void*> m_AllocatedPages;
 	};
 	

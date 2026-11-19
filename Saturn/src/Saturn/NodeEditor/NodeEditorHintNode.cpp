@@ -57,9 +57,9 @@ namespace Saturn {
 	void NodeEditorHintNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
 	{
 #if !defined(SAT_DIST)
-		constexpr float HINT_ALPHA = 0.75f;
+		constexpr float kHintAlpha = 0.75f;
 
-		ImGui::PushStyleVar( ImGuiStyleVar_Alpha, HINT_ALPHA );
+		ImGui::PushStyleVar( ImGuiStyleVar_Alpha, kHintAlpha );
 
 		ed::PushStyleColor( ed::StyleColor_NodeBg, ImColor( 255, 255, 255, 64 ) );
 		ed::PushStyleColor( ed::StyleColor_NodeBorder, ImColor( 255, 255, 255, 64 ) );

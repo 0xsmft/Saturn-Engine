@@ -88,9 +88,9 @@ namespace Saturn {
 
 			case PackagedResourceType::SMAA_AreaTexture: 
 			{
-				constexpr TextureLoadFlags loadFlags = TextureLoadFlags( TextureLoadFlags_LoadOnMainThread | TextureLoadFlags_NoMips );
+				constexpr TextureLoadFlags kLoadFlags = TextureLoadFlags( TextureLoadFlags_LoadOnMainThread | TextureLoadFlags_NoMips );
 
-				return Ref<Texture2D>::Create( "content/textures/SMAA_AreaTex.tga", AddressingMode::Repeat, loadFlags );
+				return Ref<Texture2D>::Create( "content/textures/SMAA_AreaTex.tga", AddressingMode::Repeat, kLoadFlags );
 			}
 
 			case PackagedResourceType::BRDFLutTexture:

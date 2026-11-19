@@ -38,18 +38,18 @@ namespace Saturn::Auxiliary {
 		std::vector<StaticVertex> vertices;
 		std::vector<Index> indices;
 
-		constexpr float latitudeBands = 30.0f;
-		constexpr float longitudeBands = 30.0f;
+		constexpr float kLatitudeBands = 30.0f;
+		constexpr float kLongitudeBands = 30.0f;
 
-		for( float latNumber = 0; latNumber <= latitudeBands; latNumber++ )
+		for( float latNumber = 0; latNumber <= kLatitudeBands; ++latNumber )
 		{
-			const float theta = latNumber * glm::pi<float>() / latitudeBands;
+			const float theta = latNumber * glm::pi<float>() / kLatitudeBands;
 			const float sinTheta = glm::sin( theta );
 			const float cosTheta = glm::cos( theta );
 
-			for( float longNumber = 0; longNumber <= longitudeBands; longNumber++ )
+			for( float longNumber = 0; longNumber <= kLongitudeBands; ++longNumber )
 			{
-				const float phi = longNumber * 2 * glm::pi<float>() / longitudeBands;
+				const float phi = longNumber * 2 * glm::pi<float>() / kLongitudeBands;
 				const float sinPhi = glm::sin( phi );
 				const float cosPhi = glm::cos( phi );
 
@@ -62,18 +62,18 @@ namespace Saturn::Auxiliary {
 				vertex.Normal = { x, y, z };
 				
 				// Map the longitude and latitude values to 0,1.
-				vertex.Texcoord = { longNumber / longitudeBands, latNumber / latitudeBands };
+				vertex.Texcoord = { longNumber / kLongitudeBands, latNumber / kLatitudeBands };
 
 				vertices.push_back( vertex );
 			}
 		}
 
-		for( uint32_t latNumber = 0; latNumber < latitudeBands; latNumber++ )
+		for( uint32_t latNumber = 0; latNumber < kLatitudeBands; latNumber++ )
 		{
-			for( uint32_t longNumber = 0; longNumber < longitudeBands; longNumber++ )
+			for( uint32_t longNumber = 0; longNumber < kLongitudeBands; longNumber++ )
 			{
-				uint32_t first = ( latNumber * static_cast< uint32_t >( longitudeBands + 1.0f ) ) + longNumber;
-				uint32_t second = first + static_cast< uint32_t >( longitudeBands + 1.0f );
+				uint32_t first = ( latNumber * static_cast< uint32_t >( kLongitudeBands + 1.0f ) ) + longNumber;
+				uint32_t second = first + static_cast< uint32_t >( kLongitudeBands + 1.0f );
 
 				indices.push_back( { first, second, first + 1 } );
 				indices.push_back( { second, second + 1, first + 1 } );
@@ -142,43 +142,43 @@ namespace Saturn::Auxiliary {
 
 	Ref<StaticMesh> DefaultMeshes::CreateCapsule( float radius, float height )
 	{
-		constexpr size_t subdivisionHeight = 8;
-		constexpr size_t ringsBody = subdivisionHeight + 1;
-		constexpr size_t ringsTotal = subdivisionHeight + ringsBody;
-		constexpr size_t numSegments = 12;
-		constexpr float radiusMod = 0.021f;
+		constexpr size_t kSubdivisionHeight = 8;
+		constexpr size_t kRingsBody = kSubdivisionHeight + 1;
+		constexpr size_t kRingsTotal = kSubdivisionHeight + kRingsBody;
+		constexpr size_t kNumSegments = 12;
+		constexpr float kRadiusMod = 0.021f;
 
 		std::vector<StaticVertex> vertices;
 		std::vector<Index> indices;
 
-		vertices.reserve( numSegments * ringsTotal );
-		indices.reserve( ( numSegments - 1 ) * ( ringsTotal - 1 ) * 2 );
+		vertices.reserve( kNumSegments * kRingsTotal );
+		indices.reserve( ( kNumSegments - 1 ) * ( kRingsTotal - 1 ) * 2 );
 
-		constexpr float bodyIncr = 1.0f / ( float ) ( ringsBody - 1 );
-		constexpr float ringIncr = 1.0f / ( float ) ( subdivisionHeight - 1 );
+		constexpr float kBodyIncr = 1.0f / ( float ) ( kRingsBody - 1 );
+		constexpr float kRingIncr = 1.0f / ( float ) ( kSubdivisionHeight - 1 );
 
-		for( int r = 0; r < subdivisionHeight / 2; r++ )
-			CalcRing( numSegments, glm::sin( glm::pi<float>() * r * ringIncr ), glm::sin( glm::pi<float>() * ( r * ringIncr - 0.5f ) ), -0.5f, height, radius + radiusMod, vertices );
+		for( int r = 0; r < kSubdivisionHeight / 2; r++ )
+			CalcRing( kNumSegments, glm::sin( glm::pi<float>() * r * kRingIncr ), glm::sin( glm::pi<float>() * ( r * kRingIncr - 0.5f ) ), -0.5f, height, radius + kRadiusMod, vertices );
 
-		for( int r = 0; r < ringsBody; r++ )
-			CalcRing( numSegments, 1.0f, 0.0f, r * bodyIncr - 0.5f, height, radius + radiusMod, vertices );
+		for( int r = 0; r < kRingsBody; r++ )
+			CalcRing( kNumSegments, 1.0f, 0.0f, r * kBodyIncr - 0.5f, height, radius + kRadiusMod, vertices );
 
-		for( int r = subdivisionHeight / 2; r < subdivisionHeight; r++ )
-			CalcRing( numSegments, glm::sin( glm::pi<float>() * r * ringIncr ), glm::sin( glm::pi<float>() * ( r * ringIncr - 0.5f ) ), 0.5f, height, radius + radiusMod, vertices );
+		for( int r = kSubdivisionHeight / 2; r < kSubdivisionHeight; r++ )
+			CalcRing( kNumSegments, glm::sin( glm::pi<float>() * r * kRingIncr ), glm::sin( glm::pi<float>() * ( r * kRingIncr - 0.5f ) ), 0.5f, height, radius + kRadiusMod, vertices );
 
-		for( int r = 0; r < ringsTotal - 1; ++r )
+		for( int r = 0; r < kRingsTotal - 1; ++r )
 		{
-			for( int s = 0; s < numSegments - 1; ++s )
+			for( int s = 0; s < kNumSegments - 1; ++s )
 			{
 				Index& rIndex = indices.emplace_back();
-				rIndex.V1 = ( uint32_t ) r * numSegments + s + 1;
-				rIndex.V2 = ( uint32_t ) r * numSegments + s;
-				rIndex.V3 = ( uint32_t ) ( r + 1 ) * numSegments + s + 1;
+				rIndex.V1 = ( uint32_t ) r * kNumSegments + s + 1;
+				rIndex.V2 = ( uint32_t ) r * kNumSegments + s;
+				rIndex.V3 = ( uint32_t ) ( r + 1 ) * kNumSegments + s + 1;
 
 				Index& rIndex2 = indices.emplace_back();
-				rIndex2.V1 = ( uint32_t ) ( r + 1 ) * numSegments + s;
-				rIndex2.V2 = ( uint32_t ) ( r + 1 ) * numSegments + s + 1;
-				rIndex2.V3 = ( uint32_t ) ( r * numSegments + s );
+				rIndex2.V1 = ( uint32_t ) ( r + 1 ) * kNumSegments + s;
+				rIndex2.V2 = ( uint32_t ) ( r + 1 ) * kNumSegments + s + 1;
+				rIndex2.V3 = ( uint32_t ) ( r * kNumSegments + s );
 			}
 		}
 

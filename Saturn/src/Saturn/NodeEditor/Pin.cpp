@@ -103,8 +103,8 @@ namespace Saturn {
 
 	void Pin::DrawIcon( bool connected, int alpha ) const
 	{
-		constexpr float PIN_ICON_SIZE = 24.0f;
-		constexpr ImVec2 size = ImVec2( PIN_ICON_SIZE, PIN_ICON_SIZE );
+		constexpr float kPinIconSize = 24.0f;
+		constexpr ImVec2 size = ImVec2( kPinIconSize, kPinIconSize );
 
 		if( ImGui::IsRectVisible( size ) )
 		{

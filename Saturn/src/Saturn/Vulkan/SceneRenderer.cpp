@@ -65,7 +65,7 @@
 #include "Embedded/SMAA_SearchTex.embed"
 
 constexpr auto SAT_PI = 3.14159265358979323846;
-constexpr auto SHADOW_MAP_SIZE = 4096.0f;
+constexpr auto kShadowMapSize = 4096.0f;
 
 namespace Saturn {
 
@@ -171,13 +171,13 @@ namespace Saturn {
 
 		m_RendererData.BRDFLUT_Texture = BuiltinResourceManager::Get()->GetOrLoadResource<Texture2D>( PackagedResourceType::BRDFLutTexture );
 
-		constexpr size_t TransformCount = static_cast<size_t>( 1024 ) * 10;
+		constexpr size_t kSkTransformCount = static_cast<size_t>( 1024 ) * 10;
 		m_RendererData.SubmeshTransformData.resize( MAX_FRAMES_IN_FLIGHT );
 		
 		for( uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
-			m_RendererData.SubmeshTransformData[ i ].VertexBuffer = Ref<VertexBuffer>::Create( sizeof( TransformBufferData ) * TransformCount );
-			m_RendererData.SubmeshTransformData[ i ].pData = new TransformBufferData[ TransformCount ];
+			m_RendererData.SubmeshTransformData[ i ].VertexBuffer = Ref<VertexBuffer>::Create( sizeof( TransformBufferData ) * kSkTransformCount );
+			m_RendererData.SubmeshTransformData[ i ].pData = new TransformBufferData[ kSkTransformCount ];
 		}
 
 		//////////////////////////////////////////////////////////////////////////
@@ -373,12 +373,12 @@ namespace Saturn {
 		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
 
 		// Layered image
-		Ref<Image2D> shadowImage = Ref<Image2D>::Create( ImageFormat::DEPTH32F, ( uint32_t ) SHADOW_MAP_SIZE, ( uint32_t ) SHADOW_MAP_SIZE, 4, 1 );
+		Ref<Image2D> shadowImage = Ref<Image2D>::Create( ImageFormat::DEPTH32F, ( uint32_t ) kShadowMapSize, ( uint32_t ) kShadowMapSize, 4, 1 );
 		shadowImage->SetDebugName( "Layered shadow image" );
 
 		FramebufferSpecification FBSpec = {};
-		FBSpec.Width = ( uint32_t ) SHADOW_MAP_SIZE;
-		FBSpec.Height = ( uint32_t ) SHADOW_MAP_SIZE;
+		FBSpec.Width = ( uint32_t ) kShadowMapSize;
+		FBSpec.Height = ( uint32_t ) kShadowMapSize;
 		FBSpec.ArrayLevels = SHADOW_CASCADE_COUNT;
 		FBSpec.ExistingImages[ 0 ] = shadowImage;
 
@@ -1600,14 +1600,14 @@ namespace Saturn {
 		m_RendererData.CloudsNoiseBasicMaterial = Ref<Material>::Create( m_RendererData.CloudsNoiseBasicShader, "CloudsNoiseMat" );
 		m_RendererData.CloudsNoiseBasicMaterial->SetResource( "o_Output", m_RendererData.CloudsNoiseBasicOut );
 
-		constexpr size_t LOCAL_SIZE = 8llu;
+		constexpr size_t kLocalSize = 8llu;
 		const auto imgSize = m_RendererData.CloudsNoiseBasicOut->GetWidth();
 
 		// Execute to generate the noise.
 		m_RendererData.CloudsNoiseBasicPipeline->Bind();
 		m_RendererData.CloudsNoiseBasicPipeline->Execute( m_RendererData.CloudsNoiseBasicMaterial, 
-			glm::ceil( ( ( imgSize + LOCAL_SIZE ) - 1 ) / LOCAL_SIZE ),
-			glm::ceil( ( ( imgSize + LOCAL_SIZE ) - 1 ) / LOCAL_SIZE ),
+			glm::ceil( ( ( imgSize + kLocalSize ) - 1 ) / kLocalSize ),
+			glm::ceil( ( ( imgSize + kLocalSize ) - 1 ) / kLocalSize ),
 			m_RendererData.CloudsNoiseBasicOut->GetDepth() );
 
 		// TRANSITION: GENERAL TO SHADER READ ONLY
@@ -1636,14 +1636,14 @@ namespace Saturn {
 		m_RendererData.CloudsNoiseDetailedMaterial = Ref<Material>::Create( m_RendererData.CloudsNoiseDetailedShader, "CloudsNoiseMat" );
 		m_RendererData.CloudsNoiseDetailedMaterial->SetResource( "o_Output", m_RendererData.CloudsNoiseDetailedOut );
 
-		constexpr size_t LOCAL_SIZE = 8llu;
+		constexpr size_t kLocalSize = 8llu;
 		const auto imgSize = m_RendererData.CloudsNoiseDetailedOut->GetWidth();
 
 		// Execute to generate the noise.
 		m_RendererData.CloudsNoiseDetailedPipeline->Bind();
 		m_RendererData.CloudsNoiseDetailedPipeline->Execute( m_RendererData.CloudsNoiseDetailedMaterial,
-			glm::ceil( ( ( imgSize + LOCAL_SIZE ) - 1 ) / LOCAL_SIZE ),
-			glm::ceil( ( ( imgSize + LOCAL_SIZE ) - 1 ) / LOCAL_SIZE ),
+			glm::ceil( ( ( imgSize + kLocalSize ) - 1 ) / kLocalSize ),
+			glm::ceil( ( ( imgSize + kLocalSize ) - 1 ) / kLocalSize ),
 			m_RendererData.CloudsNoiseDetailedOut->GetDepth() );
 
 		// TRANSITION: GENERAL TO SHADER READ ONLY
@@ -1997,25 +1997,25 @@ namespace Saturn {
 
 		float cascadeSplits[ SHADOW_CASCADE_COUNT ];
 
-		constexpr float NEAR_CLIP = 0.1F;
-		constexpr float FAR_CLIP = 1000.0F;
-		constexpr float CLIP_RANGE = FAR_CLIP - NEAR_CLIP;
+		constexpr float kNearClip = 0.1F;
+		constexpr float kFarClip = 1000.0F;
+		constexpr float kClipRange = kFarClip - kNearClip;
 
-		constexpr float minZ = NEAR_CLIP;
-		constexpr float maxZ = NEAR_CLIP + CLIP_RANGE;
+		constexpr float kMinZ = kNearClip;
+		constexpr float kMaxZ = kNearClip + kClipRange;
 
-		constexpr float RANGE = maxZ - minZ;
-		constexpr float RATIO = maxZ / minZ;
+		constexpr float kRange = kMaxZ - kMinZ;
+		constexpr float kRatio = kMaxZ / kMinZ;
 
 		// Calculate split depths based on view camera frustum
 		// Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
 		for( uint32_t i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 		{
 			const float p = ( i + 1 ) / static_cast< float >( SHADOW_CASCADE_COUNT );
-			const float log = minZ * std::pow( RATIO, p );
-			const float uniform = minZ + RANGE * p;
+			const float log = kMinZ * std::pow( kRatio, p );
+			const float uniform = kMinZ + kRange * p;
 			const float d = m_RendererData.CascadeSplitLambda * ( log - uniform ) + uniform;
-			cascadeSplits[ i ] = ( d - NEAR_CLIP ) / CLIP_RANGE;
+			cascadeSplits[ i ] = ( d - kNearClip ) / kClipRange;
 		}
 
 		cascadeSplits[ 3 ] = 0.3f;
@@ -2079,7 +2079,7 @@ namespace Saturn {
 
 			// Offset to texel space to avoid shimmering (from https://stackoverflow.com/questions/33499053/cascaded-shadow-map-shimmering)
 			glm::mat4 shadowMatrix = lightOrthoMatrix * lightViewMatrix;
-			float ShadowMapResolution = SHADOW_MAP_SIZE;
+			float ShadowMapResolution = kShadowMapSize;
 			glm::vec4 shadowOrigin = ( shadowMatrix * glm::vec4( 0.0f, 0.0f, 0.0f, 1.0f ) ) * ShadowMapResolution * 0.5f;
 			glm::vec4 roundedOrigin = glm::round( shadowOrigin );
 			glm::vec4 roundOffset = roundedOrigin - shadowOrigin;
@@ -2090,7 +2090,7 @@ namespace Saturn {
 			lightOrthoMatrix[ 3 ] += roundOffset;
 
 			// Store split distance and matrix in cascade
-			m_RendererData.ShadowCascades[ i ].SplitDepth = ( NEAR_CLIP + splitDist * CLIP_RANGE ) * -1.0f;
+			m_RendererData.ShadowCascades[ i ].SplitDepth = ( kNearClip + splitDist * kClipRange ) * -1.0f;
 			m_RendererData.ShadowCascades[ i ].ViewProjection = lightOrthoMatrix * lightViewMatrix;
 
 			lastSplitDist = cascadeSplits[ i ];
@@ -2729,12 +2729,12 @@ namespace Saturn {
 
 		CreateBloomMaterials();
 
-		constexpr uint32_t TILE_SIZE = 16;
+		constexpr uint32_t kForwardPlusTileSize = 16;
 		glm::uvec2 Viewport = { m_RendererData.Width, m_RendererData.Height };
 		glm::uvec2 Size = Viewport;
-		Size += TILE_SIZE - Viewport % TILE_SIZE;
+		Size += kForwardPlusTileSize - Viewport % kForwardPlusTileSize;
 
-		m_RendererData.LightCullingWorkGroups = { Size / TILE_SIZE, 1 };
+		m_RendererData.LightCullingWorkGroups = { Size / kForwardPlusTileSize, 1 };
 		const float size = m_RendererData.LightCullingWorkGroups.x * m_RendererData.LightCullingWorkGroups.y * 4.0f * 1024.0f;
 		m_RendererData.StorageBufferSet->Resize( 0, 14, ( size_t ) size );
 
@@ -2941,7 +2941,7 @@ namespace Saturn {
 			return;
 
 		const auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
-		const VkExtent2D Extent = { ( uint32_t ) SHADOW_MAP_SIZE, ( uint32_t ) SHADOW_MAP_SIZE };
+		const VkExtent2D Extent = { ( uint32_t ) kShadowMapSize, ( uint32_t ) kShadowMapSize };
 		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
@@ -2956,8 +2956,8 @@ namespace Saturn {
 		VkViewport Viewport = {};
 		Viewport.x = 0;
 		Viewport.y = 0;
-		Viewport.width = SHADOW_MAP_SIZE;
-		Viewport.height = SHADOW_MAP_SIZE;
+		Viewport.width = kShadowMapSize;
+		Viewport.height = kShadowMapSize;
 		Viewport.minDepth = 0.0f;
 		Viewport.maxDepth = 1.0f;
 
@@ -3472,12 +3472,12 @@ namespace Saturn {
 
 		if( m_RendererData.LightCullingWorkGroups.x == 0 ) 
 		{
-			constexpr uint32_t TILE_SIZE = 16;
+			constexpr uint32_t kTileSize = 16;
 			glm::uvec2 Viewport = { m_RendererData.Width, m_RendererData.Height };
 			glm::uvec2 Size = Viewport;
-			Size += TILE_SIZE - Viewport % TILE_SIZE;
+			Size += kTileSize - Viewport % kTileSize;
 
-			m_RendererData.LightCullingWorkGroups = { Size / TILE_SIZE, 1 };
+			m_RendererData.LightCullingWorkGroups = { Size / kTileSize, 1 };
 
 			const float size = m_RendererData.LightCullingWorkGroups.x * m_RendererData.LightCullingWorkGroups.y * 4.0f * 1024.0f;
 			m_RendererData.StorageBufferSet->Resize( 0, 14, ( size_t ) size );
@@ -4839,10 +4839,10 @@ namespace Saturn {
 
 	Ref<TextureCube> SceneRenderer::CreateDymanicSky()
 	{
-		constexpr uint32_t cubemapSize = 512;
-		constexpr uint32_t irradianceMap = 32;
+		constexpr uint32_t kCubemapSize = 512;
+		constexpr uint32_t kIrradianceMap = 32;
 
-		Ref<TextureCube> Environment = Ref<TextureCube>::Create( ImageFormat::RGBA32F, cubemapSize, cubemapSize );
+		Ref<TextureCube> Environment = Ref<TextureCube>::Create( ImageFormat::RGBA32F, kCubemapSize, kCubemapSize );
 
 		Ref<Shader> skyShader = ShaderLibrary::Get().Find( "Skybox-Compute" );
 		Ref<ComputePipeline> pipeline = Ref<ComputePipeline>::Create( skyShader );
@@ -4853,7 +4853,7 @@ namespace Saturn {
 		m_RendererData.PreethamMaterial->SetPC( "pc_Params.Params", params );
 
 		pipeline->Bind();
-		pipeline->Execute( m_RendererData.PreethamMaterial, cubemapSize / irradianceMap, cubemapSize / irradianceMap, 6 );
+		pipeline->Execute( m_RendererData.PreethamMaterial, kCubemapSize / kIrradianceMap, kCubemapSize / kIrradianceMap, 6 );
 		pipeline->Unbind();
 
 		Environment->CreateMips();

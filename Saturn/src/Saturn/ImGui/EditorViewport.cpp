@@ -439,9 +439,9 @@ namespace Saturn {
 		// Viewport Gizmo toolbar
 		ImGui::PushID( ( int ) m_ViewportID );
 
-		constexpr float windowHeight = 32.0f;
-		constexpr float icons = 3.0f;
-		constexpr float neededSpace = 48.0f * icons - 10.0f;
+		constexpr float kWindowHeight = 32.0f;
+		constexpr float kIcons = 3.0f;
+		constexpr float kNeededSpace = 48.0f * kIcons - 10.0f;
 
 		// For 4 icons
 		//const float windowWidth = 166.0f;
@@ -449,15 +449,15 @@ namespace Saturn {
 		// For 3 icons
 		// Formula is 24 * n - 10.0f (for item spacing)
 		// Where n is number of icons
-		constexpr float windowWidth = neededSpace - 10.0f;
+		constexpr float kWindowWidth = kNeededSpace - 10.0f;
 
 		ImGui::SetNextWindowPos( ImVec2( minBound.x + 5.0f, minBound.y + 5.0f ) );
-		ImGui::SetNextWindowSize( ImVec2( windowWidth, windowHeight ) );
+		ImGui::SetNextWindowSize( ImVec2( kWindowWidth, kWindowHeight ) );
 
 		ImGui::Begin( "ViewportGizmoCrtl", 0, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings );
 
-		ImGui::BeginVertical( "##v_gizmoV", { windowWidth, ImGui::GetContentRegionAvail().y } );
-		ImGui::BeginHorizontal( "##v_gizmoH", { windowWidth, ImGui::GetContentRegionAvail().y } );
+		ImGui::BeginVertical( "##v_gizmoV", { kWindowWidth, ImGui::GetContentRegionAvail().y } );
+		ImGui::BeginHorizontal( "##v_gizmoH", { kWindowWidth, ImGui::GetContentRegionAvail().y } );
 
 		ImGui::PushStyleColor( ImGuiCol_Button, { 0.0f, 0.0f, 0.0f, 0.0f } );
 		ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 5.0f * 2.0f, 0 ) );
@@ -501,7 +501,7 @@ namespace Saturn {
 		const ImVec2 minBound = ImGui::GetWindowPos();
 		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
-		constexpr float windowHeight = 32.0f;
+		constexpr float kWindowHeight = 32.0f;
 		const float icons = *m_pRequestRuntime ? 3.0f : 1.0f; // 3 icons if runtime is running else, one icon (play button)
 		const float neededSpace = 48.0f * icons - 10.0f;
 		const float windowWidth = neededSpace - 10.0f;
@@ -510,7 +510,7 @@ namespace Saturn {
 
 		// Runtime Controls
 		ImGui::SetNextWindowPos( ImVec2( runtimeCenterX, minBound.y + 5.0f ) );
-		ImGui::SetNextWindowSize( ImVec2( windowWidth, windowHeight ) );
+		ImGui::SetNextWindowSize( ImVec2( windowWidth, kWindowHeight ) );
 
 		ImGui::Begin( "ViewportCenterRt##viewport_center_rt", 0, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings );
 

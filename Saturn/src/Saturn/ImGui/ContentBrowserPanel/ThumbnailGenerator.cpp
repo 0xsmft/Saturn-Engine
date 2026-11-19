@@ -48,7 +48,7 @@
 
 namespace Saturn {
 
-	constexpr auto THUMBNAIL_SIZE = 512.0F;
+	constexpr auto kThumbnailSize = 512.0F;
 
 	//////////////////////////////////////////////////////////////////////////
 	// ContentBrowserThumbnailGenerator
@@ -97,7 +97,7 @@ namespace Saturn {
 			mipWidth = glm::max( 1u, textureWidth >> i );
 			mipHeight = glm::max( 1u, textureHeight >> i );
 
-			if( mipWidth <= THUMBNAIL_SIZE && mipHeight <= THUMBNAIL_SIZE )
+			if( mipWidth <= kThumbnailSize && mipHeight <= kThumbnailSize )
 			{
 				// Found a mip that is the correct size for our thumbnail.
 				mip = i;
@@ -130,7 +130,7 @@ namespace Saturn {
 		SAT_DISABLE_COPY( RendererThumbnailCacheData );
 
 		RendererThumbnailCacheData() 
-			: Camera( 45.0f, THUMBNAIL_SIZE, THUMBNAIL_SIZE, 0.1f, 1000.0f ) 
+			: Camera( 45.0f, kThumbnailSize, kThumbnailSize, 0.1f, 1000.0f ) 
 		{
 		}
 
@@ -163,7 +163,7 @@ namespace Saturn {
 		renderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
 		renderer->DisableOrEnableBloom();
 
-		renderer->SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
+		renderer->SetViewportSize( ( uint32_t ) kThumbnailSize, ( uint32_t ) kThumbnailSize );
 
 		return renderer;
 	}
@@ -197,7 +197,7 @@ namespace Saturn {
 			mc.Mesh->GetMaterialRegistry()->AddAsset( materialAsset );
 
 			// INIT (PreRender)
-			rCacheData.Camera.SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
+			rCacheData.Camera.SetViewportSize( ( uint32_t ) kThumbnailSize, ( uint32_t ) kThumbnailSize );
 			rCacheData.Camera.SetDistance( 4.0f );
 
 			// Update to change the distance
@@ -396,7 +396,7 @@ namespace Saturn {
 				mc.Mesh = mesh;
 			}
 
-			cacheData.Camera.SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
+			cacheData.Camera.SetViewportSize( ( uint32_t ) kThumbnailSize, ( uint32_t ) kThumbnailSize );
 
 			// Move the camera back to contain the whole mesh.
 			auto& rBoundingBox = mesh->GetBoundingBox();
@@ -413,7 +413,7 @@ namespace Saturn {
 			// Greater than the far clip
 			if( distance > 1000.0f )
 			{
-				cacheData.Camera.SetProjectionMatrix( 45.0f, THUMBNAIL_SIZE, THUMBNAIL_SIZE, 0.1f, distance * 10.0f );
+				cacheData.Camera.SetProjectionMatrix( 45.0f, kThumbnailSize, kThumbnailSize, 0.1f, distance * 10.0f );
 			}
 
 			// Update to change the distance
@@ -571,7 +571,7 @@ namespace Saturn {
 				cacheData.Scene = prefab->GetScene();
 
 				cacheData.SceneRenderer->SetCurrentScene( prefab->GetScene().Get() );
-				cacheData.Camera.SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
+				cacheData.Camera.SetViewportSize( ( uint32_t ) kThumbnailSize, ( uint32_t ) kThumbnailSize );
 
 				float distance = 4.0f;
 
@@ -602,7 +602,7 @@ namespace Saturn {
 				// Greater than the far clip
 				if( distance > 1000.0f )
 				{
-					cacheData.Camera.SetProjectionMatrix( 45.0f, THUMBNAIL_SIZE, THUMBNAIL_SIZE, 0.1f, distance * 10.0f );
+					cacheData.Camera.SetProjectionMatrix( 45.0f, kThumbnailSize, kThumbnailSize, 0.1f, distance * 10.0f );
 				}
 
 				cacheData.AwaitingRender.store( true );
@@ -729,7 +729,7 @@ namespace Saturn {
 				mc.LocalAnimator->StepTo( std::min( skAnim->GetDuration() * 0.5f, skAnim->GetDuration() ) );
 				mc.LocalAnimator->Begin();
 
-				cacheData.Camera.SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
+				cacheData.Camera.SetViewportSize( ( uint32_t ) kThumbnailSize, ( uint32_t ) kThumbnailSize );
 
 				float distance = 4.0f;
 
@@ -747,7 +747,7 @@ namespace Saturn {
 				// Greater than the far clip
 				if( distance > 1000.0f )
 				{
-					cacheData.Camera.SetProjectionMatrix( 45.0f, THUMBNAIL_SIZE, THUMBNAIL_SIZE, 0.1f, distance * 10.0f );
+					cacheData.Camera.SetProjectionMatrix( 45.0f, kThumbnailSize, kThumbnailSize, 0.1f, distance * 10.0f );
 				}
 
 				cacheData.AwaitingRender.store( true );

@@ -761,13 +761,13 @@ namespace Saturn {
 
 	void AluraRenderer::SubmitCircle( const glm::vec2& rCentre, float radius, float thickness, const glm::vec4& rColor )
 	{
-		constexpr int segments = 64;
-		constexpr float step = 2.0f * glm::pi<float>() / segments;
+		constexpr int kSegments = 64;
+		constexpr float kStep = 2.0f * glm::pi<float>() / kSegments;
 
-		for( int i = 0; i < segments; ++i )
+		for( int i = 0; i < kSegments; ++i )
 		{
-			const float a0 = i * step;
-			const float a1 = ( i + 1 ) * step;
+			const float a0 = i * kStep;
+			const float a1 = ( i + 1 ) * kStep;
 
 			const glm::vec2 p0 = rCentre + glm::vec2( glm::cos( a0 ), glm::sin( a0 ) ) * radius;
 			const glm::vec2 p1 = rCentre + glm::vec2( glm::cos( a1 ), glm::sin( a1 ) ) * radius;

@@ -139,8 +139,8 @@ namespace Saturn {
 		
 			const auto color = ed::GetStyle().Colors[ ed::StyleColor_HovLinkBorder ];
 
-			constexpr float sizeOffset = 1.5f;
-			Auxiliary::DrawArrowOffset( startPoint, endPoint, ImColor( color ), 2.0F + sizeOffset, 6.0F, 5.0F );
+			constexpr float kSizeOffset = 1.5f;
+			Auxiliary::DrawArrowOffset( startPoint, endPoint, ImColor( color ), 2.0F + kSizeOffset, 6.0F, 5.0F );
 		}
 
 		Auxiliary::DrawArrowOffset( startPoint, endPoint, IM_COL32( 255, 255, 255, 255 ), 2.0F, 6.0F, 5.0F );

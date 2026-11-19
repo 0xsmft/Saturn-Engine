@@ -892,12 +892,12 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 #if !defined(SAT_DIST)
 		AssimpLog::Initialize();
 
-		constexpr auto IMPORT_FLAGS = s_MeshImportFlags;
+		constexpr auto kImportFlags = s_MeshImportFlags;
 
 		auto importer = std::make_unique<Assimp::Importer>();
 		importer->SetPropertyBool( AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false );
 
-		const aiScene* scene = importer->ReadFile( rPath.string(), IMPORT_FLAGS );
+		const aiScene* scene = importer->ReadFile( rPath.string(), kImportFlags );
 
 		if( scene == nullptr )
 		{

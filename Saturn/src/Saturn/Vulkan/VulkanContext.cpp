@@ -518,7 +518,7 @@ namespace Saturn {
 
 	void VulkanContext::EndSingleTimeCommands( VkCommandBuffer CommandBuffer )
 	{
-		constexpr uint64_t FENCE_TIMEOUT = 100000000000;
+		constexpr uint64_t kFenceTimeout = 100000000000;
 
 		VK_CHECK( vkEndCommandBuffer( CommandBuffer ) );
 
@@ -539,7 +539,7 @@ namespace Saturn {
 			UnlockQueue();
 		}
 
-		VK_CHECK( vkWaitForFences( m_LogicalDevice, 1, &Fence, VK_TRUE, FENCE_TIMEOUT ) );
+		VK_CHECK( vkWaitForFences( m_LogicalDevice, 1, &Fence, VK_TRUE, kFenceTimeout ) );
 
 		// Free the command buffer.
 		vkDestroyFence( m_LogicalDevice, Fence, nullptr );

@@ -69,19 +69,19 @@ namespace Saturn {
 	static void ProcessPragmaOnce( std::string& rContent ) 
 	{
 		// Not all headers may have an include guard so let's check for one first.
-		constexpr std::string_view pragmaToken = "#pragma once";
-		constexpr size_t pragmaTokenLength = pragmaToken.size();
+		constexpr std::string_view kPragmaToken = "#pragma once";
+		constexpr size_t kPragmaTokenLength = kPragmaToken.size();
 	
-		const size_t pragmaTokenPosition = rContent.find( pragmaToken, 0 );
+		const size_t pragmaTokenPosition = rContent.find( kPragmaToken, 0 );
 		if( pragmaTokenPosition != std::string::npos )
 		{
 			const std::string fileNameAsMacro = std::to_string( FNV1A32( rContent.c_str() ) );
 			const std::string headerGuardBegin = std::format( "#ifndef _{0}_H", fileNameAsMacro );
 			const std::string headerGuardDefine = std::format( "#define _{0}_H", fileNameAsMacro );
-			constexpr std::string_view headerGuardEnd = "#endif";
+			constexpr std::string_view kHeaderGuardEnd = "#endif";
 
 			// Remove "#pragma once"...
-			const size_t begin = pragmaTokenPosition + pragmaTokenLength + Auxiliary::s_ShaderLineEndingTokenSize;
+			const size_t begin = pragmaTokenPosition + kPragmaTokenLength + Auxiliary::s_ShaderLineEndingTokenSize;
 			rContent.erase( 0llu, begin );
 
 			const auto sizeBeforeModification = rContent.size();
@@ -102,10 +102,10 @@ namespace Saturn {
 
 			// #endif
 			insertionPos += Auxiliary::s_ShaderLineEndingTokenSize;
-			rContent.insert( insertionPos, headerGuardEnd );
+			rContent.insert( insertionPos, kHeaderGuardEnd );
 
 			// Ending new line
-			insertionPos += headerGuardEnd.size();
+			insertionPos += kHeaderGuardEnd.size();
 			rContent.insert( insertionPos, Auxiliary::s_ShaderLineEndingToken );
 		}
 		else

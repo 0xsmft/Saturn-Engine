@@ -55,10 +55,10 @@ namespace Saturn {
 
 	std::string ShaderReader::RemoveTypeToken( const std::string& rContent )
 	{
-		constexpr std::string_view typeToken = "#type";
-		constexpr size_t typeTokenLength = typeToken.size();
+		constexpr std::string_view kTypeToken = "#type";
+		constexpr size_t kTypeTokenLength = kTypeToken.size();
 
-		size_t typeTokenPosition = rContent.find( typeToken, 0 );
+		size_t typeTokenPosition = rContent.find( kTypeToken, 0 );
 		SAT_CORE_ASSERT( typeTokenPosition != std::string::npos, "Missing type token in shader! All shaders must have a \"#type <shader_type>\" token in the shader!" );
 
 		while( typeTokenPosition != std::string::npos )
@@ -80,11 +80,11 @@ namespace Saturn {
 			SAT_CORE_ASSERT( typeTokenEnd != std::string::npos, "Shader must be LF!" );
 #endif
 
-			const size_t begin = typeTokenPosition + typeTokenLength + 1;
+			const size_t begin = typeTokenPosition + kTypeTokenLength + 1;
 			const std::string type = temporaryFileCopy.substr( begin, typeTokenEnd - begin );
 
 			const size_t nextLinePos = temporaryFileCopy.find_first_not_of( "\r\n", typeTokenEnd );
-			typeTokenPosition = temporaryFileCopy.find( typeToken, nextLinePos );
+			typeTokenPosition = temporaryFileCopy.find( kTypeToken, nextLinePos );
 
 			const auto rawShaderCode = temporaryFileCopy.substr( nextLinePos, typeTokenPosition - ( nextLinePos == std::string::npos ? temporaryFileCopy.size() - 1 : nextLinePos ) );
 

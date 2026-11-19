@@ -35,14 +35,14 @@ namespace Saturn {
 	//
 	static constexpr uint64_t FNV1A64( const char* pStr )
 	{
-		constexpr uint64_t offset = 14695981039346656037ull;
-		constexpr uint64_t prime = 1099511628211ull;
+		constexpr uint64_t kOffset = 14695981039346656037ull;
+		constexpr uint64_t kPrime = 1099511628211ull;
 
-		uint64_t hash = offset;
+		uint64_t hash = kOffset;
 		while( *pStr )
 		{
 			hash ^= static_cast< uint64_t >( *pStr++ );
-			hash *= prime;
+			hash *= kPrime;
 		}
 
 		return hash;
@@ -53,14 +53,14 @@ namespace Saturn {
 	//
 	static constexpr uint32_t FNV1A32( const char* pStr ) 
 	{
-		constexpr uint32_t offset = 2166136261;
-		constexpr uint32_t prime = 16777619;
+		constexpr uint32_t kOffset = 2166136261;
+		constexpr uint32_t kPrime = 16777619;
 
-		uint32_t hash = offset;
+		uint32_t hash = kOffset;
 		while( *pStr )
 		{
 			hash ^= static_cast< uint32_t >( *pStr++ );
-			hash *= prime;
+			hash *= kPrime;
 		}
 
 		return hash;

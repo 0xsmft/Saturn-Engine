@@ -45,7 +45,7 @@ namespace Saturn {
 	SceneFlyCamera::SceneFlyCamera( const float Fov, const float Width, const float Height, const float NearPlane, const float FarPlane )
 		: Camera( Fov, Width, Height, NearPlane, FarPlane ), m_FocalPoint( 0.0f )
 	{
-		constexpr glm::vec3 position{ -5.0f, 5.0f, 5.0f };
+		constexpr glm::vec3 kInitialPosition{ -5.0f, 5.0f, 5.0f };
 		m_Distance = glm::distance( m_Position, m_FocalPoint );
 
 		m_Yaw = 3.0f * ( float ) SAT_PI / 4.0f;
@@ -94,9 +94,9 @@ namespace Saturn {
 			if( Input::Get().KeyPressed( RubyKey_D ) )
 				m_PositionDelta += ts.Milliseconds() * speed * m_RightDirection;
 
-			constexpr float maxRate{ 0.12f };
-			m_YawDelta += glm::clamp( yawSign * delta.x, -maxRate, maxRate );
-			m_PitchDelta += glm::clamp( delta.y, -maxRate, maxRate );
+			constexpr float kMaxRate{ 0.12f };
+			m_YawDelta += glm::clamp( yawSign * delta.x, -kMaxRate, kMaxRate );
+			m_PitchDelta += glm::clamp( delta.y, -kMaxRate, kMaxRate );
 
 			m_RightDirection = glm::cross( m_Rotation, glm::vec3{ 0.f, yawSign, 0.f } );
 

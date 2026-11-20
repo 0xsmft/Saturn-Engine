@@ -31,10 +31,13 @@
 
 namespace Saturn {
 		
+	using UnderlyingType = std::underlying_type_t< LocalisationTableEntryType >;
+
 	UndoRedoLocalisationTableChangeEntryType::UndoRedoLocalisationTableChangeEntryType( Ref<LocalisationTableAsset> lt, LocalisationTableEntry& rEntry )
 		: UndoRedoActionBase( "Modify Localisation Table Entry Change" ), m_LocalisationTableAsset( lt ), m_rEntry( rEntry )
 	{
 		m_OldType = m_rEntry.Type;
+		m_CopyOfDataTablePerType[ ( UnderlyingType )m_OldType ] = m_rEntry.DataPerLanguage;
 	}
 
 	UndoRedoLocalisationTableChangeEntryType::~UndoRedoLocalisationTableChangeEntryType()
@@ -43,16 +46,21 @@ namespace Saturn {
 
 	void UndoRedoLocalisationTableChangeEntryType::Undo()
 	{
+		// Before we undo, we need to save the current data.
+		m_CopyOfDataTablePerType[ ( UnderlyingType ) m_rEntry.Type ] = m_rEntry.DataPerLanguage;
+
 		const auto oldType = m_rEntry.Type;
-		m_LocalisationTableAsset->ChangeTypeForEntry( m_rEntry, m_OldType );
+		m_LocalisationTableAsset->ChangeTypeForEntry_UndoRedo( m_rEntry, m_OldType, m_CopyOfDataTablePerType[ ( UnderlyingType ) m_OldType ] );
 		m_OldType = oldType;
 	}
 
 	void UndoRedoLocalisationTableChangeEntryType::Redo()
 	{
-		const auto oldType = m_rEntry.Type;
+		// Before we undo, we need to save the current data.
+		m_CopyOfDataTablePerType[ ( UnderlyingType ) m_rEntry.Type ] = m_rEntry.DataPerLanguage;
 
-		m_LocalisationTableAsset->ChangeTypeForEntry( m_rEntry, m_OldType );
+		const auto oldType = m_rEntry.Type;
+		m_LocalisationTableAsset->ChangeTypeForEntry_UndoRedo( m_rEntry, m_OldType, m_CopyOfDataTablePerType[ ( UnderlyingType ) m_OldType ] );
 		m_OldType = oldType;
 	}
 

@@ -127,6 +127,10 @@ namespace Saturn {
 	//
 	struct LocalisationTableEntry
 	{
+	public:
+		using DataPerLanguageTable = std::unordered_map<LocTextLanguage, LocalisationTableEntryData>;
+
+	public:
 		LocalisationTableEntry() = default;
 
 		LocalisationTableEntry( const std::string& rEntryName, LocalisationTableEntryType type = LocalisationTableEntryType::Text )
@@ -137,7 +141,7 @@ namespace Saturn {
 		std::string EntryName;
 
 		//					LANGUAGE      ->			ENTRIES
-		std::unordered_map<LocTextLanguage, LocalisationTableEntryData>	DataPerLanguage;
+		DataPerLanguageTable DataPerLanguage;
 	
 		// What type of entry is this? By default it's a text entry.
 		LocalisationTableEntryType Type = LocalisationTableEntryType::Text;
@@ -216,6 +220,15 @@ namespace Saturn {
 		// NB: All data will be ERASED.
 		//
 		void ChangeTypeForEntry( LocalisationTableEntry& rEntry, LocalisationTableEntryType newType );
+
+		//
+		// Internal version
+		// for ChangeTypeForEntry
+		// 
+		// For use by corresponding
+		// undo/redo
+		//
+		void ChangeTypeForEntry_UndoRedo( LocalisationTableEntry& rEntry, LocalisationTableEntryType newType, const LocalisationTableEntry::DataPerLanguageTable& tbl );
 
 	private:
 		LocTableEntryMap m_Entries;

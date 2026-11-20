@@ -54,6 +54,8 @@ namespace Saturn {
 	private:
 		Ref<LocalisationTableAsset> m_LocalisationTableAsset = nullptr;
 
+		std::array<LocalisationTableEntry::DataPerLanguageTable, 2u> m_CopyOfDataTablePerType{};
+
 		LocalisationTableEntry& m_rEntry;
 		LocalisationTableEntryType m_OldType = LocalisationTableEntryType::MaxValue;
 	};

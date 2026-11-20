@@ -176,4 +176,13 @@ namespace Saturn {
 		}
 	}
 
+	void LocalisationTableAsset::ChangeTypeForEntry_UndoRedo( 
+		LocalisationTableEntry& rEntry, 
+		LocalisationTableEntryType newType, 
+		const LocalisationTableEntry::DataPerLanguageTable& tbl )
+	{
+		rEntry.Type = newType;
+		rEntry.DataPerLanguage = tbl;
+	}
+
 }

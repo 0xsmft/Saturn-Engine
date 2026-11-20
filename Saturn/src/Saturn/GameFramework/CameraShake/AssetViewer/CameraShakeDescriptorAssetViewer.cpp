@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "CameraShakeDescriptorAssetViewer.h"
 
-#include "Saturn/CameraShake/CameraShakeDescriptorAsset.h"
+#include "Saturn/GameFramework/CameraShake/CameraShakeDescriptorAsset.h"
 #include "Saturn/Asset/AssetManager.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"

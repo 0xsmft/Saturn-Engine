@@ -227,6 +227,7 @@ namespace Saturn {
 		friend class LocalisationTableAssetViewer;
 		friend class LocalisationTableAssetSerialiser;
 		friend class RawLocalisationTableAssetSerialiser;
+		friend class UndoRedoLocalisationTableChangeEntryType;
 	};
 
 }

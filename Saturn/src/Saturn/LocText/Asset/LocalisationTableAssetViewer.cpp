@@ -37,6 +37,9 @@
 #include "Saturn/ImGui/EditorIcons.h"
 #include "Saturn/ImGui/EditorEvents.h"
 
+#include "UndoRedo/LocalisationTableUndoRedoActions.h"
+#include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
+
 #include <regex>
 
 namespace Saturn {
@@ -62,6 +65,7 @@ namespace Saturn {
 
 	LocalisationTableAssetViewer::~LocalisationTableAssetViewer()
 	{
+		GlobalUndoRedoGroup::Get()->RemoveIfActionHasIdentifier( m_AssetID );
 	}
 
 	void LocalisationTableAssetViewer::OnImGuiRender()
@@ -196,6 +200,10 @@ namespace Saturn {
 						{
 							if( !selected ) 
 							{
+								Ref<UndoRedoLocalisationTableChangeEntryType> action = Ref<UndoRedoLocalisationTableChangeEntryType>::Create( m_LocalisationTable, entry );
+								GlobalUndoRedoGroup::Get()->AddAction( action,
+									Auxiliary::BuildUndoRedoIDFormatted( "{}-{}", m_AssetID, id ) );
+
 								m_LocalisationTable->ChangeTypeForEntry( entry, LocalisationTableEntryType::Text );
 								m_Dirty = true;
 							}
@@ -206,6 +214,10 @@ namespace Saturn {
 						{
 							if( !selected )
 							{
+								Ref<UndoRedoLocalisationTableChangeEntryType> action = Ref<UndoRedoLocalisationTableChangeEntryType>::Create( m_LocalisationTable, entry );
+								GlobalUndoRedoGroup::Get()->AddAction( action, 
+									Auxiliary::BuildUndoRedoIDFormatted( "{}-{}", m_AssetID, id ) );
+
 								m_LocalisationTable->ChangeTypeForEntry( entry, LocalisationTableEntryType::Asset );
 								m_Dirty = true;
 							}
@@ -222,6 +234,8 @@ namespace Saturn {
 						m_LocalisationTable->RemoveEntry( id );
 						m_EntryNameErrorMap.erase( id );
 						m_Dirty = true;
+
+						GlobalUndoRedoGroup::Get()->RemoveIfActionHasIdentifier( Auxiliary::BuildUndoRedoIDFormatted( "{}-{}", m_AssetID, id ) );
 
 						// PopID now so we can safely break out of the for loop.
 						ImGui::PopID(); // rm
@@ -486,9 +500,10 @@ namespace Saturn {
 		ImGui::OpenPopup( "Remove language##sltlang" );
 		if( ImGui::BeginPopupModal( "Remove language##sltlang", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize ) )
 		{
+			ImGui::Text( "This action cannot be undone and is irreversible!" );
+			
 			ImGui::BeginHorizontal( "##langpickerHz" );
-
-			ImGui::Text( "Language:" );
+			ImGui::Text( "Pick Language to remove:" );
 			ImGui::Spring();
 
 			const std::string langName = Auxiliary::LocTextLanguageToString( m_ChosenLanguage );
@@ -523,7 +538,7 @@ namespace Saturn {
 			ImGui::BeginHorizontal( "optionsHz" );
 
 			Auxiliary::DisabledFlag disabledIf( m_ChosenLanguage == LocTextLanguage::Unknown );
-			if( ImGui::Button( "Remove" ) )
+			if( ImGui::Button( "I understand that removing a language is irreversible" ) )
 			{
 				m_LocalisationTable->RemoveLanguage( m_ChosenLanguage );
 

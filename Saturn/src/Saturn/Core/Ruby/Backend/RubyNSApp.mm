@@ -70,6 +70,9 @@ namespace Saturn {
 	struct RubyNSApplicationDataImpl
 	{
 		RubyNSApplicationDelegate* pAppDelegateMgr = nil;
+
+		// Event tracker for Cmd shortcuts.
+		id pKeyUpMonitor = nil;
 	};
 
 }
@@ -90,6 +93,12 @@ namespace Saturn {
 {
 	Saturn::Application::Get()->Close();
 	return NSTerminateCancel;
+}
+
+- ( void ) applicationDidResignActive:( NSNotification* ) pNotification
+{
+	// Drop whatever we think is held.
+	Saturn::RubyLibrary::Get().IntrnlClearKeysAndMouse();
 }
 
 @end
@@ -114,6 +123,18 @@ namespace Saturn {
 			[ NSApp setActivationPolicy:NSApplicationActivationPolicyRegular ];
 			[ NSApp finishLaunching ];
 			[ NSApp activateIgnoringOtherApps:YES ];
+
+			// Apple does not send keyUp: for keys released while Command is held,
+            // which leaves keys stuck down
+			// So GLFW does a workaround... and we'll do the same.
+			pImpl->pKeyUpMonitor = [ NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyUp
+				handler:^ NSEvent* ( NSEvent* pEvent )
+				{
+					if( [ pEvent modifierFlags ] & NSEventModifierFlagCommand )
+						[ [ NSApp keyWindow ] sendEvent:pEvent ];
+
+					return pEvent;
+				} ];
 		}
 	}
 
@@ -141,8 +162,14 @@ namespace Saturn {
 	{
 		@autoreleasepool
 		{
-			if( pImpl ) 
+			if( pImpl )
 			{
+				if( pImpl->pKeyUpMonitor != nil )
+				{
+					[ NSEvent removeMonitor:pImpl->pKeyUpMonitor ];
+					pImpl->pKeyUpMonitor = nil;
+				}
+
 				[ NSApp setDelegate:nil ];
 				[ pImpl->pAppDelegateMgr release ];
 				pImpl->pAppDelegateMgr = nil;

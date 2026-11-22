@@ -77,7 +77,10 @@ namespace Saturn {
 #endif
 
 		InitWindow();
+        
+#if !defined(SAT_DIST)
 		FigureOutWorkingDir();
+#endif
 
 		InitGraphics();
 

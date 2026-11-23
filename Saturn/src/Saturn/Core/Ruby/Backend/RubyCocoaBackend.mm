@@ -1355,9 +1355,8 @@ namespace Saturn {
 		{
 			NSArray< NSScreen* >* pScreens = [ NSScreen screens ];
 
-			// This is not good, but I am unsure of a better way so this will work for now.
-			// See more: https://developer.apple.com/documentation/appkit/nsscreen/main?language=objc#Discussion
-			NSScreen* pMainScreen = [ NSScreen mainScreen ];
+			// The screen with the menu bar is always the the primary display.
+			NSScreen* pPrimaryScreen = [ pScreens firstObject ];
 
 			for( NSScreen* pScreen in pScreens )
 			{
@@ -1366,10 +1365,23 @@ namespace Saturn {
 				NSString* pName = [ pScreen localizedName ];
 
 				auto& rMonitor = monitors.emplace_back();
-				rMonitor.WorkSize = { static_cast< int >( workArea.size.width ), static_cast< int >( workArea.size.height ) };
-				rMonitor.MonitorSize = { static_cast< int >( frame.size.width ), static_cast< int >( frame.size.height ) };
-				rMonitor.MonitorPosition = { static_cast< int >( frame.origin.x ), static_cast< int >( frame.origin.y ) };
-				rMonitor.Primary = ( pMainScreen == pScreen );
+				rMonitor.WorkSize = {
+                    static_cast< int >( workArea.size.width ),
+                    static_cast< int >( workArea.size.height ) };
+                
+				rMonitor.WorkPosition = {
+                    static_cast< int >( workArea.origin.x ),
+                    static_cast< int >( RubyTransformYCocoa( workArea.origin.y + workArea.size.height - 1 ) ) };
+                
+				rMonitor.MonitorSize = {
+                    static_cast< int >( frame.size.width ),
+                    static_cast< int >( frame.size.height ) };
+                
+				rMonitor.MonitorPosition = {
+                    static_cast< int >( frame.origin.x ),
+                    static_cast< int >( RubyTransformYCocoa( frame.origin.y + frame.size.height - 1 ) ) };
+                
+				rMonitor.Primary = ( pPrimaryScreen == pScreen );
 				
 				NSData* data = [ pName dataUsingEncoding:NSUTF32LittleEndianStringEncoding ];
 				if( data != nil )

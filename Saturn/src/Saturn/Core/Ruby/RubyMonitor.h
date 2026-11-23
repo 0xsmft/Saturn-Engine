@@ -39,7 +39,11 @@ namespace Saturn {
 		bool Primary = false;
 		std::wstring Name;
 
+		// Work area...
 		RubyIVec2 WorkSize{};
+		RubyIVec2 WorkPosition{};
+
+        // Full area...
 		RubyIVec2 MonitorSize{};
 		RubyIVec2 MonitorPosition{};
 	};

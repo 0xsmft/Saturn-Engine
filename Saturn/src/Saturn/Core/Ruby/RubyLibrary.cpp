@@ -69,6 +69,7 @@ namespace Saturn {
 
 			monitor.WorkSize.x = MonitorInfo.rcWork.right - MonitorInfo.rcWork.left;
 			monitor.WorkSize.y = MonitorInfo.rcWork.bottom - MonitorInfo.rcWork.top;
+			monitor.WorkPosition = { MonitorInfo.rcWork.left, MonitorInfo.rcWork.top };
 
 			pThis->AddMonintor( monitor );
 		}
@@ -168,6 +169,7 @@ namespace Saturn {
 			rMonitor.MonitorPosition = { monitorInfo.x, monitorInfo.y };
 			rMonitor.MonitorSize = { monitorInfo.width, monitorInfo.height };
 			rMonitor.WorkSize = rMonitor.MonitorSize;
+			rMonitor.WorkPosition = rMonitor.MonitorPosition;
 		}
 
 		std::free( reply );

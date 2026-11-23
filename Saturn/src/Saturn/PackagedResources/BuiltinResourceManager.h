@@ -60,7 +60,19 @@ namespace Saturn {
 		}
 
 #if !defined(SAT_DIST)
-		bool Package();
+		// 
+		// Package the currently loaded resources
+		//
+		bool PackageCurrent();
+		
+		//
+		// Package all resources
+		// 
+		// This will load any resources
+		// that are not currently loaded
+		// before packaging.
+		//
+		bool PackageAll();
 #endif
 
 	private:
@@ -70,6 +82,7 @@ namespace Saturn {
 		Ref<RefTarget> CreateResourceFromType_Dist( PackagedResourceType type );
 		bool ReadBundle();
 #else
+		void LoadAllResources();
 		Ref<RefTarget> CreateResourceFromType_Development( PackagedResourceType type );
 #endif
 

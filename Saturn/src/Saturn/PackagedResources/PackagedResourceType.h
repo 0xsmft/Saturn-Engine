@@ -44,13 +44,23 @@ namespace Saturn {
 		BRDFLutTexture,
 
 		// Texture2D, non-TSA
-		DefaultBloomDirtTexture,
+//		DefaultBloomDirtTexture,
 
 		// Texture2D, non-TSA
 		WeatherMapTexture,
 
 		// Texture2D, non-TSA (and TSA means texture source asset btw...)
-		CurlTexture
+		CurlTexture,
+
+		// The max usable index 
+		// without the unknown
+		// type.
+		// Basically any value in this
+		// range will always result in 
+		// a resource.
+		// when using this in an index
+		// start at index 1.
+		MaxUsableIndex = CurlTexture - 1,
 	};
 	
 }

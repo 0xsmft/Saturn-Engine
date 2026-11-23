@@ -96,8 +96,8 @@ namespace Saturn {
 			case PackagedResourceType::BRDFLutTexture:
 				return Ref<Texture2D>::Create( "content/textures/BRDF_LUT.tga", AddressingMode::Repeat, TextureLoadFlags_LoadOnMainThread );
 
-			case PackagedResourceType::DefaultBloomDirtTexture:
-				break;
+//			case PackagedResourceType::DefaultBloomDirtTexture:
+//				break;
 
 			case PackagedResourceType::WeatherMapTexture:
 				return Ref<Texture2D>::Create( "content/textures/CloudsWeatherMap.tga", AddressingMode::Repeat, TextureLoadFlags_LoadOnMainThread );
@@ -125,13 +125,68 @@ namespace Saturn {
 		uint32_t EngineVersion = 0llu;
 	};
 
+	struct BuiltinAssetBundleTextureHeader
+	{
+		// TRM + null
+		const unsigned char Magic[ 4 ] = { 0x54, 0x52, 0x4D, 0x00 };
+	};
+
 #if defined(SAT_DIST)
 	bool BuiltinResourceManager::ReadBundle()
 	{
 
 	}
+
 #else
-	bool BuiltinResourceManager::Package()
+	//
+	// Ugh, this is not great....
+	// Ideally we'd want to use a texture source asset,
+	// but, built in resources are not assets, they
+	// are never touched by the AssetManager nor
+	// can they be referenced by other assets.
+	//
+	static void SerialiseTexture( const Ref<Texture2D> texture2D, std::ofstream& rStream ) 
+	{
+		const auto& rTextureSpec = texture2D->GetTextureSpecification();
+
+		BuiltinAssetBundleTextureHeader header{};
+		RawSerialisation::WriteObject( header, rStream );
+
+		RawSerialisation::WriteObject( texture2D->Width(), rStream );
+		RawSerialisation::WriteObject( texture2D->Height(), rStream );
+		RawSerialisation::WriteObject( rTextureSpec.Format, rStream );
+		RawSerialisation::WriteObject( rTextureSpec.LoadFlags, rStream );
+		RawSerialisation::WriteObject( rTextureSpec.AddressingMode, rStream );
+		RawSerialisation::WriteObject( rTextureSpec.FilteringFlags, rStream );
+
+		// Copy texture to CPU
+		Buffer TemporaryBuffer = texture2D->X31CopyToBuffer();
+		RawSerialisation::WriteSaturnBuffer( TemporaryBuffer, rStream );
+
+		TemporaryBuffer.Free();
+	}
+
+	void BuiltinResourceManager::LoadAllResources()
+	{
+		for( size_t i = 1; i < ( std::underlying_type_t<PackagedResourceType> )PackagedResourceType::MaxUsableIndex; ++i )
+		{
+			const PackagedResourceType type = ( PackagedResourceType ) i;
+
+			const auto itr = m_Resources.find( type );
+			if( itr == m_Resources.end() )
+			{
+				m_Resources[ type ] = CreateResourceFromType( type );
+			}
+		}
+	}
+
+	bool BuiltinResourceManager::PackageAll()
+	{
+		LoadAllResources();
+		return PackageCurrent();
+	}
+
+	bool BuiltinResourceManager::PackageCurrent()
 	{
 		std::filesystem::path outPath = Project::GetActiveProject()->GetFullCachePath();
 		outPath /= "AssetBundle-Builtin.srm";
@@ -145,7 +200,7 @@ namespace Saturn {
 
 		RawSerialisation::WriteObject( m_Resources.size(), fout );
 
-		for( const auto [type, asset] : m_Resources )
+		for( const auto& [type, resource] : m_Resources )
 		{
 			RawSerialisation::WriteObject( ( std::underlying_type_t<PackagedResourceType> )type, fout );
 			
@@ -154,15 +209,19 @@ namespace Saturn {
 				case PackagedResourceType::BRDFLutTexture:
 				case PackagedResourceType::CurlTexture:
 				case PackagedResourceType::SMAA_AreaTexture:
-				case PackagedResourceType::DefaultBloomDirtTexture:
+//				case PackagedResourceType::DefaultBloomDirtTexture:
 				case PackagedResourceType::WeatherMapTexture:
 				{
-					
+					const auto texture2D = resource.As<Texture2D>();
+					if( texture2D )
+					{
+						SerialiseTexture( texture2D, fout );
+					}
 				} break;
 
 				case PackagedResourceType::DefaultAluraFont: 
 				{
-					const Ref<AluraFont> font = asset.As<AluraFont>();
+					const Ref<AluraFont> font = resource.As<AluraFont>();
 					if( font )
 					{
 						font->Serialise_ForBRM( Passkey<BuiltinResourceManager>(), fout );

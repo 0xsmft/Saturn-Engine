@@ -1606,8 +1606,8 @@ namespace Saturn {
 		// Execute to generate the noise.
 		m_RendererData.CloudsNoiseBasicPipeline->Bind();
 		m_RendererData.CloudsNoiseBasicPipeline->Execute( m_RendererData.CloudsNoiseBasicMaterial, 
-			glm::ceil( ( ( imgSize + kLocalSize ) - 1 ) / kLocalSize ),
-			glm::ceil( ( ( imgSize + kLocalSize ) - 1 ) / kLocalSize ),
+			( uint32_t ) glm::ceil( ( ( imgSize + kLocalSize ) - 1u ) / kLocalSize ),
+			( uint32_t ) glm::ceil( ( ( imgSize + kLocalSize ) - 1u ) / kLocalSize ),
 			m_RendererData.CloudsNoiseBasicOut->GetDepth() );
 
 		// TRANSITION: GENERAL TO SHADER READ ONLY
@@ -1642,8 +1642,8 @@ namespace Saturn {
 		// Execute to generate the noise.
 		m_RendererData.CloudsNoiseDetailedPipeline->Bind();
 		m_RendererData.CloudsNoiseDetailedPipeline->Execute( m_RendererData.CloudsNoiseDetailedMaterial,
-			glm::ceil( ( ( imgSize + kLocalSize ) - 1 ) / kLocalSize ),
-			glm::ceil( ( ( imgSize + kLocalSize ) - 1 ) / kLocalSize ),
+			( uint32_t ) glm::ceil( ( ( imgSize + kLocalSize ) - 1 ) / kLocalSize ),
+			( uint32_t ) glm::ceil( ( ( imgSize + kLocalSize ) - 1 ) / kLocalSize ),
 			m_RendererData.CloudsNoiseDetailedOut->GetDepth() );
 
 		// TRANSITION: GENERAL TO SHADER READ ONLY

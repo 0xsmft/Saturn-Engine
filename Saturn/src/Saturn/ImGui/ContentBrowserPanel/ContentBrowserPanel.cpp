@@ -2090,15 +2090,27 @@ namespace Saturn {
 
 		if( m_CurrentImportPopup )
 		{
+			// Is the popup fully initialised?
 			if( m_CurrentImportPopup->IsReady() )
 			{
 				m_CurrentImportPopup->OnImGuiRender();
 
+				// If we are no longer open we need to know what the state is
+				// 
+				// if we are modified then the asset was imported.
+				// if no modifications are created then nothing happened.
+				// if we failed we have errors.
 				if( !m_CurrentImportPopup->IsOpen() )
 				{
 					switch( m_CurrentImportPopup->GetModificationState() )
 					{
-						case AssetImportModificationState::Failed: break;
+						case AssetImportModificationState::Failed: 
+						{
+							if( m_CurrentImportPopup->HasError() )
+							{
+								DrawErrorImportPopup();
+							}
+						} break;
 
 						case AssetImportModificationState::Modified:
 						{
@@ -2120,10 +2132,6 @@ namespace Saturn {
 						} break;
 					}
 				}
-			}
-			else if( m_CurrentImportPopup->HasError() )
-			{
-				DrawErrorImportPopup();
 			}
 			else
 			{

@@ -114,7 +114,9 @@ namespace Saturn {
 			case AssetImportPopupError::MeshNoMaterials:
 			{
 				ImGui::Text( "Error: MeshNoMaterials (0x%08x)", m_Error );
-				ImGui::Text( "No materials exist in the Mesh. A mesh cannot have no materials but it can have no MaterialAssets. In your DCC tool ensure that you have created at least one material slot in the scene!" );
+				ImGui::Text( "No materials exist in the Mesh." );
+				ImGui::Text( "A mesh cannot have no material slots but it can have no created/imported MaterialAssets." );
+				ImGui::Text( "In your DCC tool ensure that you have created at least one material slot in the scene!" );
 			} break;
 		
 			case AssetImportPopupError::MeshAssimpInternalError:
@@ -527,6 +529,8 @@ namespace Saturn {
 				{
 					m_Error = error;
 					m_ModificationState = AssetImportModificationState::Failed;
+
+					Close();
 					ImGui::CloseCurrentPopup();
 				}
 				else

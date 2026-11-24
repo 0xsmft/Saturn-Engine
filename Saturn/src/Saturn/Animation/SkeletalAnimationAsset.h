@@ -30,6 +30,8 @@
 
 #include "Saturn/Asset/Asset.h"
 
+#include "RootMotion.h"
+
 struct aiAnimation;
 
 namespace Saturn {
@@ -61,14 +63,25 @@ namespace Saturn {
 	enum class SkeletalAnimationAssetVersion
 	{
 		// Engine version: Alpha 0.2.3
-		BeforeVersionWasAdded,
+		BeforeVersionWasAdded = 0,
+
 		// Root motion support added, introduced in Alpha 0.2.3
-		RootMotion,
+		// Old root motion
+		RootMotion = 1,
+		
+		// New root motion work
+		RootMotionLegacyLatest = 2,
+		
+		// Root motion extraction settings (translation/vertical/rotation).
+		RootMotionSettings = 3,
 
 		//^^^ only add new versions above here....
 		Latest,
 		Lowest = BeforeVersionWasAdded
 	};
+
+	inline constexpr SkeletalAnimationAssetVersion kSkeletalAnimationAssetVersion_Current =
+		static_cast< SkeletalAnimationAssetVersion >( static_cast< int >( SkeletalAnimationAssetVersion::Latest ) - 1 );
 
 	class SkeletalAnimationAsset : public Asset
 	{
@@ -82,6 +95,7 @@ namespace Saturn {
 		[[nodiscard]] float   GetDuration()       const { return m_Duration; }
 		[[nodiscard]] float   GetTicksPerSecond() const { return m_TicksPerSecond; }
 		[[nodiscard]] bool    IsUsingRootMotion() const { return m_UseRootMotion; }
+		[[nodiscard]] const RootMotionSettings& GetRootMotionSettings() const { return m_RootMotionSettings; }
 		[[nodiscard]] size_t  GetBoneCount()      const { return m_BoneCount; }
 		[[nodiscard]] SkeletalAnimationAssetVersion GetLocalAssetVersion() const { return m_LocalVersion; }
 		[[nodiscard]] void*   GetData()           const { return m_pData; }
@@ -96,10 +110,11 @@ namespace Saturn {
 		void SetTicks( float ticks )                     { m_TicksPerSecond = ticks; }
 		void SetSkeletonID( AssetID id )                 { m_SkeletonAssetID = id; }
 		void UseRootMotion( bool val )                   { m_UseRootMotion = val; }
+		void SetRootMotionSettings( const RootMotionSettings& rSettings ) { m_RootMotionSettings = rSettings; }
 		void SetUncompressedDuration( float duration )   { m_UncompressedDuration = duration; }
 		void SetUncompressedTicks( float ticks )         { m_UncompressedTPS = ticks; }
 		void SetBoneCount( size_t boneCount )			 { m_BoneCount = boneCount; }
-		void PortToNewestVersion()                       { m_LocalVersion = SkeletalAnimationAssetVersion::Latest; }
+		void PortToNewestVersion()                       { m_LocalVersion = kSkeletalAnimationAssetVersion_Current; }
 
 		void SetACLData( void* pData );
 
@@ -129,6 +144,7 @@ namespace Saturn {
 	private:
 		SkeletalAnimationAssetVersion m_LocalVersion = SkeletalAnimationAssetVersion::Lowest;
 		bool m_UseRootMotion = false;
+		RootMotionSettings m_RootMotionSettings;
 
 		void* m_pData = nullptr;
 

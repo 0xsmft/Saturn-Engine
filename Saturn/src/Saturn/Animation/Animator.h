@@ -117,9 +117,52 @@ namespace Saturn {
 		void QuickFireAnimation( AssetID id );
 		void QuickFireAnimation( const std::string& rName );
 
+	public:
+		//////////////////////////////////////////////////////////////////////////
+		// Root motion
+		//
+		// When the current animation has root motion enabled, the movement of the root bone is
+		// taken out of the pose (so the mesh animates in place) and stored here instead.
+		// The scene then applies that movement to the entity, see SetAutoApplyRootMotion.
+
+		//
+		// @returns true if the animation that is currently playing is using root motion.
+		//
+		[[nodiscard]] bool IsUsingRootMotion() const { return m_RootMotionEnabled; }
+
+		//
+		// The bone that root motion is taken from. This is the skeleton's root, unless the root does not move in this
+		// animation and only has one child (e.g. an "Armature" node above the hips), then it's the first bone down that chain that does.
+		//
+		[[nodiscard]] uint32_t GetRootMotionBone() const { return m_RootMotionBone; }
+
+		//
+		// The root motion that has been extracted but not yet applied, in mesh (entity local) space.
+		//
+		[[nodiscard]] const RootMotionTransform& GetPendingRootMotion() const { return m_PendingRootMotion; }
+
+		//
+		// Returns the root motion that has been extracted since the last call and resets it.
+		//
+		RootMotionTransform ConsumeRootMotion();
+
+		//
+		// When true (default) the scene applies root motion to the entity every frame.
+		// Turn it off if you want to call ConsumeRootMotion and move the entity yourself.
+		//
+		void SetAutoApplyRootMotion( bool value ) { m_AutoApplyRootMotion = value; }
+		[[nodiscard]] bool ShouldAutoApplyRootMotion() const { return m_AutoApplyRootMotion; }
+
 	private:
 		void TickSingleAnim( Timestep ts );
 		void AnimGraph_SetSingleAnim( Ref<SkeletalAnimationAsset> anim, bool loop );
+
+		// Root motion
+		void InitialiseRootMotion();
+		AnimatorLocalTransfrom SampleBone( uint32_t boneIndex, float normalisedTime );
+		void SamplePose( float normalisedTime, Pose& rPose );
+		uint32_t FindRootMotionBone( const std::vector<uint64_t>& rParents, uint32_t boneCount );
+		void ExtractRootMotion( float previousTime, uint32_t loopCount );
 
 	private:
 		float m_AnimationTime = 0.0f;
@@ -138,6 +181,13 @@ namespace Saturn {
 		Pose* m_pOutPose = nullptr;
 		PoseWriter m_Writer;
 		acl::decompression_context<acl::default_transform_decompression_settings> m_Context;
+
+		// Root motion for the animation that is currently playing.
+		RootMotionExtractor m_RootMotion;
+		bool m_RootMotionEnabled = false;
+		uint32_t m_RootMotionBone = 0;
+		RootMotionTransform m_PendingRootMotion;
+		bool m_AutoApplyRootMotion = true;
 
 	private:
 		friend class AnimGraphPlayAnimTask;

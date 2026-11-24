@@ -210,6 +210,7 @@ namespace Saturn {
 
 				RawSerialisation::WriteObject( mc.AnimationControllerAssetID, rStream );
 				RawSerialisation::WriteObject( ( uint8_t ) mc.AnimatorType, rStream );
+				RawSerialisation::WriteObject( mc.LoopAnimation, rStream );
 			} );
 
 		// Sky light component
@@ -534,6 +535,8 @@ namespace Saturn {
 				RawSerialisation::ReadObject( type, rStream );
 
 				mc.AnimatorType = ( AnimatorType ) type;
+
+				RawSerialisation::ReadObject( mc.LoopAnimation, rStream );
 			} );
 
 		// Sky light component

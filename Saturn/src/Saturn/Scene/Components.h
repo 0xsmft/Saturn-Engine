@@ -192,6 +192,9 @@ namespace Saturn {
 
 		AnimatorType AnimatorType = AnimatorType::Single;
 
+		// Only used when for single animators.
+		bool LoopAnimation = false;
+
 		SkeletalMeshComponent() = default;
 		SkeletalMeshComponent( const SkeletalMeshComponent& other ) = default;
 		SkeletalMeshComponent( Ref<Saturn::SkeletalMesh>& rMesh )

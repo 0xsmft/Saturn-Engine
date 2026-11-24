@@ -1819,17 +1819,21 @@ namespace Saturn {
 #endif
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
-		// Set UB Data.
-		const glm::mat4 trans = glm::rotate( glm::mat4( 1.0f ), glm::radians( 90.0f ), glm::vec3( 1.0f, 0.0f, 0.0f ) ) * glm::scale( glm::mat4( 1.0f ), glm::vec3( 16.0f ) );
+		const glm::mat4& rViewMatrix = m_RendererData.CurrentCamera.ViewMatrix;
+		const glm::mat4 viewProjection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * rViewMatrix;
+		const glm::vec3 cameraPosition = glm::vec3( glm::inverse( rViewMatrix )[ 3 ] );
 
-		UBGridMatrices GridMatricesObject = {};
-		GridMatricesObject.Transform = trans;
-		GridMatricesObject.ViewProjection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
+		// Fade out further away the higher up the camera is, 
+		// so the user can still see the grid from far above.
+		const float fadeDistance = glm::max( 150.0f, glm::abs( cameraPosition.y ) * 25.0f );
 
-		GridMatricesObject.Res = 0.025f;
-		GridMatricesObject.Scale = 16.025f;
+		UBGridData gridData = {};
+		gridData.ViewProjection = viewProjection;
+		gridData.InverseViewProjection = glm::inverse( viewProjection );
+		gridData.CameraPosition = glm::vec4( cameraPosition, fadeDistance );
+		gridData.CellSizes = glm::vec4( 1.0f, 10.0f, 0.0f, 0.0f );
 
-		m_RendererData.GridMaterials[ frame ]->UploadDataToUB( 0u, &GridMatricesObject, sizeof( UBGridMatrices ) );
+		m_RendererData.GridMaterials[ frame ]->UploadDataToUB( 0u, &gridData, sizeof( UBGridData ) );
 
 		Renderer::Get()->SubmitFullscreenQuad(
 			m_RendererData.CommandBuffer,
@@ -2123,6 +2127,9 @@ namespace Saturn {
 			PipelineSpec.Shader = m_RendererData.GridShader;
 			PipelineSpec.RenderPass = m_RendererData.GeometryPass;
 			PipelineSpec.UseDepthTest = true;
+			// We only depth test against the other geo, but we do not write.
+			PipelineSpec.UseDepthWrite = false;
+			PipelineSpec.EnableBlending = true;
 			PipelineSpec.CullMode = CullMode::None;
 			PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
 			PipelineSpec.VertexLayout = {
@@ -2802,14 +2809,6 @@ namespace Saturn {
 
 		CmdEndDebugLabel( m_RendererData.CommandBuffer );
 
-#if !defined(SAT_DIST)
-		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "Grid" );
-
-		RenderGrid();
-
-		CmdEndDebugLabel( m_RendererData.CommandBuffer );
-#endif
-
 		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "Static meshes" );
 		
 		// Set environment resource.
@@ -2824,6 +2823,14 @@ namespace Saturn {
 		RenderDynamicMeshes();
 
 		CmdEndDebugLabel( m_RendererData.CommandBuffer );
+
+#if !defined(SAT_DIST)
+		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "Grid" );
+
+		RenderGrid();
+
+		CmdEndDebugLabel( m_RendererData.CommandBuffer );
+#endif
 
 		//////////////////////////////////////////////////////////////////////////
 

@@ -1144,6 +1144,30 @@ namespace Saturn {
 
 					ImGui::EndHorizontal();
 
+					if( mc.AnimatorType == AnimatorType::Single )
+					{
+						ImGui::BeginHorizontal( "##animLoop" );
+
+						ImGui::Text( "Loop" );
+
+						ImGui::Spring();
+
+						if( ImGui::Checkbox( "##loopanimation", &mc.LoopAnimation ) )
+						{
+							if( mc.LocalAnimator )
+							{
+								mc.LocalAnimator->Loop( mc.LoopAnimation );
+
+								if( mc.LoopAnimation && mc.LocalAnimator->IsCompleted() )
+									mc.LocalAnimator->PlayFromStart();
+							}
+
+							modified = true;
+						}
+
+						ImGui::EndHorizontal();
+					}
+
 					Auxiliary::EndTreeNode();
 				}
 			}

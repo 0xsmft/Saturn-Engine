@@ -1734,6 +1734,10 @@ namespace Saturn {
 			rComp.LocalAnimator = Ref<Animator>::Create();
 
 			rComp.LocalAnimator->InitAnimation( rComp.AnimationControllerAssetID, rComp.Mesh, rComp.AnimatorType );
+
+			if( rComp.AnimatorType == AnimatorType::Single )
+				rComp.LocalAnimator->Loop( rComp.LoopAnimation );
+
 			rComp.LocalAnimator->Begin();
 		}
 	}

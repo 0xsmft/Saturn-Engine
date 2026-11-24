@@ -304,6 +304,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			// because if we do it as a uint8_t it may write it as "\x01" and will refuse to read it back...
 			rEmitter << YAML::Key << "AnimationAssetType" << YAML::Value << ( uint16_t )mc.AnimatorType;
 			rEmitter << YAML::Key << "AnimationAsset" << YAML::Value << mc.AnimationControllerAssetID;
+			rEmitter << YAML::Key << "LoopAnimation" << YAML::Value << mc.LoopAnimation;
 
 			rEmitter << YAML::Key << "MaterialRegistry";
 			rEmitter << YAML::BeginMap;
@@ -952,6 +953,8 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 			}
 
 			m.AnimationControllerAssetID = animAsset;
+
+			m.LoopAnimation = skm[ "LoopAnimation" ].as<bool>( false );
 		}
 
 		const auto rcNode = rEntityNode[ "RelationshipComponent" ];

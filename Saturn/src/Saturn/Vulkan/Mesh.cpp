@@ -965,7 +965,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 		if( m_Scene->mNumMaterials == 0 )
 		{
-			SAT_CORE_ERROR( "[MeshImporterBase] No materials exist in the Mesh. A mesh cannot have no materials but it can have no MaterialAssets. In your DCC tool ensure that you have created at least one material slot in the scene!" );
+			SAT_CORE_ERROR( "[MeshImporterBase] No materials exist in the Mesh. A mesh cannot have no material slots but it can have created MaterialAssets. In your DCC tool ensure that you have created at least one material slot in the scene!" );
 			return false;
 		}
 
@@ -1315,7 +1315,10 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		m_Scene = scene;
 
 		bool anyMaterialsFound = FindMaterials();
-		CreateSkeletonIfNeeded();
+		if( anyMaterialsFound )
+		{
+			CreateSkeletonIfNeeded();
+		}
 
 		return anyMaterialsFound ? AssetImportPopupError::None : AssetImportPopupError::MeshNoMaterials;
 	}

@@ -202,14 +202,17 @@ namespace std {
 
 namespace Saturn {
 
-	struct UBGridMatrices
+	// Must match the GridData uniform block in Grid.glsl (std140).
+	struct UBGridData
 	{
 		glm::mat4 ViewProjection;
+		glm::mat4 InverseViewProjection;
 
-		glm::mat4 Transform;
+		// xyz = camera position, w = distance where the grid has fully faded out.
+		glm::vec4 CameraPosition;
 
-		float Scale;
-		float Res;
+		// x = minor cell size, y = major cell size.
+		glm::vec4 CellSizes;
 	};
 
 	struct UBSkyboxMatrices

@@ -68,6 +68,8 @@ namespace Saturn {
 		// Layouts that are at the end of both VertexLayouts and Instance Layouts
 		VertexBufferLayout AdditionalLayoutAtEnd;
 		bool UseDepthTest = false;
+		// Only used when UseDepthTest is true.
+		bool UseDepthWrite = true;
 		bool UseStencilTest = false;
 		bool HasColorAttachment = true;
 		bool UseSpecializationInfo = false;

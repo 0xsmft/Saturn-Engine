@@ -344,7 +344,7 @@ namespace Saturn {
 
 		VkPipelineDepthStencilStateCreateInfo DepthStencilState = { VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO };
 		DepthStencilState.depthTestEnable = m_Specification.UseDepthTest ? VK_TRUE : VK_FALSE;
-		DepthStencilState.depthWriteEnable = VK_TRUE;
+		DepthStencilState.depthWriteEnable = m_Specification.UseDepthWrite ? VK_TRUE : VK_FALSE;
 		DepthStencilState.depthCompareOp = m_Specification.DepthCompareOp;
 		DepthStencilState.depthBoundsTestEnable = VK_FALSE;
 		DepthStencilState.stencilTestEnable = m_Specification.UseStencilTest;

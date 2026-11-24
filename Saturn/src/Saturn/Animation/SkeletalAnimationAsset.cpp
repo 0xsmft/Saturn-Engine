@@ -227,7 +227,7 @@ namespace Saturn {
 		RawSerialisation::WriteObject( header, rStream );
 
 		// We always write the newest layout, so the version on disk must always be the newest one.
-		RawSerialisation::WriteObject( SkeletalAnimationAssetVersion_Current, rStream );
+		RawSerialisation::WriteObject( kSkeletalAnimationAssetVersion_Current, rStream );
 		RawSerialisation::WriteObject( GetSkeletonID(), rStream );
 		RawSerialisation::WriteObject( GetDuration(), rStream );
 		RawSerialisation::WriteObject( GetTicksPerSecond(), rStream );

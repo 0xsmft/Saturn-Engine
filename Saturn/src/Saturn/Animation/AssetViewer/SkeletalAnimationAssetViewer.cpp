@@ -240,6 +240,22 @@ namespace Saturn {
 				m_Asset->UseRootMotion( value );
 			}
 
+			ImGui::BeginDisabled( !m_Asset->IsUsingRootMotion() );
+
+			RootMotionSettings settings = m_Asset->GetRootMotionSettings();
+			bool changed = false;
+
+			changed |= Auxiliary::DrawBoolControl( "Translation (XZ)", settings.ExtractTranslation );
+			changed |= Auxiliary::DrawBoolControl( "Vertical (Y)", settings.ExtractVerticalTranslation );
+			changed |= Auxiliary::DrawBoolControl( "Rotation (Yaw)", settings.ExtractRotation );
+
+			if( changed )
+			{
+				m_Asset->SetRootMotionSettings( settings );
+			}
+
+			ImGui::EndDisabled();
+
 			Auxiliary::EndTreeNode();
 		}
 	}

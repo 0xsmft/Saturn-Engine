@@ -134,6 +134,51 @@ namespace Saturn {
 		return result;
 	}
 
+	//
+	// Resamples keys (with timestamps from 0 to 1) into sampleCount evenly spaced keys.
+	//
+	template<typename Ty, typename Fn>
+	static std::vector<AnimationKey<Ty>> ResampleKeys( const std::vector<AnimationKey<Ty>>& rKeys, size_t sampleCount, Fn&& rInterpolate )
+	{
+		std::vector<AnimationKey<Ty>> result;
+		result.reserve( sampleCount );
+
+		if( rKeys.empty() )
+		{
+			result.resize( sampleCount );
+			return result;
+		}
+
+		const float interval = 1.0f / ( float ) ( sampleCount - 1 );
+
+		size_t keyIndex = 1;
+		for( size_t i = 0; i < sampleCount; ++i )
+		{
+			const float ts = ( i == sampleCount - 1 ) ? 1.0f : ( float ) i * interval;
+
+			// Find the first key at or after this time.
+			while( keyIndex < rKeys.size() && rKeys[ keyIndex ].Timestamp < ts )
+				++keyIndex;
+
+			// Before the first key or past the last key, just hold the value.
+			if( i == 0 || keyIndex >= rKeys.size() )
+			{
+				result.emplace_back( i == 0 ? rKeys.front().Value : rKeys.back().Value, ts );
+				continue;
+			}
+
+			const auto& rPrevious = rKeys[ keyIndex - 1 ];
+			const auto& rNext = rKeys[ keyIndex ];
+
+			const float span = rNext.Timestamp - rPrevious.Timestamp;
+			const float t = span > 0.0f ? glm::clamp( ( ts - rPrevious.Timestamp ) / span, 0.0f, 1.0f ) : 1.0f;
+
+			result.emplace_back( rInterpolate( rPrevious.Value, rNext.Value, t ), ts );
+		}
+
+		return result;
+	}
+
 	void SkeletalAnimationAsset::MakeUniformAndCompress( aiAnimation* pAnimation )
 	{
 		size_t highestSample = 2;
@@ -145,70 +190,14 @@ namespace Saturn {
 			highestSample = glm::max( highestSample, rChannel.Scale.size() );
 		}
 
-		const float interval = 1.0f / ( highestSample - 1 );
+		const auto mixVec3 = []( const glm::vec3& a, const glm::vec3& b, float t ) { return glm::mix( a, b, t ); };
+		const auto slerpQuat = []( const glm::quat& a, const glm::quat& b, float t ) { return glm::slerp( a, b, t ); };
 
 		for( auto& rChannel : m_Bones )
 		{
-			AnimationChannel ab;
-
-			// POSITION
-			uint64_t tsIndex = 1;
-			ab.Positions.reserve( highestSample );
-			ab.Positions.emplace_back( rChannel.Positions[ 0 ] );
-
-			for( uint32_t i = 1; i < highestSample - 1; ++i )
-			{
-				float ts = i * interval;
-				while( ( tsIndex < rChannel.Positions.size() ) && ( rChannel.Positions[ tsIndex ].Timestamp < ts ) )
-				{
-					++tsIndex;
-				}
-
-				const float newT = ( ts - rChannel.Positions[ tsIndex - 1 ].Timestamp ) / ( rChannel.Positions[ tsIndex ].Timestamp - rChannel.Positions[ tsIndex - 1 ].Timestamp );
-				ab.Positions.emplace_back( glm::mix( rChannel.Positions[ tsIndex - 1 ].Value, rChannel.Positions[ tsIndex ].Value, newT ), ts );
-			}
-			ab.Positions.emplace_back( ab.Positions.back() );
-
-			// ROTATION
-			uint64_t rotIndex = 1;
-			ab.Rotations.reserve( highestSample );
-			ab.Rotations.emplace_back( rChannel.Rotations[ 0 ] );
-
-			for( uint32_t i = 1; i < highestSample - 1; ++i )
-			{
-				float ts = i * interval;
-				while( ( rotIndex < rChannel.Rotations.size() ) && ( rChannel.Rotations[ rotIndex ].Timestamp < ts ) )
-				{
-					++rotIndex;
-				}
-
-				const float newT = ( ts - rChannel.Rotations[ rotIndex - 1 ].Timestamp ) / ( rChannel.Rotations[ rotIndex ].Timestamp - rChannel.Rotations[ rotIndex - 1 ].Timestamp );
-
-				ab.Rotations.emplace_back( glm::slerp( rChannel.Rotations[ rotIndex - 1 ].Value, rChannel.Rotations[ rotIndex ].Value, newT ), ts );
-			}
-			ab.Rotations.emplace_back( ab.Rotations.back() );
-
-			// SCALING
-			uint64_t scaleIndex = 1;
-			ab.Scale.reserve( highestSample );
-			ab.Scale.emplace_back( rChannel.Scale[ 0 ] );
-
-			for( uint32_t i = 1; i < highestSample - 1; ++i )
-			{
-				float ts = i * interval;
-				while( ( scaleIndex < rChannel.Scale.size() ) && ( rChannel.Scale[ scaleIndex ].Timestamp < ts ) )
-				{
-					++scaleIndex;
-				}
-
-				const float newT = ( ts - rChannel.Scale[ scaleIndex - 1 ].Timestamp ) / ( rChannel.Scale[ scaleIndex ].Timestamp - rChannel.Scale[ scaleIndex - 1 ].Timestamp );
-				ab.Scale.emplace_back( glm::mix( rChannel.Scale[ scaleIndex - 1 ].Value, rChannel.Scale[ scaleIndex ].Value, newT ), ts );
-			}
-			ab.Scale.emplace_back( ab.Scale.back() );
-
-			rChannel.Positions = std::move( ab.Positions );
-			rChannel.Rotations = std::move( ab.Rotations );
-			rChannel.Scale = std::move( ab.Scale );
+			rChannel.Positions = ResampleKeys( rChannel.Positions, highestSample, mixVec3 );
+			rChannel.Rotations = ResampleKeys( rChannel.Rotations, highestSample, slerpQuat );
+			rChannel.Scale     = ResampleKeys( rChannel.Scale, highestSample, mixVec3 );
 		}
 
 		m_UncompressedDuration = ( float ) pAnimation->mDuration;
@@ -237,13 +226,17 @@ namespace Saturn {
 		SkeletonAssetFileHeader header;
 		RawSerialisation::WriteObject( header, rStream );
 
-		RawSerialisation::WriteObject( GetLocalAssetVersion(), rStream );
+		// We always write the newest layout, so the version on disk must always be the newest one.
+		RawSerialisation::WriteObject( SkeletalAnimationAssetVersion_Current, rStream );
 		RawSerialisation::WriteObject( GetSkeletonID(), rStream );
 		RawSerialisation::WriteObject( GetDuration(), rStream );
 		RawSerialisation::WriteObject( GetTicksPerSecond(), rStream );
 		RawSerialisation::WriteObject( m_UncompressedDuration, rStream );
 		RawSerialisation::WriteObject( m_UncompressedTPS, rStream );
 		RawSerialisation::WriteObject( IsUsingRootMotion(), rStream );
+		RawSerialisation::WriteObject( m_RootMotionSettings.ExtractTranslation, rStream );
+		RawSerialisation::WriteObject( m_RootMotionSettings.ExtractVerticalTranslation, rStream );
+		RawSerialisation::WriteObject( m_RootMotionSettings.ExtractRotation, rStream );
 		RawSerialisation::WriteObject( GetBoneCount(), rStream );
 
 		SerialiseAclData( rStream );
@@ -285,10 +278,17 @@ namespace Saturn {
 		RawSerialisation::ReadObject( uncompDur, rStream );
 		RawSerialisation::ReadObject( uncompTps, rStream );
 
+		// NOTE: The root motion flag is read for every version, 
+		// files that were saved before versioning was used still wrote it.
 		bool hadRootMotion = false;
-		//		if( skAnimVer >= SkeletalAnimationAssetVersion::RootMotion )
+		RawSerialisation::ReadObject( hadRootMotion, rStream );
+
+		RootMotionSettings rootMotionSettings{};
+		if( skAnimVer >= SkeletalAnimationAssetVersion::RootMotionSettings )
 		{
-			RawSerialisation::ReadObject( hadRootMotion, rStream );
+			RawSerialisation::ReadObject( rootMotionSettings.ExtractTranslation, rStream );
+			RawSerialisation::ReadObject( rootMotionSettings.ExtractVerticalTranslation, rStream );
+			RawSerialisation::ReadObject( rootMotionSettings.ExtractRotation, rStream );
 		}
 
 		RawSerialisation::ReadObject( boneCount, rStream );
@@ -299,7 +299,9 @@ namespace Saturn {
 		SetUncompressedDuration( uncompDur );
 		SetUncompressedTicks( uncompTps );
 		UseRootMotion( hadRootMotion );
+		SetRootMotionSettings( rootMotionSettings );
 		SetBoneCount( boneCount );
+		m_LocalVersion = skAnimVer;
 
 		DeserialiseAclData( rStream );
 

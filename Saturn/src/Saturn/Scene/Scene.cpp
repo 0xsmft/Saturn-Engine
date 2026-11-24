@@ -350,6 +350,12 @@ namespace Saturn {
 			if( meshComponent.Mesh && meshComponent.LocalAnimator )
 			{
 				meshComponent.LocalAnimator->TickAnimation( ts );
+
+				// Only move entities while runtime is running.
+				if( IsRuntimeRunning() && meshComponent.LocalAnimator->ShouldAutoApplyRootMotion() )
+				{
+					ApplyRootMotion( entity, meshComponent.LocalAnimator->ConsumeRootMotion() );
+				}
 			}
 		}
 
@@ -409,6 +415,44 @@ namespace Saturn {
 				}
 			} break;
 		}
+	}
+
+	void Scene::ApplyRootMotion( const SharedPtr<Entity>& rEntity, const RootMotionTransform& rRootMotion )
+	{
+		if( rRootMotion.IsIdentity() )
+			return;
+
+		auto& rTc = rEntity->GetComponent<TransformComponent>();
+
+		// Root motion is in the space of the mesh, 
+		// which is the entity's local space, 
+		// so doing: newLocal = local * rootMotion. Is fine.
+		const glm::quat rotation = rTc.GetRotation();
+		
+		// In parent space.
+		const glm::vec3 displacement = rotation * ( rTc.Scale * rRootMotion.Translation ); 
+
+		auto* pMovementComp = rEntity->TryGetComponent<CharacterMovementComponent>();
+		if( pMovementComp && pMovementComp->CharacterMovement )
+		{
+			// Move via the character controller so we still collide with the world, 
+			// its position is synced back to the transform after physics.
+			// The controller is in world space, so take the displacement out of the parent's space.
+			glm::vec3 worldDisplacement = displacement;
+			if( rEntity->HasParent() )
+			{
+				if( const SharedPtr<Entity> parent = FindEntityByID( rEntity->GetParent() ) )
+					worldDisplacement = glm::mat3( GetTransformRelativeToParent( parent ) ) * displacement;
+			}
+
+			pMovementComp->CharacterMovement->Move( worldDisplacement );
+		}
+		else
+		{
+			rTc.Position += displacement;
+		}
+
+		rTc.SetRotation( glm::normalize( rotation * rRootMotion.Rotation ) );
 	}
 
 	void Scene::OnUpdateAnimators_Preview( Timestep ts )

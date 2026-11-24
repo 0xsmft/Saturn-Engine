@@ -32,6 +32,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include "RootMotion.h"
+
 namespace Saturn {
 
 	struct AnimatorLocalTransfrom
@@ -48,7 +50,8 @@ namespace Saturn {
 	// Poses are allocated on the heap and again are allocated per animation.
 	struct Pose
 	{
-		AnimatorLocalTransfrom RootMotion;
+		// The root motion that was extracted from the root bone in the last tick (identity if root motion is not being used).
+		RootMotionTransform RootMotion;
 		std::array<AnimatorLocalTransfrom, SK_MAX_BONES> LocalTransforms;
 		float Duration = 0.0f;
 		float Timestamp = 0.0f;

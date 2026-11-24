@@ -1410,23 +1410,27 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 			}
 
 			double firstFrameDelta = DBL_MAX;
-			for( uint32_t boneIndex = 0; boneIndex < pAnimation->mNumChannels; ++boneIndex )
+			for( const auto& [boneIndex, nodeAnim] : validChannels )
 			{
-				if( auto validChannel = validChannels.find( boneIndex ); validChannel != validChannels.end() )
-				{
-					auto nodeAnim = validChannel->second;
-					if( nodeAnim->mNumPositionKeys > 0 )
-						firstFrameDelta = std::min( firstFrameDelta, nodeAnim->mPositionKeys[ 0 ].mTime );
+				if( nodeAnim->mNumPositionKeys > 0 )
+					firstFrameDelta = std::min( firstFrameDelta, nodeAnim->mPositionKeys[ 0 ].mTime );
 
-					if( nodeAnim->mNumRotationKeys > 0 )
-						firstFrameDelta = std::min( firstFrameDelta, nodeAnim->mRotationKeys[ 0 ].mTime );
+				if( nodeAnim->mNumRotationKeys > 0 )
+					firstFrameDelta = std::min( firstFrameDelta, nodeAnim->mRotationKeys[ 0 ].mTime );
 
-					if( nodeAnim->mNumScalingKeys > 0 )
-						firstFrameDelta = std::min( firstFrameDelta, nodeAnim->mScalingKeys[ 0 ].mTime );
-				}
+				if( nodeAnim->mNumScalingKeys > 0 )
+					firstFrameDelta = std::min( firstFrameDelta, nodeAnim->mScalingKeys[ 0 ].mTime );
 			}
 
-			for( unsigned int c = 0; c < pAnimation->mNumChannels; ++c )
+			if( firstFrameDelta == DBL_MAX )
+				firstFrameDelta = 0.0;
+
+			// One track per skeleton bone, so the track index is always the bone index.
+			// NOTE: The skeleton is built from every animation in the file, 
+			// so this animation may not have a channel for every bone
+			//       (and may have fewer channels than there are bones).
+			const uint32_t boneCount = ( uint32_t ) sk->GetBonePositions().size();
+			for( uint32_t c = 0; c < boneCount; ++c )
 			{
 				AnimationChannel animBone;
 				animBone.Index = c;
@@ -1468,7 +1472,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 						if( ( r == 0 ) && ( time > 0.0f ) )
 						{
-							animBone.Rotations.emplace_back( glm::vec3( ( float ) key.mValue.x, ( float ) key.mValue.y, ( float ) key.mValue.z ), 0.0f );
+							animBone.Rotations.emplace_back( glm::quat( key.mValue.w, key.mValue.x, key.mValue.y, key.mValue.z ), 0.0f );
 						}
 
 						animBone.Rotations.emplace_back( glm::quat( key.mValue.w, key.mValue.x, key.mValue.y, key.mValue.z ), time );
@@ -1509,13 +1513,18 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 				}
 				else
 				{
+					// Not animated in this animation?
+					// so lets hold the bind pose for the whole animation.
 					const auto& p = sk->GetBonePositions().at( c );
 					const auto& q = sk->GetBoneRotations().at( c );
 					const auto& s = sk->GetBoneScales().at( c );
 
 					animBone.Positions.emplace_back( p, 0.0f );
+					animBone.Positions.emplace_back( p, 1.0f );
 					animBone.Rotations.emplace_back( q, 0.0f );
+					animBone.Rotations.emplace_back( q, 1.0f );
 					animBone.Scale.emplace_back( s, 0.0f );
+					animBone.Scale.emplace_back( s, 1.0f );
 				}
 
 				animAsset->AddAnimBone( animBone );

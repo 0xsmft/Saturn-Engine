@@ -72,6 +72,7 @@ namespace Saturn {
 
 	struct TransformComponent;
 	struct RaycastHitResult;
+	struct RootMotionTransform;
 
 	struct SceneComponent
 	{
@@ -502,6 +503,9 @@ namespace Saturn {
 		void OnNavMeshBuildCompRemoved( entt::registry& reg, entt::entity entity );
 
 		void OnCameraShakeComponentAdded( entt::registry& reg, entt::entity entity );
+
+		// Move/rotate an entity by root motion (which is in the entity's local space).
+		void ApplyRootMotion( const SharedPtr<Entity>& rEntity, const RootMotionTransform& rRootMotion );
 
 	private:
 		void RtSetupLights( Ref<SceneRenderer> sceneRenderer );

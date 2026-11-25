@@ -37,7 +37,7 @@ namespace Saturn {
 	{
 	public:
 		UniformBuffer( uint32_t set, uint32_t binding, size_t size );
-		~UniformBuffer();
+		virtual ~UniformBuffer();
 
 		const VkDescriptorBufferInfo& GetBufferInfo() { return m_BufferInfo; }
 
@@ -45,6 +45,9 @@ namespace Saturn {
 		uint32_t GetBinding() const { return m_Binding; }
 
 		void UploadData( const void* pData, size_t size, uint32_t offset = 0 );
+
+	public:
+		void SetBufferName( const std::string& rName );
 
 	private:
 		void Create();

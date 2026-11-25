@@ -31,6 +31,7 @@
 
 #include "VulkanAllocator.h"
 #include "VulkanContext.h"
+#include "VulkanDebug.h"
 
 namespace Saturn {
 
@@ -78,8 +79,13 @@ namespace Saturn {
 		auto bufferAloc = pAllocator->GetAllocationFromBuffer( m_Buffer );
 
 		void* pBufferData = pAllocator->MapMemory<void>( bufferAloc );
-		std::memcpy( pBufferData, (const uint8_t*)pData + offset, size );
+		std::memcpy( pBufferData, ( const uint8_t* ) pData + offset, size );
 		pAllocator->UnmapMemory( bufferAloc );
+	}
+
+	void UniformBuffer::SetBufferName( const std::string& rName )
+	{
+		SetDebugUtilsObjectName( rName, ( uint64_t ) m_Buffer, VK_OBJECT_TYPE_BUFFER );
 	}
 
 }

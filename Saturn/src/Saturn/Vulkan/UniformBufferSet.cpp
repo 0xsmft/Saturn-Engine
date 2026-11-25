@@ -42,10 +42,13 @@ namespace Saturn {
 
 	void UniformBufferSet::CreateBuffer( size_t size, uint32_t binding )
 	{
-		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
+		for( unsigned int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			Ref<UniformBuffer> ub = Ref<UniformBuffer>::Create( 0, binding, size );
 			m_Buffers[ 0 ][ binding ][ i ] = ub;
+
+			const std::string name = std::format( "UBSet-{}-{}", binding, i );
+			ub->SetBufferName( name );
 		}
 	}
 
@@ -56,6 +59,7 @@ namespace Saturn {
 
 	void UniformBufferSet::Set( Ref<UniformBuffer>& rBuffer, uint32_t set, uint32_t binding )
 	{
+		SAT_CORE_ASSERT( false );
 	}
 
 }

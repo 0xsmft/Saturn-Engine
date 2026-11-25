@@ -84,7 +84,7 @@ namespace Saturn {
 		switch( format )
 		{
 			case VK_FORMAT_R8G8B8A8_UNORM:
-				return ImageFormat::BGRA8;
+				return ImageFormat::RGBA8;
 
 			case VK_FORMAT_R16G16B16A16_UNORM:
 				return ImageFormat::RGBA16;

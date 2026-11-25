@@ -47,7 +47,7 @@
 #define SAT_SHOW_ERROR_DIALOG( title, text ) Saturn::Core::ShowErrorDialogBoxAndTerminate( title, text, true )
 #endif
 
-#define SAT_VERIFY_NO_MSG(cond) { if(!(cond)) { SAT_CORE_ERROR("Verify Failed: {0}, Line {1}, File {2}", #cond, __LINE__, __FILE__); SAT_BREAK_DEBUG() SAT_SHOW_ERROR_DIALOG( "Verify Failed!", "No Message!" ); } }
+#define SAT_VERIFY_NO_MSG(cond) { if(!(cond)) { SAT_CORE_ERROR("Verify Failed: {0}, Line {1}, File {2}", #cond, __LINE__, __FILE__); SAT_BREAK_DEBUG() SAT_SHOW_ERROR_DIALOG( "Verify Failed!", #cond ); } }
 
 #define SAT_VERIFY_MSG(cond, ...) { if(!(cond)) { SAT_CORE_ERROR("Verify Failed: {0}, Line {1}, File {2}", __VA_ARGS__, __LINE__, __FILE__); SAT_BREAK_DEBUG() SAT_SHOW_ERROR_DIALOG( "Verify Failed!", __VA_ARGS__ ); }  }
 

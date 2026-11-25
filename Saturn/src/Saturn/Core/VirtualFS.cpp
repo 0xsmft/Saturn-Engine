@@ -401,7 +401,7 @@ namespace Saturn {
 
 	const std::string& VirtualFS::GetActiveMountBaseAndEnsureIsProject() const
 	{
-		SAT_CORE_VERIFY( m_ActiveMountBase != Project::GetActiveConfig().Name );
+		SAT_CORE_VERIFY( m_ActiveMountBase == Project::GetActiveConfig().Name );
 		return m_ActiveMountBase;
 	}
 

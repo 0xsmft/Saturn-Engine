@@ -68,7 +68,6 @@ namespace Saturn {
 
 		return false;
 	}
-#endif
 
 	bool ShaderAsset::TryLoadShaders()
 	{
@@ -85,6 +84,7 @@ namespace Saturn {
 		}
 		return true;
 	}
+#endif
 
 	Ref<Shader> ShaderAsset::GetShaderForMaterial() const
 	{

@@ -65,7 +65,7 @@ namespace Saturn {
 
 	struct AssetBundleHeader
 	{
-		// .AB + type
+		// .AB + null
 		const unsigned char Magic[ 4 ] = { 0x2E, 0x41, 0x42, 0x00 };
 		uint32_t Version = 0u;
 		size_t Assets = 0llu;
@@ -73,8 +73,8 @@ namespace Saturn {
 
 	struct AssetBundleMinimalHeader
 	{
-		// .AB + type
-		const unsigned char Magic[ 4 ] = { 0x2E, 0x41, 0x42, 0x01 };
+		// .AB + null
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x41, 0x42, 0x00 };
 		uint32_t Version = 0u;
 		uint64_t BuildTime = 0llu;
 	};

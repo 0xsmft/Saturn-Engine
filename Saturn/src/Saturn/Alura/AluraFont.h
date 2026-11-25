@@ -170,7 +170,8 @@ namespace Saturn {
 	class AluraFont : public Asset
 	{
 	public:
-		// INTERNAL CONSTRUCTOR! FOR USE BY ALURACANVAS ONLY. Init empty font with no asset.
+		// INTERNAL CONSTRUCTOR! FOR USE BY ALURACANVAS & THE BUILTIN RESOURCE MGR ONLY. 
+		// Init empty font with no asset.
 		AluraFont() = default;
 
 		// Create a new font and load the raw .ttf file and generate the real Alura Font data
@@ -217,6 +218,10 @@ namespace Saturn {
 
 		// FOR USE BY THE BUILT IN RESOURCE MANAGER ONLY!
 		void Serialise_ForBRM( Passkey<class BuiltinResourceManager> pk, std::ofstream& rStream ) const;
+		
+#if defined(SAT_DIST)
+		void Deserialise_ForBRM( Passkey<class BuiltinResourceManager> pk, std::ifstream& rStream );
+#endif
 
 	private:
 		void CreateOrLoadAtlas( bool overrideCache = false );
@@ -225,6 +230,9 @@ namespace Saturn {
 #endif
 
 		void SerialiseInternal( std::ofstream& rStream, const bool isForDist ) const;
+
+		template<typename Ty>
+		void DeserialiseInternal( Ty& rStream );
 
 	private:
 #if !defined(SAT_DIST)
@@ -243,6 +251,6 @@ namespace Saturn {
 
 	private:
 		friend class AluraFontAssetViewer;
-	};	
-	
+	};
+
 }

@@ -1063,11 +1063,15 @@ namespace Saturn {
 
 	void Shader::AddDependency( Passkey<class ShaderIncludeHelper> pk, const std::filesystem::path& rPath )
 	{
+#if !defined(SAT_DIST)
 		const auto itr = std::find( m_ShaderDependencies.begin(), m_ShaderDependencies.end(), rPath );
 		if( itr == m_ShaderDependencies.end() )
 		{
 			m_ShaderDependencies.emplace_back( rPath );
 		}
+#else
+		SAT_CORE_VERIFY( false, "Call to AddDependency illegal in Dist!" );
+#endif
 	}
 
 	//////////////////////////////////////////////////////////////////////////

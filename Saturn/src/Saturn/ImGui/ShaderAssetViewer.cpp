@@ -84,7 +84,9 @@ namespace Saturn {
 
 	void ShaderAssetViewer::OnCompile()
 	{
+#if !defined(SAT_DIST)
 		m_ShaderAsset->CompileAll();
+#endif
 	}
 
 }

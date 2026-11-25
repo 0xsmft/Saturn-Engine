@@ -53,11 +53,12 @@ namespace Saturn {
 		ShaderAsset( const Ref<Asset>& rBase );
 		virtual ~ShaderAsset() = default;
 
-		virtual void OnDelete() override {}
-		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) override {}
 		virtual bool CanPurge() const override { return false; }
 
 #if !defined(SAT_DIST)
+		virtual void OnDelete() override {}
+		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) override {}
+		
 		void CopyTemplateFile();
 
 		bool CompileAll();

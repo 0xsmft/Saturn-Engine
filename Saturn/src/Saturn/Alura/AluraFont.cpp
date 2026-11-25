@@ -321,174 +321,6 @@ namespace Saturn {
 	}
 #endif
 
-	struct AluraSerialiedFontHeader
-	{
-		// .SAF
-		const unsigned char Magic[ 4 ] = { 0x2E, 0x53, 0x41, 0x46 };
-		AluraFontAssetVersion Version = AluraFontAssetVersion::Lowest;
-	};
-
-	void AluraFont::SerialiseInternal( std::ofstream& rStream, const bool isForDist ) const
-	{
-		// Header
-		AluraSerialiedFontHeader header{};
-		RawSerialisation::WriteObject( header.Magic, rStream );
-		RawSerialisation::WriteObject( ( uint8_t ) m_Version, rStream );
-
-#if !defined(SAT_DIST)
-		if( !isForDist )
-		{
-			// Name of the font file
-			RawSerialisation::WriteString( m_Name, rStream );
-
-			// Write path
-			RawSerialisation::WriteString( m_FontFilepath, rStream );
-		}
-#endif
-
-		// Metrics
-		RawSerialisation::WriteObject( m_AluraFontData.GetMetrics(), rStream );
-
-		// Glyph to codepoint map
-		RawSerialisation::WriteMap( m_AluraFontData.GetCodepointToGlyph(), rStream );
-
-		// Kerning
-		size_t mapSize = m_AluraFontData.GetKerning().size();
-		RawSerialisation::WriteObject( mapSize, rStream );
-
-		for( const auto& [kv, kerning] : m_AluraFontData.GetKerning() )
-		{
-			RawSerialisation::WriteObject( kv.first, rStream );
-			RawSerialisation::WriteObject( kv.second, rStream );
-			RawSerialisation::WriteObject( kerning, rStream );
-		}
-
-		// Write glyph geo.
-		// Write the map manually
-		mapSize = m_AluraFontData.GetGlyphs().size();
-		RawSerialisation::WriteObject( mapSize, rStream );
-
-		for( size_t i = 0; i < mapSize; ++i )
-		{
-			const AluraSerialisedGlyph& asg = m_AluraFontData.GetGlyphs()[ i ];
-			RawSerialisation::WriteObject( asg.Codepoint, rStream );
-			RawSerialisation::WriteObject( asg.Advance, rStream );
-
-			RawSerialisation::WriteObject( asg.PlaneLeft, rStream );
-			RawSerialisation::WriteObject( asg.PlaneBottom, rStream );
-			RawSerialisation::WriteObject( asg.PlaneRight, rStream );
-			RawSerialisation::WriteObject( asg.PlaneTop, rStream );
-
-			RawSerialisation::WriteObject( asg.AtlasLeft, rStream );
-			RawSerialisation::WriteObject( asg.AtlasBottom, rStream );
-			RawSerialisation::WriteObject( asg.AtlasRight, rStream );
-			RawSerialisation::WriteObject( asg.AtlasTop, rStream );
-		}
-
-		// Now write the texture atlas image
-		RawSerialisation::WriteObject( m_TextureAtlas->Width(), rStream );
-		RawSerialisation::WriteObject( m_TextureAtlas->Height(), rStream );
-
-		Buffer TemporaryBuffer = m_TextureAtlas->X31CopyToBuffer();
-		RawSerialisation::WriteSaturnBuffer( TemporaryBuffer, rStream );
-		TemporaryBuffer.Free();
-	}
-
-	void AluraFont::Serialise( const std::filesystem::path& rPath, bool isForDist /*=false*/ ) const
-	{
-		std::ofstream fout( rPath, std::ios::binary | std::ios::trunc );
-		SerialiseInternal( fout, isForDist );
-		fout.close();
-	}
-
-	void AluraFont::Deserialise( FDependentIStream& rStream )
-	{
-		AluraSerialiedFontHeader header{};
-		
-		char magic[ 4 ]{ 0 };
-		RawSerialisation::ReadObject( magic, rStream );
-
-		if( std::memcmp( header.Magic, ".SAF", 4 ) != 0 )
-		{
-			SAT_CORE_ERROR( "[AluraFont]: File magic does not match!" );
-			return;
-		}
-
-		RawSerialisation::ReadObject( header.Version, rStream );
-
-#if !defined(SAT_DIST)
-		// Name of the font file
-		m_Name = RawSerialisation::ReadString( rStream );
-
-		m_FontFilepath = RawSerialisation::ReadString( rStream );
-#endif
-
-		// Metrics
-		RawSerialisation::ReadObject( m_AluraFontData.GetMetrics(), rStream );
-
-		// Glyph to codepoint map
-		RawSerialisation::ReadMap( m_AluraFontData.GetCodepointToGlyph(), rStream );
-
-		// Kerning
-		size_t mapSize = 0llu;
-		RawSerialisation::ReadObject( mapSize, rStream );
-
-		for( size_t i = 0; i < mapSize; ++i )
-		{
-			uint32_t a, b;
-			double kerning;
-
-			RawSerialisation::ReadObject( a, rStream );
-			RawSerialisation::ReadObject( b, rStream );
-			RawSerialisation::ReadObject( kerning, rStream );
-
-			m_AluraFontData.GetKerning().emplace( std::make_pair( a, b ), kerning );
-		}
-
-		// Read the map manually
-		RawSerialisation::ReadObject( mapSize, rStream );
-
-		m_AluraFontData.GetGlyphs().resize( mapSize );
-
-		for( auto& rGlyph : m_AluraFontData.GetGlyphs() )
-		{
-			RawSerialisation::ReadObject( rGlyph.Codepoint, rStream );
-			RawSerialisation::ReadObject( rGlyph.Advance, rStream );
-
-			RawSerialisation::ReadObject( rGlyph.PlaneLeft, rStream );
-			RawSerialisation::ReadObject( rGlyph.PlaneBottom, rStream );
-			RawSerialisation::ReadObject( rGlyph.PlaneRight, rStream );
-			RawSerialisation::ReadObject( rGlyph.PlaneTop, rStream );
-
-			RawSerialisation::ReadObject( rGlyph.AtlasLeft, rStream );
-			RawSerialisation::ReadObject( rGlyph.AtlasBottom, rStream );
-			RawSerialisation::ReadObject( rGlyph.AtlasRight, rStream );
-			RawSerialisation::ReadObject( rGlyph.AtlasTop, rStream );
-		}
-
-		uint32_t width = 0u, height = 0u;
-
-		RawSerialisation::ReadObject( width, rStream );
-		RawSerialisation::ReadObject( height, rStream );
-
-		Buffer imageData;
-		RawSerialisation::ReadSaturnBuffer( imageData, rStream );
-		m_TextureAtlas = Ref<Texture2D>::Create( ImageFormat::RGBA32F, width, height, imageData.Data, false, AddressingMode::ClampToEdge, TextureLoadFlags_NoMips );
-		imageData.Free();
-	}
-
-	void AluraFont::Deserialise_ForAluraCanvas( Passkey<class AluraCanvas> pk, const std::filesystem::path& rPath )
-	{
-		std::ifstream stream( rPath, std::ios::binary | std::ios::in );
-		Deserialise( stream );
-		stream.close();
-	}
-
-	void AluraFont::Serialise_ForBRM( Passkey<class BuiltinResourceManager> pk, std::ofstream& rStream ) const
-	{
-		SerialiseInternal( rStream, true );
-	}
-
 	//////////////////////////////////////////////////////////////////////////
 	// TEXT SIZE
 
@@ -572,5 +404,195 @@ namespace Saturn {
 	
 		return glm::ceil( static_cast< float >( y ) );
 	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// SERIALISATION
+
+	struct AluraSerialiedFontHeader
+	{
+		// .SAF
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x53, 0x41, 0x46 };
+		AluraFontAssetVersion Version = AluraFontAssetVersion::Lowest;
+	};
+
+	//
+	// All serialiation calls boil down to here.
+	//
+	void AluraFont::SerialiseInternal( std::ofstream& rStream, const bool isForDist ) const
+	{
+		// Header
+		AluraSerialiedFontHeader header{};
+		RawSerialisation::WriteObject( header.Magic, rStream );
+		RawSerialisation::WriteObject( ( uint8_t ) m_Version, rStream );
+
+#if !defined(SAT_DIST)
+		if( !isForDist )
+		{
+			// Name of the font file
+			RawSerialisation::WriteString( m_Name, rStream );
+
+			// Write path
+			RawSerialisation::WriteString( m_FontFilepath, rStream );
+		}
+#endif
+
+		// Metrics
+		RawSerialisation::WriteObject( m_AluraFontData.GetMetrics(), rStream );
+
+		// Glyph to codepoint map
+		RawSerialisation::WriteMap( m_AluraFontData.GetCodepointToGlyph(), rStream );
+
+		// Kerning
+		size_t mapSize = m_AluraFontData.GetKerning().size();
+		RawSerialisation::WriteObject( mapSize, rStream );
+
+		for( const auto& [kv, kerning] : m_AluraFontData.GetKerning() )
+		{
+			RawSerialisation::WriteObject( kv.first, rStream );
+			RawSerialisation::WriteObject( kv.second, rStream );
+			RawSerialisation::WriteObject( kerning, rStream );
+		}
+
+		// Write glyph geo.
+		// Write the map manually
+		mapSize = m_AluraFontData.GetGlyphs().size();
+		RawSerialisation::WriteObject( mapSize, rStream );
+
+		for( size_t i = 0; i < mapSize; ++i )
+		{
+			const AluraSerialisedGlyph& asg = m_AluraFontData.GetGlyphs()[ i ];
+			RawSerialisation::WriteObject( asg.Codepoint, rStream );
+			RawSerialisation::WriteObject( asg.Advance, rStream );
+
+			RawSerialisation::WriteObject( asg.PlaneLeft, rStream );
+			RawSerialisation::WriteObject( asg.PlaneBottom, rStream );
+			RawSerialisation::WriteObject( asg.PlaneRight, rStream );
+			RawSerialisation::WriteObject( asg.PlaneTop, rStream );
+
+			RawSerialisation::WriteObject( asg.AtlasLeft, rStream );
+			RawSerialisation::WriteObject( asg.AtlasBottom, rStream );
+			RawSerialisation::WriteObject( asg.AtlasRight, rStream );
+			RawSerialisation::WriteObject( asg.AtlasTop, rStream );
+		}
+
+		// Now write the texture atlas image
+		RawSerialisation::WriteObject( m_TextureAtlas->Width(), rStream );
+		RawSerialisation::WriteObject( m_TextureAtlas->Height(), rStream );
+
+		Buffer TemporaryBuffer = m_TextureAtlas->X31CopyToBuffer();
+		RawSerialisation::WriteSaturnBuffer( TemporaryBuffer, rStream );
+		TemporaryBuffer.Free();
+	}
+
+	void AluraFont::Serialise( const std::filesystem::path& rPath, bool isForDist /*=false*/ ) const
+	{
+		std::ofstream fout( rPath, std::ios::binary | std::ios::trunc );
+		SerialiseInternal( fout, isForDist );
+		fout.close();
+	}
+
+	//
+	// Deserialise
+	//
+	template<typename Ty>
+	void AluraFont::DeserialiseInternal( Ty& rStream )
+	{
+		AluraSerialiedFontHeader header{};
+
+		char magic[ 4 ]{ 0 };
+		RawSerialisation::ReadObject( magic, rStream );
+
+		if( std::memcmp( header.Magic, ".SAF", 4 ) != 0 )
+		{
+			SAT_CORE_ERROR( "[AluraFont]: File magic does not match!" );
+			return;
+		}
+
+		RawSerialisation::ReadObject( header.Version, rStream );
+
+#if !defined(SAT_DIST)
+		// Name of the font file
+		m_Name = RawSerialisation::ReadString( rStream );
+
+		m_FontFilepath = RawSerialisation::ReadString( rStream );
+#endif
+
+		// Metrics
+		RawSerialisation::ReadObject( m_AluraFontData.GetMetrics(), rStream );
+
+		// Glyph to codepoint map
+		RawSerialisation::ReadMap( m_AluraFontData.GetCodepointToGlyph(), rStream );
+
+		// Kerning
+		size_t mapSize = 0llu;
+		RawSerialisation::ReadObject( mapSize, rStream );
+
+		for( size_t i = 0; i < mapSize; ++i )
+		{
+			uint32_t a, b;
+			double kerning;
+
+			RawSerialisation::ReadObject( a, rStream );
+			RawSerialisation::ReadObject( b, rStream );
+			RawSerialisation::ReadObject( kerning, rStream );
+
+			m_AluraFontData.GetKerning().emplace( std::make_pair( a, b ), kerning );
+		}
+
+		// Read the map manually
+		RawSerialisation::ReadObject( mapSize, rStream );
+
+		m_AluraFontData.GetGlyphs().resize( mapSize );
+
+		for( auto& rGlyph : m_AluraFontData.GetGlyphs() )
+		{
+			RawSerialisation::ReadObject( rGlyph.Codepoint, rStream );
+			RawSerialisation::ReadObject( rGlyph.Advance, rStream );
+
+			RawSerialisation::ReadObject( rGlyph.PlaneLeft, rStream );
+			RawSerialisation::ReadObject( rGlyph.PlaneBottom, rStream );
+			RawSerialisation::ReadObject( rGlyph.PlaneRight, rStream );
+			RawSerialisation::ReadObject( rGlyph.PlaneTop, rStream );
+
+			RawSerialisation::ReadObject( rGlyph.AtlasLeft, rStream );
+			RawSerialisation::ReadObject( rGlyph.AtlasBottom, rStream );
+			RawSerialisation::ReadObject( rGlyph.AtlasRight, rStream );
+			RawSerialisation::ReadObject( rGlyph.AtlasTop, rStream );
+		}
+
+		uint32_t width = 0u, height = 0u;
+
+		RawSerialisation::ReadObject( width, rStream );
+		RawSerialisation::ReadObject( height, rStream );
+
+		Buffer imageData;
+		RawSerialisation::ReadSaturnBuffer( imageData, rStream );
+		m_TextureAtlas = Ref<Texture2D>::Create( ImageFormat::RGBA32F, width, height, imageData.Data, false, AddressingMode::ClampToEdge, TextureLoadFlags_NoMips );
+		imageData.Free();
+	}
+
+	void AluraFont::Deserialise( FDependentIStream& rStream )
+	{
+		DeserialiseInternal<FDependentIStream>( rStream );
+	}
+
+	void AluraFont::Deserialise_ForAluraCanvas( Passkey<class AluraCanvas> pk, const std::filesystem::path& rPath )
+	{
+		std::ifstream stream( rPath, std::ios::binary | std::ios::in );
+		Deserialise( stream );
+		stream.close();
+	}
+
+	void AluraFont::Serialise_ForBRM( Passkey<class BuiltinResourceManager> pk, std::ofstream& rStream ) const
+	{
+		SerialiseInternal( rStream, true );
+	}
+
+#if defined(SAT_DIST)
+	void AluraFont::Deserialise_ForBRM( Passkey<class BuiltinResourceManager> pk, std::ifstream& rStream )
+	{
+		DeserialiseInternal( rStream );
+	}
+#endif
 
 }

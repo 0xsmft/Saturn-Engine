@@ -70,6 +70,7 @@ namespace Saturn {
 		Ref<Scene> m_RuntimeScene;
 		Ref<SceneRenderer> m_SceneRenderer;
 		Ref<OnlineAPI> m_OnlineAPI;
+		Ref<class BuiltinResourceManager> m_BuiltinResourceManager;
 
 		PhysicsFoundation m_PhysicsFoundation;
 		AssetManager m_AssetManager;

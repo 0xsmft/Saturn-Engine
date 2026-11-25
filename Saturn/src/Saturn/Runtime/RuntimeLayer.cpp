@@ -53,6 +53,8 @@
 #include "Saturn/GameFramework/Core/SClassDistReference.h"
 #endif
 
+#include "Saturn/PackagedResources/BuiltinResourceManager.h"
+
 namespace Saturn {
 
 	RuntimeLayer::RuntimeLayer()
@@ -64,6 +66,9 @@ namespace Saturn {
 		m_PhysicsFoundation.Init();
 
 		VirtualFS::Get().MountBase( Project::GetActiveConfig().Name, Project::GetActiveProject()->GetRootDir() );
+
+		// Load built in resource manager.
+		m_BuiltinResourceManager = Ref<BuiltinResourceManager>::Create();
 
 		// Load Asset bundle.
 		if( const auto result = AssetBundle::ReadBundle(); result != AssetBundleResult::Success )
@@ -78,7 +83,7 @@ namespace Saturn {
 		SceneRendererSpecification spec{
 			.Width = Application::Get()->GetWindow()->GetWidth(),
 			.Height = Application::Get()->GetWindow()->GetHeight(),
-			.AOTechnique = AOTechnique::SSAO,
+			.AOTechnique = AOTechnique::GTAO,
 			.Flags = SceneRendererFlag_MasterInstance | SceneRendererFlag_SwapchainTarget,
 			.TargetScene = m_RuntimeScene };
 
@@ -130,6 +135,8 @@ namespace Saturn {
 		{
 			m_OnlineAPI->Terminate();
 		}
+
+		m_BuiltinResourceManager.Reset();
 	}
 
 	RuntimeLayer::~RuntimeLayer()
@@ -280,12 +287,12 @@ namespace Saturn {
 
 	void RuntimeLayer::OnWindowResize( RubyWindowResizeEvent& e )
 	{
-		const int width = e.GetWidth(), height = e.GetHeight();
+		const auto width = e.GetWidth(), height = e.GetHeight();
 
 		if( width == 0 && height == 0 )
 			return;
 
-		m_SceneRenderer->SetViewportSize( ( uint32_t ) width, ( uint32_t ) height );
+		m_SceneRenderer->SetViewportSize( width, height );
 
 		if( g_AluraCanvas )
 			g_AluraCanvas->SetSize( { width, height } );

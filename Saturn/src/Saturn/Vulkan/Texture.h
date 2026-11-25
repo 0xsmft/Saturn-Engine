@@ -140,6 +140,9 @@ namespace Saturn {
 		uint32_t Width() const { return m_Specification.Width; }
 		uint32_t Height() const { return m_Specification.Height; }
 
+		TextureSpecification& GetTextureSpecification() { return m_Specification; }
+		const TextureSpecification& GetTextureSpecification() const { return m_Specification; }
+
 		//
 		// NB: This will only return a valid pointer if the texture
 		//	   is a CPU only texture, otherwise it will always return
@@ -158,6 +161,8 @@ namespace Saturn {
 		
 		virtual VkImageView GetOrCreateMipImageView( uint32_t mip ) = 0;
 	
+		ImageFormat GetImageFormat() const;
+
 	protected:
 		virtual void CreateTextureImage() = 0;
 		virtual void SetData( const void* pData ) = 0;

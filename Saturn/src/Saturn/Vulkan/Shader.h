@@ -505,8 +505,13 @@ namespace Saturn {
 
 		const UUID GetShaderHash() const;
 
+#if !defined(SAT_DIST)
 		std::vector<std::filesystem::path> GetShaderDependencies() { return m_ShaderDependencies; }
 		const std::vector<std::filesystem::path> GetShaderDependencies() const { return m_ShaderDependencies; }
+#else
+		std::vector<std::filesystem::path> GetShaderDependencies() { return {}; }
+		const std::vector<std::filesystem::path> GetShaderDependencies() const { return {}; }
+#endif
 
 		void AddDependency( Passkey<class ShaderIncludeHelper> pk, const std::filesystem::path& rPath );
 
@@ -539,6 +544,8 @@ namespace Saturn {
 		ShaderSourceMap m_ShaderSources;
 
 		// List of files that we include in the source glsl file.
+		// Shader dependencies do not exists on on dist because we 
+		// do not parse GLSL source files.
 		std::vector<std::filesystem::path> m_ShaderDependencies;
 #endif
 		// Set -> ShaderDescriptorSet

@@ -386,6 +386,11 @@ namespace Saturn {
 		SetDebugUtilsObjectName( "RPT-View", ( uint64_t ) m_ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
 	}
 
+	ImageFormat Texture::GetImageFormat() const
+	{
+		return SaturnFormat( m_ImageFormat );
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// GLOBAL HELPERS														//
 	//////////////////////////////////////////////////////////////////////////

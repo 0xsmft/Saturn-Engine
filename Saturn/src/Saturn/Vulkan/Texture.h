@@ -82,8 +82,8 @@ namespace Saturn {
 		bool CPUOnly = false;
 
 		// Temporary data pointer, in most cases
-		// this will be the data coming from stbi
-		// the data buffer provided in pData
+		// this will be the data coming from stbi.
+		// The data buffer provided in pData
 		// is _not_ deleted by the texture.
 		// after the data has been used to create
 		// the texture it should be freed.

@@ -64,7 +64,6 @@
 // SMAA
 #include "Embedded/SMAA_SearchTex.embed"
 
-constexpr auto SAT_PI = 3.14159265358979323846;
 constexpr auto kShadowMapSize = 4096.0f;
 
 namespace Saturn {

@@ -354,9 +354,9 @@ namespace Saturn {
 		
 		// Only valid if user tried to open an invalid recent project via the titlebar.
 		std::filesystem::path m_InvalidRecentProjectPath;
-        
-        // Only valid if the user has changed an evironment variable path.
-        std::filesystem::path m_TemporaryEnviromentVariablePath;
+		
+		// Only valid if the user has changed an evironment variable path.
+		std::filesystem::path m_TemporaryEnviromentVariablePath;
 
 		Ref<Scene> m_EditorScene = nullptr;
 		Ref<Scene> m_RuntimeScene = nullptr;

@@ -56,7 +56,7 @@ namespace Saturn {
 			const auto& rEntryPath = rEntry.path();
 			const auto& rEntryPathStr = rEntry.path().string();
 			const auto& rFilenameStr = rEntryPath.filename();
-		
+
 			if( rEntry.is_directory() )
 			{
 				const auto itr = std::find_if( rFilters.FoldersToExclude.begin(), rFilters.FoldersToExclude.end(),
@@ -134,8 +134,8 @@ namespace Saturn {
 				const auto& rFilenameStr = rNameInZip / rEntryPath.filename();
 				const auto& rExtStr = rEntryPath.extension().string();
 
-				const auto itr = std::find_if( rFilters.FileExtensionsToExclude.begin(), rFilters.FileExtensionsToExclude.end(), 
-					[ rExtStr ](const auto& rCandidate)
+				const auto itr = std::find_if( rFilters.FileExtensionsToExclude.begin(), rFilters.FileExtensionsToExclude.end(),
+					[ rExtStr ]( const auto& rCandidate )
 				{
 					return rCandidate == rExtStr;
 				} );

@@ -110,6 +110,6 @@ namespace Saturn {
 
 		RubyMacOSData* m_pData = nullptr;
 		bool m_WindowClosed = false;
-		RubyCursorType m_CurrentCursorType = RubyCursorType::None;
+		RubyCursorType m_CurrentCursorType = RubyCursorType::Arrow;
 	};
 }

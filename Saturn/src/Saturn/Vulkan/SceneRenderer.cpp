@@ -3435,8 +3435,8 @@ namespace Saturn {
 		Ref<Pass> pass = VulkanContext::Get()->GetDefaultPass();
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
-		// Cover the whole swapchain, the fullscreen quad samples the scene so it stretches to fit.
-		// (On Retina displays the swapchain is larger than the scene, which is sized in window points.)
+		// On Retina displays the swapchain is larger than the scene, 
+		// which is sized in window points.
 		const VkExtent2D Extent = VulkanContext::Get()->GetSwapchain().GetExtent();
 		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 

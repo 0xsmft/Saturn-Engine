@@ -314,10 +314,13 @@ namespace Saturn {
 	void RubyWindow::CentreWindowXYInMonitor()
 	{
 		// Centre window.
-		const auto& rMonitorSize = RubyLibrary::Get().GetPrimaryMonitor().WorkSize;
+		const RubyMonitor& rMonitor = RubyLibrary::Get().GetPrimaryMonitor();
 		const auto& rWindowSize = GetSize();
 
-		SetPosition( ( rMonitorSize.x - rWindowSize.x ) / 2, ( rMonitorSize.y - rWindowSize.y ) / 2 );
+		// Offset by the work area position so we centre inside it (e.g. below the macOS menu bar).
+		SetPosition(
+			rMonitor.WorkPosition.x + ( rMonitor.WorkSize.x - rWindowSize.x ) / 2,
+			rMonitor.WorkPosition.y + ( rMonitor.WorkSize.y - rWindowSize.y ) / 2 );
 	}
 
 	void RubyWindow::SetIcon( Ref<Texture2D> icon )

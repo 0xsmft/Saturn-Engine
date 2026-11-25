@@ -55,12 +55,16 @@ namespace Saturn {
 
 		size_t GetImageCount() const { return m_Images.size(); }
 
+		// Size of the swapchain images in pixels. On macOS Retina displays this is larger than the window size (points).
+		VkExtent2D GetExtent() const { return m_Extent; }
+
 	private:
 		void CreateImageViews();
 
 	private:
 		VkSwapchainKHR m_Swapchain = VK_NULL_HANDLE;
 		VkSemaphore m_PresentSemaphore = VK_NULL_HANDLE;
+		VkExtent2D m_Extent{};
 
 		std::vector< VkFence > m_Fences;
 		std::vector< VkImage > m_Images;

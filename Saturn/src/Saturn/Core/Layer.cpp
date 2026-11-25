@@ -209,8 +209,9 @@ namespace Saturn {
 
 		ImGui::Render();
 
-		uint32_t WindowWidth = Application::Get()->GetWindow()->GetWidth();
-		uint32_t WindowHeight = Application::Get()->GetWindow()->GetHeight();
+		const VkExtent2D SwapchainExtent = rSwapchain.GetExtent();
+		uint32_t WindowWidth = SwapchainExtent.width;
+		uint32_t WindowHeight = SwapchainExtent.height;
 
 		std::vector<VkClearValue> ClearColor;
 		ClearColor.reserve( 2 );

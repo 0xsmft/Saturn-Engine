@@ -3435,7 +3435,9 @@ namespace Saturn {
 		Ref<Pass> pass = VulkanContext::Get()->GetDefaultPass();
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
-		const VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
+		// Cover the whole swapchain, the fullscreen quad samples the scene so it stretches to fit.
+		// (On Retina displays the swapchain is larger than the scene, which is sized in window points.)
+		const VkExtent2D Extent = VulkanContext::Get()->GetSwapchain().GetExtent();
 		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
 		// Begin scene composite pass.
@@ -3443,9 +3445,9 @@ namespace Saturn {
 
 		VkViewport Viewport = {};
 		Viewport.x = 0;
-		Viewport.y = ( float ) m_RendererData.Height;
-		Viewport.width = ( float ) m_RendererData.Width;
-		Viewport.height = -( float ) m_RendererData.Height;
+		Viewport.y = ( float ) Extent.height;
+		Viewport.width = ( float ) Extent.width;
+		Viewport.height = -( float ) Extent.height;
 		Viewport.minDepth = 0.0f;
 		Viewport.maxDepth = 1.0f;
 

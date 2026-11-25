@@ -55,6 +55,7 @@ namespace Saturn {
 		SwapchainCreateInfo.imageFormat      = SwapchainData.CurrentFormat.format;
 		SwapchainCreateInfo.imageColorSpace  = SwapchainData.CurrentFormat.colorSpace;
 		SwapchainCreateInfo.imageExtent      = SwapchainData.SurfaceCaps.currentExtent;
+		m_Extent = SwapchainCreateInfo.imageExtent;
 		SwapchainCreateInfo.imageArrayLayers = 1;
 		SwapchainCreateInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
@@ -101,8 +102,6 @@ namespace Saturn {
 
 	void Swapchain::CreateFramebuffers()
 	{
-		SwapchainCreationData SwapchainData = VulkanContext::Get()->GetSwapchainCreationData();
-
 		m_Framebuffers.resize( m_ImageViews.size() );
 		
 		for( int i = 0; i < m_ImageViews.size(); ++i )
@@ -111,8 +110,9 @@ namespace Saturn {
 			Attachments.push_back( m_ImageViews[ i ] );
 			
 			VkFramebufferCreateInfo FramebufferCreateInfo ={ VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-			FramebufferCreateInfo.width = SwapchainData.SurfaceCaps.currentExtent.width;
-			FramebufferCreateInfo.height = SwapchainData.SurfaceCaps.currentExtent.height;
+			// Use the extent the images were created with (re-querying the surface could return a newer size).
+			FramebufferCreateInfo.width = m_Extent.width;
+			FramebufferCreateInfo.height = m_Extent.height;
 
 			FramebufferCreateInfo.renderPass = VulkanContext::Get()->GetDefaultVulkanPass(); // Swap chain render pass
 			FramebufferCreateInfo.layers = 1;

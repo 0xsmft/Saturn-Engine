@@ -5080,6 +5080,8 @@ namespace Saturn {
 	{
 		JobSystem::Get().QueueJob( [ this ]()
 		{
+			BuiltinResourceManager::Get()->PackageAll();
+
 			if( const auto result = AssetBundle::BundleAssets( m_BlockingOperation ); result != AssetBundleResult::Success )
 			{
 				Application::Get()->GetWindow()->FlashAttention();

@@ -102,26 +102,29 @@ namespace Saturn {
 
 			ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical );
 
-			Auxiliary::DisabledFlag disabledIfErrors( !m_EntryNameErrorMap.empty() );
-			
 			{
-				Auxiliary::DisabledFlag disabledIfNotDirty( !m_Dirty );
+				// This is wrong but who cares.
+				Auxiliary::ScopedDisabledFlag disabledIfErrs( m_EntryNameErrorMap.empty() );
+				Auxiliary::ScopedDisabledFlag disabledIfNotDirty( !m_Dirty );
+
 				if( ImGui::Button( "Save" ) )
 				{
 					LocalisationTableAssetSerialiser ltas;
 					ltas.Serialise( m_LocalisationTable );
 					m_Dirty = false;
 				}
-				disabledIfNotDirty.Pop();
 			}
 
 			{
+				// This is shit, we've already checked this before.
+				// Disable the export button if there are errors
+				Auxiliary::ScopedDisabledFlag disabledIfErrors( !m_EntryNameErrorMap.empty() );
 				if( ImGui::Button( "Export CSV" ) )
 				{
 					auto chosenFolder = Application::Get()->OpenFolder();
 					if( !chosenFolder.empty() )
 					{
-						chosenFolder /= m_LocalisationTable->Name;
+						chosenFolder /= std::format( "{0}.{1}", m_LocalisationTable->Name, m_LocalisationTable->ID );
 						// I'm doing it this way because replace_extension is retarded.
 						chosenFolder += ".csv";
 
@@ -130,7 +133,6 @@ namespace Saturn {
 				}
 			}
 
-			disabledIfErrors.Pop();
 
 			ImGui::EndHorizontal();
 

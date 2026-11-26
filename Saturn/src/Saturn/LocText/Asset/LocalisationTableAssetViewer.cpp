@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "LocalisationTableAssetViewer.h"
 
+#include "LocalisationTableExporter.h"
+
 #include "Saturn/Asset/AssetManager.h"
 
 #include "Saturn/Core/App.h"
@@ -100,14 +102,35 @@ namespace Saturn {
 
 			ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical );
 
-			Auxiliary::DisabledFlag disabledIfNotDirty( !m_Dirty && m_EntryNameErrorMap.empty() );
-			if( ImGui::Button( "Save" ) )
+			Auxiliary::DisabledFlag disabledIfErrors( !m_EntryNameErrorMap.empty() );
+			
 			{
-				LocalisationTableAssetSerialiser ltas;
-				ltas.Serialise( m_LocalisationTable );
-				m_Dirty = false;
+				Auxiliary::DisabledFlag disabledIfNotDirty( !m_Dirty );
+				if( ImGui::Button( "Save" ) )
+				{
+					LocalisationTableAssetSerialiser ltas;
+					ltas.Serialise( m_LocalisationTable );
+					m_Dirty = false;
+				}
+				disabledIfNotDirty.Pop();
 			}
-			disabledIfNotDirty.Pop();
+
+			{
+				if( ImGui::Button( "Export CSV" ) )
+				{
+					auto chosenFolder = Application::Get()->OpenFolder();
+					if( !chosenFolder.empty() )
+					{
+						chosenFolder /= m_LocalisationTable->Name;
+						// I'm doing it this way because replace_extension is retarded.
+						chosenFolder += ".csv";
+
+						LocalisationTableExporter::ExportCSV( m_LocalisationTable, chosenFolder );
+					}
+				}
+			}
+
+			disabledIfErrors.Pop();
 
 			ImGui::EndHorizontal();
 

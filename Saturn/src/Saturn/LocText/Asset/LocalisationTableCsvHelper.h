@@ -26,78 +26,22 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "LocalisationTableExporter.h"
-
-#include "LocalisationTableAsset.h"
+#pragma once
 
 namespace Saturn {
 
-	void LocalisationTableExporter::ExportCSV( Ref<class LocalisationTableAsset> tbl, const std::filesystem::path& rWhere )
+	//
+	// Localisation Table asset exporter to a .csv file.
+	//
+	class LocalisationTableCsvHelper
 	{
-		std::ofstream fout( rWhere, std::ios::out );
+	public:
+		static void ExportCSV( Ref<class LocalisationTableAsset> tbl, const std::filesystem::path& rWhere );
+		static bool ImportCSV( Ref<class LocalisationTableAsset> tbl, const std::filesystem::path& rWhere );
 
-		// Header row
-		// --------
-		// This will give us a result of:
-		// EntryName,EntryType,[langName1 (langNumber1)],[langName2 (langNumber2)],...
-
-		fout << "EntryName,EntryType,";
-
-		// Langauges
-		const auto& rUsedLangauges = tbl->GetUsedLanguages();
-		for( size_t i = 0; i < tbl->GetUsedLanguages().size(); ++i )
-		{
-			fout << Auxiliary::LocTextLanguageToString( rUsedLangauges.at( i ) )
-				<< "("
-				<< ( std::underlying_type_t<LocTextLanguage> ) rUsedLangauges.at( i )
-				<< ")";
-
-			if( i + 1 < tbl->GetUsedLanguages().size() )
-				fout << ",";
-		}
-
-		fout << "\n";
-
-		// Data
-		const auto& rEntries = tbl->GetAllEntries();
-
-		for( const auto& [rID, rEntry] : rEntries )
-		{
-			fout << rEntry.EntryName 
-				<< "," 
-				<< ( uint64_t )rEntry.Type 
-				<< ",";
-
-			size_t langaugeIndex = 0llu;
-			for( const auto& [rLangauge, rData] : rEntry.DataPerLanguage )
-			{
-				switch( rData.Type )
-				{
-					case LocalisationTableEntryType::Asset:
-					{
-						fout << rData.GetAssetID();
-					} break;
-
-					case LocalisationTableEntryType::Text:
-					{
-						fout << rData.GetTextData();
-					} break;
-
-					default:
-						break;
-				}
-
-				if( langaugeIndex + 1 < rEntry.DataPerLanguage.size() )
-					fout << ",";
-				
-				++langaugeIndex;
-			}
-
-			fout << "\n";
-		}
-
-		fout.close();
-	}
-
+	private:
+		static bool ParseHeaderLine( const std::string& rLine, Ref<LocalisationTableAsset> tbl );
+		static bool ParseEntryLine( const std::string& rLine, Ref<LocalisationTableAsset> tbl );
+	};
+	
 }

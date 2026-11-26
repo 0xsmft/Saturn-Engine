@@ -73,6 +73,7 @@ namespace Saturn {
 		void DrawDirtyPopupModal();
 		void DrawPickLanguagePopupModal();
 		void DrawRemoveLanguagePopupModal();
+		void DrawImportCsvPopupModal();
 
 		void DisplayErrorSection( const char* pText );
 
@@ -81,6 +82,8 @@ namespace Saturn {
 	private:
 		Ref<LocalisationTableAsset> m_LocalisationTable;
 
+		bool m_ShouldImportFromCSV = false;
+		bool m_ShowImportFromCSVPopup = false;
 		bool m_ShowNewLanguagePopup = false;
 		bool m_ShowRemoveLanguagePopup = false;
 		bool m_CanSave = true;

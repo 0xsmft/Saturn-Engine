@@ -185,4 +185,12 @@ namespace Saturn {
 		rEntry.DataPerLanguage = tbl;
 	}
 
+	void LocalisationTableAsset::ClearAll()
+	{
+		m_UsedLanguages.clear();
+		m_Entries.clear();
+		m_EntriesRT.clear();
+		m_ActiveLanguage = LocTextLanguage::Unknown;
+	}
+
 }

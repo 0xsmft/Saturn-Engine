@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "LocalisationTableAssetViewer.h"
 
-#include "LocalisationTableExporter.h"
+#include "LocalisationTableCsvHelper.h"
 
 #include "Saturn/Asset/AssetManager.h"
 
@@ -81,6 +81,20 @@ namespace Saturn {
 
 			if( m_ShowRemoveLanguagePopup ) DrawRemoveLanguagePopupModal();
 			if( m_ShowNewLanguagePopup ) DrawPickLanguagePopupModal();
+			if( m_ShowImportFromCSVPopup ) DrawImportCsvPopupModal();
+
+			if( m_ShouldImportFromCSV )
+			{
+				auto chosenFile = Application::Get()->OpenFile( "Comma Separated Value File (.csv)|csv" );
+				if( !chosenFile.empty() )
+				{
+					m_LocalisationTable->ClearAll();
+
+					LocalisationTableCsvHelper::ImportCSV( m_LocalisationTable, chosenFile );
+				}
+
+				m_ShouldImportFromCSV = false;
+			}
 
 			ImGui::BeginHorizontal( "##opt_hz" );
 
@@ -128,11 +142,15 @@ namespace Saturn {
 						// I'm doing it this way because replace_extension is retarded.
 						chosenFolder += ".csv";
 
-						LocalisationTableExporter::ExportCSV( m_LocalisationTable, chosenFolder );
+						LocalisationTableCsvHelper::ExportCSV( m_LocalisationTable, chosenFolder );
 					}
 				}
-			}
 
+				if( ImGui::Button( "Import from CSV" ) )
+				{
+					m_ShowImportFromCSVPopup = true;
+				}
+			}
 
 			ImGui::EndHorizontal();
 
@@ -582,6 +600,36 @@ namespace Saturn {
 				m_ChosenLanguage = LocTextLanguage::Unknown;
 				m_ChosenLanguageVariant = LocTextLanguageVariant::UnknownUnknown;
 				m_ShowRemoveLanguagePopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndPopup();
+		}
+	}
+
+	void LocalisationTableAssetViewer::DrawImportCsvPopupModal()
+	{
+		ImGui::OpenPopup( "Import from CSV##sltcsv" );
+		if( ImGui::BeginPopupModal( "Import from CSV##sltcsv", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize ) )
+		{
+			ImGui::Text( "When importing from a CSV file ALL data will be removed!" );
+
+			ImGui::Separator();
+
+			ImGui::BeginHorizontal( "##sltcsvoptshz" );
+
+			if( ImGui::Button( "I understand that all data will be lost." ) )
+			{
+				m_ShouldImportFromCSV = true;
+				m_ShowImportFromCSVPopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				m_ShowImportFromCSVPopup = false;
 				ImGui::CloseCurrentPopup();
 			}
 

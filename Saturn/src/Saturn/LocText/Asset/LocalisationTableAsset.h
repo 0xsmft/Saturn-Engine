@@ -230,6 +230,8 @@ namespace Saturn {
 		//
 		void ChangeTypeForEntry_UndoRedo( LocalisationTableEntry& rEntry, LocalisationTableEntryType newType, const LocalisationTableEntry::DataPerLanguageTable& tbl );
 
+		void ClearAll();
+
 	private:
 		LocTableEntryMap m_Entries;
 		LocTableEntryMapRT m_EntriesRT;
@@ -237,6 +239,7 @@ namespace Saturn {
 		LocTextLanguage m_ActiveLanguage = LocTextLanguage::English;
 
 	private:
+		friend class LocalisationTableCsvHelper;
 		friend class LocalisationTableAssetViewer;
 		friend class LocalisationTableAssetSerialiser;
 		friend class RawLocalisationTableAssetSerialiser;

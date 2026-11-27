@@ -542,7 +542,7 @@ namespace Saturn {
 		// *.ssb
 		// *.srnc
 		// *.smcs
-		std::vector<std::filesystem::path> validExts{ ".sab", ".ssb", ".srnc", ".smcs" };
+		std::vector<std::filesystem::path> validExts{ ".sab", ".ssb", ".srnc", ".smcs", ".srm" };
 		std::vector<std::filesystem::path> filesToCopy;
 
 		for( const auto& rEntry : std::filesystem::directory_iterator( GetRootDir() / "Cache" ) )

@@ -37,7 +37,7 @@ Using Unix Makefiles:
 
 Using Xcode:
 
-- Select the proudct you want to build and do `Cmd+B`
+- Select the product you want to build and do `Cmd+B`.
 
 ## Compiling SaturnBuildTool (non-windows platforms)
 
@@ -65,5 +65,5 @@ For example if you are running the Editor, make sure the working directory is se
 
 ## Note
 
-The macOS port is experimental and is very unstable.
+The macOS port is experimental stability is reduced.
 The macOS port is only available on Apple Silicon (Arm based CPUs).
